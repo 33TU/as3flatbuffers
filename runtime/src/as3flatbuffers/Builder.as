@@ -332,7 +332,8 @@ package as3flatbuffers
             return bytes.position;
         }
 
-        private function checkSlot(slot:uint):void
+        [Inline]
+        private final function checkSlot(slot:uint):void
         {
             if (!tableOpen || slot >= fields.length)
                 throw new RangeError("Field slot is outside the open table");
