@@ -48,7 +48,8 @@ package as3flatbuffers
             bytes = input;
         }
 
-        protected function field(slot:uint, width:uint):uint
+        [Inline]
+        protected final function field(slot:uint, width:uint):uint
         {
             if (!bytes)
                 throw new Error("View is not bound");
