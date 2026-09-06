@@ -17,14 +17,17 @@ package fixtures
         public function bind(input:flash.utils.ByteArray, rootOffset:uint = 0):SpecialFloatsView
         {
             bytes = null;
-            if (!input) throw new ArgumentError("Input must be non-null");
+            if (!input)
+                throw new ArgumentError("Input must be non-null");
             if (rootOffset > input.length || input.length - rootOffset < 4)
                 throw new RangeError("Truncated root offset");
+
             input.endian = Endian.LITTLE_ENDIAN;
             input.position = rootOffset;
             const root:uint = input.readUnsignedInt();
             if (root < 4 || root > input.length - rootOffset - 4)
                 throw new RangeError("Invalid root offset");
+
             return bindAt(input, rootOffset + root);
         }
 
@@ -32,20 +35,24 @@ package fixtures
         public function bindAt(input:flash.utils.ByteArray, tablePosition:uint):SpecialFloatsView
         {
             bytes = null;
-            if (!input) throw new ArgumentError("Input must be non-null");
+            if (!input)
+                throw new ArgumentError("Input must be non-null");
             if (tablePosition > input.length || input.length - tablePosition < 4)
                 throw new RangeError("Truncated table");
+
             input.endian = Endian.LITTLE_ENDIAN;
             input.position = tablePosition;
             const vtablePosition:Number = Number(tablePosition) - input.readInt();
             if (vtablePosition < 0 || vtablePosition > input.length - 4)
                 throw new RangeError("Invalid vtable offset");
+
             input.position = uint(vtablePosition);
             const vtSize:uint = input.readUnsignedShort();
             const objSize:uint = input.readUnsignedShort();
             if (vtSize < 4 || (vtSize & 1) || vtSize > input.length - vtablePosition ||
-                objSize < 4 || objSize > input.length - tablePosition)
+                    objSize < 4 || objSize > input.length - tablePosition)
                 throw new RangeError("Invalid table size");
+
             table = tablePosition;
             vtable = uint(vtablePosition);
             vtableSize = vtSize;
@@ -57,20 +64,27 @@ package fixtures
         [Inline]
         private final function fieldOffset(slot:uint, width:uint):uint
         {
-            if (!bytes) throw new Error("View is not bound");
-            if (slot >= vtableSize) return 0;
+            if (!bytes)
+                throw new Error("View is not bound");
+            if (slot >= vtableSize)
+                return 0;
+
             bytes.position = vtable + slot;
             const relative:uint = bytes.readUnsignedShort();
-            if (!relative) return 0;
+            if (!relative)
+                return 0;
             if (relative < 4 || relative > objectSize || width > objectSize - relative)
                 throw new RangeError("Field lies outside its table");
+
             return table + relative;
         }
 
         public function get f32():Number
         {
             const position:uint = fieldOffset(4, 4);
-            if (!position) return NaN;
+            if (!position)
+                return NaN;
+
             bytes.position = position;
             return bytes.readFloat();
         }
@@ -78,7 +92,9 @@ package fixtures
         public function get f64():Number
         {
             const position:uint = fieldOffset(6, 8);
-            if (!position) return Number.POSITIVE_INFINITY;
+            if (!position)
+                return Number.POSITIVE_INFINITY;
+
             bytes.position = position;
             return bytes.readDouble();
         }
@@ -86,7 +102,9 @@ package fixtures
         public function get negative():Number
         {
             const position:uint = fieldOffset(8, 8);
-            if (!position) return Number.NEGATIVE_INFINITY;
+            if (!position)
+                return Number.NEGATIVE_INFINITY;
+
             bytes.position = position;
             return bytes.readDouble();
         }

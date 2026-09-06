@@ -17,14 +17,17 @@ package fixtures
         public function bind(input:flash.utils.ByteArray, rootOffset:uint = 0):NamingView
         {
             bytes = null;
-            if (!input) throw new ArgumentError("Input must be non-null");
+            if (!input)
+                throw new ArgumentError("Input must be non-null");
             if (rootOffset > input.length || input.length - rootOffset < 4)
                 throw new RangeError("Truncated root offset");
+
             input.endian = Endian.LITTLE_ENDIAN;
             input.position = rootOffset;
             const root:uint = input.readUnsignedInt();
             if (root < 4 || root > input.length - rootOffset - 4)
                 throw new RangeError("Invalid root offset");
+
             return bindAt(input, rootOffset + root);
         }
 
@@ -32,20 +35,24 @@ package fixtures
         public function bindAt(input:flash.utils.ByteArray, tablePosition:uint):NamingView
         {
             bytes = null;
-            if (!input) throw new ArgumentError("Input must be non-null");
+            if (!input)
+                throw new ArgumentError("Input must be non-null");
             if (tablePosition > input.length || input.length - tablePosition < 4)
                 throw new RangeError("Truncated table");
+
             input.endian = Endian.LITTLE_ENDIAN;
             input.position = tablePosition;
             const vtablePosition:Number = Number(tablePosition) - input.readInt();
             if (vtablePosition < 0 || vtablePosition > input.length - 4)
                 throw new RangeError("Invalid vtable offset");
+
             input.position = uint(vtablePosition);
             const vtSize:uint = input.readUnsignedShort();
             const objSize:uint = input.readUnsignedShort();
             if (vtSize < 4 || (vtSize & 1) || vtSize > input.length - vtablePosition ||
-                objSize < 4 || objSize > input.length - tablePosition)
+                    objSize < 4 || objSize > input.length - tablePosition)
                 throw new RangeError("Invalid table size");
+
             table = tablePosition;
             vtable = uint(vtablePosition);
             vtableSize = vtSize;
@@ -57,20 +64,27 @@ package fixtures
         [Inline]
         private final function fieldOffset(slot:uint, width:uint):uint
         {
-            if (!bytes) throw new Error("View is not bound");
-            if (slot >= vtableSize) return 0;
+            if (!bytes)
+                throw new Error("View is not bound");
+            if (slot >= vtableSize)
+                return 0;
+
             bytes.position = vtable + slot;
             const relative:uint = bytes.readUnsignedShort();
-            if (!relative) return 0;
+            if (!relative)
+                return 0;
             if (relative < 4 || relative > objectSize || width > objectSize - relative)
                 throw new RangeError("Field lies outside its table");
+
             return table + relative;
         }
 
         public function get snakeCase():int
         {
             const position:uint = fieldOffset(4, 4);
-            if (!position) return 11;
+            if (!position)
+                return 11;
+
             bytes.position = position;
             return bytes.readInt();
         }
@@ -78,7 +92,9 @@ package fixtures
         public function get snakeCase_():int
         {
             const position:uint = fieldOffset(6, 4);
-            if (!position) return 22;
+            if (!position)
+                return 22;
+
             bytes.position = position;
             return bytes.readInt();
         }
@@ -86,7 +102,9 @@ package fixtures
         public function get reset_():int
         {
             const position:uint = fieldOffset(8, 4);
-            if (!position) return 33;
+            if (!position)
+                return 33;
+
             bytes.position = position;
             return bytes.readInt();
         }
@@ -94,7 +112,9 @@ package fixtures
         public function get reset__():int
         {
             const position:uint = fieldOffset(10, 4);
-            if (!position) return 44;
+            if (!position)
+                return 44;
+
             bytes.position = position;
             return bytes.readInt();
         }
@@ -102,7 +122,9 @@ package fixtures
         public function get reset___():int
         {
             const position:uint = fieldOffset(12, 4);
-            if (!position) return 55;
+            if (!position)
+                return 55;
+
             bytes.position = position;
             return bytes.readInt();
         }
@@ -110,7 +132,9 @@ package fixtures
         public function get bind_():int
         {
             const position:uint = fieldOffset(14, 4);
-            if (!position) return 66;
+            if (!position)
+                return 66;
+
             bytes.position = position;
             return bytes.readInt();
         }
@@ -118,7 +142,9 @@ package fixtures
         public function get bind_2():int
         {
             const position:uint = fieldOffset(16, 4);
-            if (!position) return 77;
+            if (!position)
+                return 77;
+
             bytes.position = position;
             return bytes.readInt();
         }
@@ -126,7 +152,9 @@ package fixtures
         public function get __leadingName():int
         {
             const position:uint = fieldOffset(18, 4);
-            if (!position) return 88;
+            if (!position)
+                return 88;
+
             bytes.position = position;
             return bytes.readInt();
         }
@@ -134,7 +162,9 @@ package fixtures
         public function get trailingName_():int
         {
             const position:uint = fieldOffset(20, 4);
-            if (!position) return 99;
+            if (!position)
+                return 99;
+
             bytes.position = position;
             return bytes.readInt();
         }
@@ -142,7 +172,9 @@ package fixtures
         public function get value_Name():int
         {
             const position:uint = fieldOffset(22, 4);
-            if (!position) return 111;
+            if (!position)
+                return 111;
+
             bytes.position = position;
             return bytes.readInt();
         }
@@ -150,7 +182,9 @@ package fixtures
         public function get bytes_():int
         {
             const position:uint = fieldOffset(24, 4);
-            if (!position) return 122;
+            if (!position)
+                return 122;
+
             bytes.position = position;
             return bytes.readInt();
         }
@@ -158,7 +192,9 @@ package fixtures
         public function get class_():int
         {
             const position:uint = fieldOffset(26, 4);
-            if (!position) return 133;
+            if (!position)
+                return 133;
+
             bytes.position = position;
             return bytes.readInt();
         }

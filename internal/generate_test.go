@@ -59,7 +59,7 @@ func TestDefaultsIDsAndEscaping(t *testing.T) {
 		t.Error("deprecated field emitted")
 	}
 	if !strings.Contains(string(files[1].Data), "fieldOffset(10, 4);") ||
-		!strings.Contains(string(files[1].Data), "if (!position) return 4294967295;") ||
+		!strings.Contains(string(files[1].Data), "if (!position)\n                return 4294967295;") ||
 		!strings.Contains(string(files[1].Data), "return bytes.readUnsignedInt();") {
 		t.Error("view lost schema field id/default")
 	}

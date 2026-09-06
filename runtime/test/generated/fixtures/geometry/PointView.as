@@ -13,9 +13,11 @@ package fixtures.geometry
         public function bind(input:flash.utils.ByteArray, offset:uint = 0):PointView
         {
             bytes = null;
-            if (!input) throw new ArgumentError("Input must be non-null");
+            if (!input)
+                throw new ArgumentError("Input must be non-null");
             if (offset > input.length || 8 > input.length - offset)
                 throw new RangeError("Truncated struct");
+
             input.endian = Endian.LITTLE_ENDIAN;
             base = offset;
             bytes = input;
@@ -24,21 +26,26 @@ package fixtures.geometry
 
         public function get x():Number
         {
-            if (!bytes) throw new Error("View is not bound");
+            if (!bytes)
+                throw new Error("View is not bound");
+
             bytes.position = base + 0;
             return bytes.readFloat();
         }
 
         public function get y():Number
         {
-            if (!bytes) throw new Error("View is not bound");
+            if (!bytes)
+                throw new Error("View is not bound");
+
             bytes.position = base + 4;
             return bytes.readFloat();
         }
 
         public function unpack(destination:Point = null):Point
         {
-            if (!bytes) throw new Error("View is not bound");
+            if (!bytes)
+                throw new Error("View is not bound");
             if (!destination)
                 destination = new Point();
 

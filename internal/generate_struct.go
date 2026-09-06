@@ -86,6 +86,7 @@ func generateStructView(w *IndentWriter, o object) {
 		w.Line("{")
 		w.Indent()
 		generateBoundCheck(w)
+		w.BlankLine()
 		if f.Struct {
 			w.Line("return this.%s.bind(bytes, base + %d);", f.ViewCache, f.Offset)
 		} else {

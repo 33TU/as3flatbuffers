@@ -19,9 +19,11 @@ package fixtures.geometry
         public function bind(input:flash.utils.ByteArray, offset:uint = 0):FrameView
         {
             bytes = null;
-            if (!input) throw new ArgumentError("Input must be non-null");
+            if (!input)
+                throw new ArgumentError("Input must be non-null");
             if (offset > input.length || 56 > input.length - offset)
                 throw new RangeError("Truncated struct");
+
             input.endian = Endian.LITTLE_ENDIAN;
             base = offset;
             bytes = input;
@@ -30,90 +32,115 @@ package fixtures.geometry
 
         public function get tag():uint
         {
-            if (!bytes) throw new Error("View is not bound");
+            if (!bytes)
+                throw new Error("View is not bound");
+
             bytes.position = base + 0;
             return bytes.readUnsignedByte();
         }
 
         public function get point():fixtures.geometry.PointView
         {
-            if (!bytes) throw new Error("View is not bound");
+            if (!bytes)
+                throw new Error("View is not bound");
+
             return this.pointView.bind(bytes, base + 4);
         }
 
         public function get count():int
         {
-            if (!bytes) throw new Error("View is not bound");
+            if (!bytes)
+                throw new Error("View is not bound");
+
             bytes.position = base + 12;
             return bytes.readShort();
         }
 
         public function get signedValue():as3flatbuffers.types.Int64
         {
-            if (!bytes) throw new Error("View is not bound");
+            if (!bytes)
+                throw new Error("View is not bound");
+
             bytes.position = base + 16;
             return new as3flatbuffers.types.Int64(bytes.readUnsignedInt(), bytes.readInt());
         }
 
         public function get unsignedValue():as3flatbuffers.types.UInt64
         {
-            if (!bytes) throw new Error("View is not bound");
+            if (!bytes)
+                throw new Error("View is not bound");
+
             bytes.position = base + 24;
             return new as3flatbuffers.types.UInt64(bytes.readUnsignedInt(), bytes.readUnsignedInt());
         }
 
         public function get weight():Number
         {
-            if (!bytes) throw new Error("View is not bound");
+            if (!bytes)
+                throw new Error("View is not bound");
+
             bytes.position = base + 32;
             return bytes.readDouble();
         }
 
         public function get enabled():Boolean
         {
-            if (!bytes) throw new Error("View is not bound");
+            if (!bytes)
+                throw new Error("View is not bound");
+
             bytes.position = base + 40;
             return bytes.readBoolean();
         }
 
         public function get tiny():int
         {
-            if (!bytes) throw new Error("View is not bound");
+            if (!bytes)
+                throw new Error("View is not bound");
+
             bytes.position = base + 41;
             return bytes.readByte();
         }
 
         public function get small():uint
         {
-            if (!bytes) throw new Error("View is not bound");
+            if (!bytes)
+                throw new Error("View is not bound");
+
             bytes.position = base + 42;
             return bytes.readUnsignedShort();
         }
 
         public function get number():int
         {
-            if (!bytes) throw new Error("View is not bound");
+            if (!bytes)
+                throw new Error("View is not bound");
+
             bytes.position = base + 44;
             return bytes.readInt();
         }
 
         public function get unsignedNumber():uint
         {
-            if (!bytes) throw new Error("View is not bound");
+            if (!bytes)
+                throw new Error("View is not bound");
+
             bytes.position = base + 48;
             return bytes.readUnsignedInt();
         }
 
         public function get fraction():Number
         {
-            if (!bytes) throw new Error("View is not bound");
+            if (!bytes)
+                throw new Error("View is not bound");
+
             bytes.position = base + 52;
             return bytes.readFloat();
         }
 
         public function unpack(destination:Frame = null):Frame
         {
-            if (!bytes) throw new Error("View is not bound");
+            if (!bytes)
+                throw new Error("View is not bound");
             if (!destination)
                 destination = new Frame();
 

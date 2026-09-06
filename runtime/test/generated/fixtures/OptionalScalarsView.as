@@ -23,14 +23,17 @@ package fixtures
         public function bind(input:flash.utils.ByteArray, rootOffset:uint = 0):OptionalScalarsView
         {
             bytes = null;
-            if (!input) throw new ArgumentError("Input must be non-null");
+            if (!input)
+                throw new ArgumentError("Input must be non-null");
             if (rootOffset > input.length || input.length - rootOffset < 4)
                 throw new RangeError("Truncated root offset");
+
             input.endian = Endian.LITTLE_ENDIAN;
             input.position = rootOffset;
             const root:uint = input.readUnsignedInt();
             if (root < 4 || root > input.length - rootOffset - 4)
                 throw new RangeError("Invalid root offset");
+
             return bindAt(input, rootOffset + root);
         }
 
@@ -38,20 +41,24 @@ package fixtures
         public function bindAt(input:flash.utils.ByteArray, tablePosition:uint):OptionalScalarsView
         {
             bytes = null;
-            if (!input) throw new ArgumentError("Input must be non-null");
+            if (!input)
+                throw new ArgumentError("Input must be non-null");
             if (tablePosition > input.length || input.length - tablePosition < 4)
                 throw new RangeError("Truncated table");
+
             input.endian = Endian.LITTLE_ENDIAN;
             input.position = tablePosition;
             const vtablePosition:Number = Number(tablePosition) - input.readInt();
             if (vtablePosition < 0 || vtablePosition > input.length - 4)
                 throw new RangeError("Invalid vtable offset");
+
             input.position = uint(vtablePosition);
             const vtSize:uint = input.readUnsignedShort();
             const objSize:uint = input.readUnsignedShort();
             if (vtSize < 4 || (vtSize & 1) || vtSize > input.length - vtablePosition ||
-                objSize < 4 || objSize > input.length - tablePosition)
+                    objSize < 4 || objSize > input.length - tablePosition)
                 throw new RangeError("Invalid table size");
+
             table = tablePosition;
             vtable = uint(vtablePosition);
             vtableSize = vtSize;
@@ -63,20 +70,27 @@ package fixtures
         [Inline]
         private final function fieldOffset(slot:uint, width:uint):uint
         {
-            if (!bytes) throw new Error("View is not bound");
-            if (slot >= vtableSize) return 0;
+            if (!bytes)
+                throw new Error("View is not bound");
+            if (slot >= vtableSize)
+                return 0;
+
             bytes.position = vtable + slot;
             const relative:uint = bytes.readUnsignedShort();
-            if (!relative) return 0;
+            if (!relative)
+                return 0;
             if (relative < 4 || relative > objectSize || width > objectSize - relative)
                 throw new RangeError("Field lies outside its table");
+
             return table + relative;
         }
 
         public function get enabled():as3flatbuffers.types.OptionalBoolean
         {
             const position:uint = fieldOffset(4, 1);
-            if (!position) return null;
+            if (!position)
+                return null;
+
             bytes.position = position;
             return new as3flatbuffers.types.OptionalBoolean(bytes.readBoolean());
         }
@@ -84,7 +98,9 @@ package fixtures
         public function get i8():as3flatbuffers.types.OptionalInt
         {
             const position:uint = fieldOffset(6, 1);
-            if (!position) return null;
+            if (!position)
+                return null;
+
             bytes.position = position;
             return new as3flatbuffers.types.OptionalInt(bytes.readByte());
         }
@@ -92,7 +108,9 @@ package fixtures
         public function get u8():as3flatbuffers.types.OptionalUint
         {
             const position:uint = fieldOffset(8, 1);
-            if (!position) return null;
+            if (!position)
+                return null;
+
             bytes.position = position;
             return new as3flatbuffers.types.OptionalUint(bytes.readUnsignedByte());
         }
@@ -100,7 +118,9 @@ package fixtures
         public function get i16():as3flatbuffers.types.OptionalInt
         {
             const position:uint = fieldOffset(10, 2);
-            if (!position) return null;
+            if (!position)
+                return null;
+
             bytes.position = position;
             return new as3flatbuffers.types.OptionalInt(bytes.readShort());
         }
@@ -108,7 +128,9 @@ package fixtures
         public function get u16():as3flatbuffers.types.OptionalUint
         {
             const position:uint = fieldOffset(12, 2);
-            if (!position) return null;
+            if (!position)
+                return null;
+
             bytes.position = position;
             return new as3flatbuffers.types.OptionalUint(bytes.readUnsignedShort());
         }
@@ -116,7 +138,9 @@ package fixtures
         public function get i32():as3flatbuffers.types.OptionalInt
         {
             const position:uint = fieldOffset(14, 4);
-            if (!position) return null;
+            if (!position)
+                return null;
+
             bytes.position = position;
             return new as3flatbuffers.types.OptionalInt(bytes.readInt());
         }
@@ -124,7 +148,9 @@ package fixtures
         public function get u32():as3flatbuffers.types.OptionalUint
         {
             const position:uint = fieldOffset(16, 4);
-            if (!position) return null;
+            if (!position)
+                return null;
+
             bytes.position = position;
             return new as3flatbuffers.types.OptionalUint(bytes.readUnsignedInt());
         }
@@ -132,7 +158,9 @@ package fixtures
         public function get i64():as3flatbuffers.types.Int64
         {
             const position:uint = fieldOffset(18, 8);
-            if (!position) return null;
+            if (!position)
+                return null;
+
             bytes.position = position;
             return new as3flatbuffers.types.Int64(bytes.readUnsignedInt(), bytes.readInt());
         }
@@ -140,7 +168,9 @@ package fixtures
         public function get u64():as3flatbuffers.types.UInt64
         {
             const position:uint = fieldOffset(20, 8);
-            if (!position) return null;
+            if (!position)
+                return null;
+
             bytes.position = position;
             return new as3flatbuffers.types.UInt64(bytes.readUnsignedInt(), bytes.readUnsignedInt());
         }
@@ -148,7 +178,9 @@ package fixtures
         public function get f32():as3flatbuffers.types.OptionalNumber
         {
             const position:uint = fieldOffset(22, 4);
-            if (!position) return null;
+            if (!position)
+                return null;
+
             bytes.position = position;
             return new as3flatbuffers.types.OptionalNumber(bytes.readFloat());
         }
@@ -156,7 +188,9 @@ package fixtures
         public function get f64():as3flatbuffers.types.OptionalNumber
         {
             const position:uint = fieldOffset(24, 8);
-            if (!position) return null;
+            if (!position)
+                return null;
+
             bytes.position = position;
             return new as3flatbuffers.types.OptionalNumber(bytes.readDouble());
         }

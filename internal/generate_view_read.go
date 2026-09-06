@@ -6,7 +6,11 @@ func generateTableGetter(w *IndentWriter, f field) {
 		w.Line("return position ? this.%s.bind(bytes, position) : null;", f.ViewCache)
 		return
 	}
-	w.Line("if (!position) return %s;", f.Default)
+	w.Line("if (!position)")
+	w.Indent()
+	w.Line("return %s;", f.Default)
+	w.Dedent()
+	w.BlankLine()
 	w.Line("bytes.position = position;")
 	if f.WordDefault != "" {
 		w.Line("return new %s(bytes.readUnsignedInt(), bytes.%s());", f.Type, highReader(f))
