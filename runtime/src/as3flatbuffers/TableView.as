@@ -1,5 +1,7 @@
 package as3flatbuffers
 {
+    import as3flatbuffers.types.Int64;
+    import as3flatbuffers.types.UInt64;
     import flash.utils.ByteArray;
     import flash.utils.Endian;
 
@@ -64,6 +66,92 @@ package as3flatbuffers
                 throw new RangeError("Field lies outside its table");
 
             return table + relative;
+        }
+
+        protected function bool(slot:uint, defaultValue:Boolean = false):Boolean
+        {
+            const position:uint = field(slot, 1);
+            if (!position)
+                return defaultValue;
+
+            bytes.position = position;
+            return bytes.readBoolean();
+        }
+
+        protected function int8(slot:uint, defaultValue:int = 0):int
+        {
+            const position:uint = field(slot, 1);
+            if (!position)
+                return defaultValue;
+
+            bytes.position = position;
+            return bytes.readByte();
+        }
+
+        protected function uint8(slot:uint, defaultValue:uint = 0):uint
+        {
+            const position:uint = field(slot, 1);
+            if (!position)
+                return defaultValue;
+
+            bytes.position = position;
+            return bytes.readUnsignedByte();
+        }
+
+        protected function int16(slot:uint, defaultValue:int = 0):int
+        {
+            const position:uint = field(slot, 2);
+            if (!position)
+                return defaultValue;
+
+            bytes.position = position;
+            return bytes.readShort();
+        }
+
+        protected function uint16(slot:uint, defaultValue:uint = 0):uint
+        {
+            const position:uint = field(slot, 2);
+            if (!position)
+                return defaultValue;
+
+            bytes.position = position;
+            return bytes.readUnsignedShort();
+        }
+
+        protected function float64(slot:uint, defaultValue:Number = 0):Number
+        {
+            const position:uint = field(slot, 8);
+            if (!position)
+                return defaultValue;
+
+            bytes.position = position;
+            return bytes.readDouble();
+        }
+
+        protected function int64(slot:uint, defaultLow:uint = 0, defaultHigh:int = 0, destination:Int64 = null):Int64
+        {
+            const position:uint = field(slot, 8);
+            if (!destination)
+                destination = new Int64();
+            if (!position)
+                return destination.set(defaultLow, defaultHigh);
+
+            bytes.position = position;
+            const low:uint = bytes.readUnsignedInt();
+            return destination.set(low, bytes.readInt());
+        }
+
+        protected function uint64(slot:uint, defaultLow:uint = 0, defaultHigh:uint = 0, destination:UInt64 = null):UInt64
+        {
+            const position:uint = field(slot, 8);
+            if (!destination)
+                destination = new UInt64();
+            if (!position)
+                return destination.set(defaultLow, defaultHigh);
+
+            bytes.position = position;
+            const low:uint = bytes.readUnsignedInt();
+            return destination.set(low, bytes.readUnsignedInt());
         }
 
         protected function float32(slot:uint, defaultValue:Number = 0):Number

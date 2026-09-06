@@ -1,12 +1,14 @@
 package as3flatbuffers
 {
+    import as3flatbuffers.types.Int64;
+    import as3flatbuffers.types.UInt64;
     import flash.utils.ByteArray;
     import flash.utils.Endian;
 
     /**
-     * Reusable backwards builder for scalar-only FlatBuffers tables.
+     * Reusable backwards builder for FlatBuffers tables with scalar primitive fields.
      * Offsets refer to distance from the end of storage, so growth preserves them.
-     * This initial subset supports int32, uint32 and float32 fields.
+     * Scalar add methods accept force=true to retain present nullable defaults.
      */
     public final class Builder
     {
@@ -16,6 +18,7 @@ package as3flatbuffers
         private var tableStart:uint;
         private var finished:Boolean;
         private var lastTable:uint;
+        private var maxAlignment:uint = 4;
 
         public function Builder(initialCapacity:uint = 64)
         {
@@ -39,6 +42,7 @@ package as3flatbuffers
             space = bytes.length;
             fields = null;
             lastTable = 0;
+            maxAlignment = 4;
             finished = false;
         }
 
@@ -53,39 +57,157 @@ package as3flatbuffers
             tableStart = offset;
         }
 
-        public function addFloat32(slot:uint, value:Number, defaultValue:Number = 0):void
+        public function addBool(slot:uint, value:Boolean, defaultValue:Boolean = false, force:Boolean = false):void
         {
             checkSlot(slot);
-            if (value == defaultValue)
+            if (!force && value == defaultValue)
                 return;
 
-            prepare(4);
+            prepare(1, 0);
+            space -= 1;
+            bytes.position = space;
+            bytes.writeBoolean(value);
+            fields[slot] = offset;
+        }
+
+        public function addInt8(slot:uint, value:int, defaultValue:int = 0, force:Boolean = false):void
+        {
+            checkSlot(slot);
+            if (value < -128 || value > 127)
+                throw new RangeError("Int8 value is out of range");
+            if (!force && value == defaultValue)
+                return;
+
+            prepare(1, 0);
+            space -= 1;
+            bytes.position = space;
+            bytes.writeByte(value);
+            fields[slot] = offset;
+        }
+
+        public function addUint8(slot:uint, value:uint, defaultValue:uint = 0, force:Boolean = false):void
+        {
+            checkSlot(slot);
+            if (value > 255)
+                throw new RangeError("Uint8 value is out of range");
+            if (!force && value == defaultValue)
+                return;
+
+            prepare(1, 0);
+            space -= 1;
+            bytes.position = space;
+            bytes.writeByte(value);
+            fields[slot] = offset;
+        }
+
+        public function addInt16(slot:uint, value:int, defaultValue:int = 0, force:Boolean = false):void
+        {
+            checkSlot(slot);
+            if (value < -32768 || value > 32767)
+                throw new RangeError("Int16 value is out of range");
+            if (!force && value == defaultValue)
+                return;
+
+            prepare(2, 0);
+            space -= 2;
+            bytes.position = space;
+            bytes.writeShort(value);
+            fields[slot] = offset;
+        }
+
+        public function addUint16(slot:uint, value:uint, defaultValue:uint = 0, force:Boolean = false):void
+        {
+            checkSlot(slot);
+            if (value > 65535)
+                throw new RangeError("Uint16 value is out of range");
+            if (!force && value == defaultValue)
+                return;
+
+            prepare(2, 0);
+            space -= 2;
+            bytes.position = space;
+            bytes.writeShort(value);
+            fields[slot] = offset;
+        }
+
+        public function addFloat64(slot:uint, value:Number, defaultValue:Number = 0, force:Boolean = false):void
+        {
+            checkSlot(slot);
+            if (!force && value == defaultValue)
+                return;
+
+            prepare(8, 0);
+            space -= 8;
+            bytes.position = space;
+            bytes.writeDouble(value);
+            fields[slot] = offset;
+        }
+
+        public function addInt64(slot:uint, value:Int64, defaultLow:uint = 0, defaultHigh:int = 0, force:Boolean = false):void
+        {
+            checkSlot(slot);
+            if (!value)
+                throw new ArgumentError("Int64 value must be non-null");
+            if (!force && value.low == defaultLow && value.high == defaultHigh)
+                return;
+
+            prepare(8, 0);
+            space -= 8;
+            bytes.position = space;
+            bytes.writeUnsignedInt(value.low);
+            bytes.writeUnsignedInt(uint(value.high));
+            fields[slot] = offset;
+        }
+
+        public function addUint64(slot:uint, value:UInt64, defaultLow:uint = 0, defaultHigh:uint = 0, force:Boolean = false):void
+        {
+            checkSlot(slot);
+            if (!value)
+                throw new ArgumentError("UInt64 value must be non-null");
+            if (!force && value.low == defaultLow && value.high == defaultHigh)
+                return;
+
+            prepare(8, 0);
+            space -= 8;
+            bytes.position = space;
+            bytes.writeUnsignedInt(value.low);
+            bytes.writeUnsignedInt(uint(value.high));
+            fields[slot] = offset;
+        }
+
+        public function addFloat32(slot:uint, value:Number, defaultValue:Number = 0, force:Boolean = false):void
+        {
+            checkSlot(slot);
+            if (!force && value == defaultValue)
+                return;
+
+            prepare(4, 0);
             space -= 4;
             bytes.position = space;
             bytes.writeFloat(value);
             fields[slot] = offset;
         }
 
-        public function addInt32(slot:uint, value:int, defaultValue:int = 0):void
+        public function addInt32(slot:uint, value:int, defaultValue:int = 0, force:Boolean = false):void
         {
             checkSlot(slot);
-            if (value == defaultValue)
+            if (!force && value == defaultValue)
                 return;
 
-            prepare(4);
+            prepare(4, 0);
             space -= 4;
             bytes.position = space;
             bytes.writeInt(value);
             fields[slot] = offset;
         }
 
-        public function addUint32(slot:uint, value:uint, defaultValue:uint = 0):void
+        public function addUint32(slot:uint, value:uint, defaultValue:uint = 0, force:Boolean = false):void
         {
             checkSlot(slot);
-            if (value == defaultValue)
+            if (!force && value == defaultValue)
                 return;
 
-            prepare(4);
+            prepare(4, 0);
             space -= 4;
             bytes.position = space;
             bytes.writeUnsignedInt(value);
@@ -125,7 +247,7 @@ package as3flatbuffers
             if (finished || fields != null || !root || root != lastTable)
                 throw new Error("Finish requires the most recently completed table");
 
-            prepare(4);
+            prepare(maxAlignment, 4);
             putInt32(int(offset + 4 - root));
             finished = true;
             const result:ByteArray = new ByteArray();
@@ -150,7 +272,7 @@ package as3flatbuffers
 
         private function putInt32(value:int):void
         {
-            prepare(4);
+            prepare(4, 0);
             space -= 4;
             bytes.position = space;
             bytes.writeInt(value);
@@ -158,18 +280,21 @@ package as3flatbuffers
 
         private function putUint16(value:uint):void
         {
-            prepare(2);
+            prepare(2, 0);
             space -= 2;
             bytes.position = space;
             bytes.writeShort(value);
         }
 
         [Inline]
-        private final function prepare(alignment:uint):void
+        private final function prepare(alignment:uint, additionalBytes:uint):void
         {
-            const padding:uint = (alignment - (offset % alignment)) % alignment;
+            if (alignment > maxAlignment)
+                maxAlignment = alignment;
 
-            while (space < padding + alignment)
+            const padding:uint = (alignment - ((offset + additionalBytes) % alignment)) % alignment;
+
+            while (space < padding + alignment + additionalBytes)
             {
                 if (bytes.length >= 0x40000000)
                     throw new RangeError("Builder capacity is too large");

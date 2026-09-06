@@ -4,6 +4,7 @@ func generateView(w *IndentWriter, o object) {
 	generatePackage(w, o)
 	w.Line("import as3flatbuffers.TableView;")
 	w.Line("import flash.utils.ByteArray;")
+	generateScalarImports(w, o)
 	w.BlankLine()
 	w.Line("/** Borrowed read-only view; unpack() produces independent owned values. */")
 	w.Line("public final class %sView extends as3flatbuffers.TableView", o.Name)
@@ -34,7 +35,17 @@ func generateViewAccessors(w *IndentWriter, o object) {
 		w.Line("public function get %s():%s", f.Name, f.Type)
 		w.Line("{")
 		w.Indent()
-		w.Line("return %s(%d, %s);", f.Reader, f.ID, f.Default)
+		if f.Optional {
+			generateOptionalRead(w, f, "")
+			w.Dedent()
+			w.Line("}")
+			continue
+		}
+		defaults := f.Default
+		if f.WordDefault != "" {
+			defaults = f.WordDefault
+		}
+		w.Line("return %s(%d, %s);", f.Reader, f.ID, defaults)
 		w.Dedent()
 		w.Line("}")
 	}

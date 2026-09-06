@@ -1,0 +1,23 @@
+namespace fixtures;
+
+table Primitives {
+  enabled:bool = true;
+  i8:byte = -7;
+  u8:ubyte = 255;
+  i16:short = -1234;
+  u16:ushort = 65535;
+  i32:int = -1234567;
+  u32:uint = 4294967295;
+  i64:long = -9223372036854775808;
+  u64:ulong = 9223372036854775807;
+  f32:float = 0.5;
+  f64:double = 1.2345678901234567;
+}
+
+table SpecialFloats {
+  f32:float = nan;
+  f64:double = inf;
+  negative:double = -inf;
+}
+
+root_type Primitives;

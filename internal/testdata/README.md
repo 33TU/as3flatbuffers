@@ -12,3 +12,13 @@ just generate-test-schemas
 deprecated IDs, escaped names, field collision allocation, class collision errors
 and explicit unsupported-feature errors. `naming.fbs` is also compiled into the AIR
 test suite; its mixed-case fields deliberately trigger flatc style warnings.
+
+`primitives.fbs` covers every scalar primitive and nonfinite floating defaults.
+Its `ulong` default stays within the signed 64-bit range because flatc 25.12.19
+loses larger unsigned defaults when exporting BFBS. Go tests also construct a
+correctly encoded full-range unsigned default by mutating the reflection field;
+the AIR/Python fixtures exercise full-range unsigned field values on the wire.
+
+`optional.fbs` covers nullable fields for all 11 scalar types. Its AIR/Python
+fixtures distinguish absence from present zero/false and check wrapper ownership
+and reuse as field presence changes.

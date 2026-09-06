@@ -6,7 +6,13 @@ func generateUnpack(w *IndentWriter, o object) {
 	w.Indent()
 	w.Line("if (!destination) destination = new %s();", o.Name)
 	for _, f := range o.Fields {
-		w.Line("destination.%s = this.%s;", f.Name, f.Name)
+		if f.Optional {
+			generateOptionalRead(w, f, "destination."+f.Name)
+		} else if f.WordDefault != "" {
+			w.Line("destination.%s = %s(%d, %s, destination.%s);", f.Name, f.Reader, f.ID, f.WordDefault, f.Name)
+		} else {
+			w.Line("destination.%s = this.%s;", f.Name, f.Name)
+		}
 	}
 	w.Line("return destination;")
 	w.Dedent()

@@ -14,6 +14,9 @@ type File struct {
 type field struct {
 	Name, Type, Default, Reader, Writer string
 	ID                                  uint16
+	WordDefault                         string
+	Optional                            bool
+	Width                               uint32
 }
 
 type object struct {
@@ -23,7 +26,10 @@ type object struct {
 }
 
 func floatLiteral(value float64) string {
-	value = float64(float32(value))
+	return realLiteral(float64(float32(value)))
+}
+
+func realLiteral(value float64) string {
 	switch {
 	case math.IsNaN(value):
 		return "NaN"

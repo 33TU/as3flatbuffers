@@ -6,7 +6,15 @@ func generatePack(w *IndentWriter, o object) {
 	w.Indent()
 	w.Line("builder.startTable(%d);", o.Count)
 	for _, f := range o.Fields {
-		w.Line("builder.%s(%d, this.%s, %s);", f.Writer, f.ID, f.Name, f.Default)
+		if f.Optional {
+			generateOptionalPack(w, f)
+			continue
+		}
+		defaults := f.Default
+		if f.WordDefault != "" {
+			defaults = f.WordDefault
+		}
+		w.Line("builder.%s(%d, this.%s, %s);", f.Writer, f.ID, f.Name, defaults)
 	}
 	w.Line("return builder.endTable();")
 	w.Dedent()

@@ -73,6 +73,13 @@ func IsAS3ReservedWord(word string) bool {
 }
 
 var typeNames = map[string]struct{}{
+	"OptionalInt":     {},
+	"OptionalUint":    {},
+	"OptionalNumber":  {},
+	"OptionalBoolean": {},
+
+	"Int64":     {},
+	"UInt64":    {},
 	"Array":     {},
 	"Boolean":   {},
 	"Builder":   {},

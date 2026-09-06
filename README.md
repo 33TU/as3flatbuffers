@@ -4,7 +4,8 @@ An experimental FlatBuffers runtime for ActionScript 3 and Flash/AIR, built
 around owned objects and reusable views into binary data.
 
 This initial branch includes a Go code generator and a working runtime for
-scalar-only tables (`float`, `int`, `uint` in `.fbs` schemas). The runtime provides
+scalar-only tables (`bool`, `byte`, `ubyte`, `short`, `ushort`, `int`, `uint`,
+`long`, `ulong`, `float`, and `double` in `.fbs` schemas). The runtime provides
 a reusable backwards builder, bounded table access, and 64-bit word helpers.
 `Point` / `PointView` are generated from the example schema. This is not yet a
 general FlatBuffers implementation; unsupported schema features produce errors.
@@ -44,6 +45,34 @@ while using a bound view.
 ByteArray. Resetting or growing the builder cannot invalidate previously returned
 buffers. `Point.pack()` returns a builder offset, not a complete buffer.
 
+`long` and `ulong` fields use `as3flatbuffers.types.Int64` and `UInt64`, with
+separate low/high words to preserve all 64 bits. Non-nullable owned fields start with non-null
+word objects; `reset()`, `copyFrom()`, and `unpack(existing)` reuse them, allocating
+replacements if the destination fields were set to null. `clone()` copies the
+words independently. A view's 64-bit getter returns a fresh word object;
+`unpack(existing)` avoids those getter allocations. Keep source word fields
+non-null when packing or copying. Narrow integer writes reject out-of-range values.
+
+Nullable scalar fields (`score:int = null` in a schema) use AS3PB's `OptionalInt`,
+`OptionalUint`, `OptionalNumber`, or `OptionalBoolean` wrappers. A null wrapper
+represents absence; a non-null wrapper holds a present `.value`, including zero
+or false. Nullable `long` and `ulong` use `Int64` and `UInt64` directly, with null
+representing absence. All 11 scalar types support nullable fields.
+
+Nullable fields initialize and reset to null. `copyFrom()` and `unpack(existing)`
+reuse present destination wrappers, allocate missing ones, and clear absent fields.
+`clone()` deeply copies wrappers, and a view getter returns an independent wrapper
+or null. Packing preserves present zero/false values instead of omitting them.
+For manual construction, the builder's scalar `add*` methods accept a final
+`force` argument that writes a value even when it equals the supplied default.
+
+**Compiler limitation:** `flatc` 25.12.19 exports `ulong` schema defaults above
+`9223372036854775807` as zero in BFBS. This loses information before our generator
+reads it, so it cannot be detected from the BFBS alone. With that compiler, keep
+`ulong` schema defaults within the signed range. Field values still support the
+full unsigned range, including `18446744073709551615`; correctly encoded BFBS
+defaults also preserve the full range.
+
 The example uses a FlatBuffers **table**, so fields can be omitted and defaults
 read correctly. Inline FlatBuffers structs are a future addition.
 
@@ -72,6 +101,11 @@ checks omitted defaults, alternative field order, buffer growth and reuse,
 nonzero root offsets, malformed root/field offsets, ownership, and integer
 boundaries. It is not the full upstream FlatBuffers conformance suite. Generated
 fixtures, logs, SWFs, and results live in ignored `runtime/bin/` directories.
+Primitive fixtures additionally cover 64-bit values beyond Number's exact range,
+double precision, NaN/infinities, subnormal floats, signed zero, 8-byte alignment,
+nonzero defaults, and deep-copy versus reuse behavior.
+Nullable fixtures cover absence, present zero/false, mixed presence, and transitions
+between present and absent fields in reused destinations.
 
 ## Generate ActionScript
 
@@ -100,9 +134,8 @@ still rejected.
 Schema validation completes before any output files are written. The CLI overwrites
 matching generated files, but does not remove stale files after schema renames.
 
-Strings, vectors, nested objects, structs, enums/unions, optional scalars, key
-fields, services, and file identifiers are currently unsupported. Even the provided
-64-bit helper types do not yet imply support for `long` / `ulong` schema fields.
+Strings, vectors, nested objects, structs, enums/unions, key
+fields, services, and file identifiers are currently unsupported.
 The CLI reports an error for unsupported features instead of emitting partial APIs.
 
 Go tests use checked-in `.bfbs` fixtures, so `just test-go` does not require an AIR
@@ -124,7 +157,7 @@ tools/                      Reference-runtime interoperability harness
 ```
 
 The next milestones are offset fields, strings, vectors, nested tables, inline structs,
-64-bit wire fields, and unions. Schema-specific verification, file identifiers,
+and enums/unions. Schema-specific verification, file identifiers,
 size-prefixed roots, and vtable deduplication are also not implemented yet.
 No Royale compatibility layer is included.
 

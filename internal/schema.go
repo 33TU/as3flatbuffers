@@ -2,10 +2,8 @@ package internal
 
 import (
 	"fmt"
-	"math"
 	"path"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/33TU/as3flatbuffers/internal/reflection"
@@ -16,7 +14,7 @@ func parseSchema(data []byte) ([]object, error) {
 		return nil, fmt.Errorf("expected a .bfbs binary schema (create it with flatc -b --schema)")
 	}
 	schema := reflection.GetRootAsSchema(data, 0)
-	if schema.AdvancedFeatures() != 0 {
+	if schema.AdvancedFeatures() & ^reflection.AdvancedFeaturesOptionalScalars != 0 {
 		return nil, fmt.Errorf("advanced schema features are not supported yet")
 	}
 	if schema.EnumsLength() != 0 {
@@ -97,8 +95,8 @@ func parseObject(source *reflection.Object, dataLength int) (object, error) {
 		if !identifier.MatchString(name) {
 			return o, fmt.Errorf("%s: invalid field name %q", fullName, name)
 		}
-		if f.Optional() || f.Required() || f.Key() || f.Offset64() {
-			return o, fmt.Errorf("%s.%s: optional, required, key or offset64 fields are not supported yet", fullName, name)
+		if f.Required() || f.Key() || f.Offset64() {
+			return o, fmt.Errorf("%s.%s: required, key or offset64 fields are not supported yet", fullName, name)
 		}
 		fType := f.Type(nil)
 		if fType == nil {
@@ -107,25 +105,19 @@ func parseObject(source *reflection.Object, dataLength int) (object, error) {
 		if fType.Index() != -1 {
 			return o, fmt.Errorf("%s.%s: referenced types are not supported yet", fullName, name)
 		}
-		out := field{Name: name, ID: f.Id()}
-		switch fType.BaseType() {
-		case reflection.BaseTypeInt:
-			if f.DefaultInteger() < math.MinInt32 || f.DefaultInteger() > math.MaxInt32 {
-				return o, fmt.Errorf("%s.%s: int default out of range", fullName, name)
+		out, err := parseScalar(&f)
+		if err != nil {
+			return o, fmt.Errorf("%s.%s: %w", fullName, name, err)
+		}
+		out.Width = map[string]uint32{"bool": 1, "int8": 1, "uint8": 1, "int16": 2, "uint16": 2,
+			"int32": 4, "uint32": 4, "float32": 4, "int64": 8, "uint64": 8, "float64": 8}[out.Reader]
+		if f.Optional() {
+			out.Optional, out.Default = true, "null"
+			if out.WordDefault == "" {
+				out.Type = "as3flatbuffers.types." + map[string]string{
+					"int": "OptionalInt", "uint": "OptionalUint", "Number": "OptionalNumber", "Boolean": "OptionalBoolean",
+				}[out.Type]
 			}
-			out.Type, out.Reader, out.Writer = "int", "int32", "addInt32"
-			out.Default = strconv.FormatInt(f.DefaultInteger(), 10)
-		case reflection.BaseTypeUInt:
-			if f.DefaultInteger() < 0 || f.DefaultInteger() > math.MaxUint32 {
-				return o, fmt.Errorf("%s.%s: uint default out of range", fullName, name)
-			}
-			out.Type, out.Reader, out.Writer = "uint", "uint32", "addUint32"
-			out.Default = strconv.FormatInt(f.DefaultInteger(), 10)
-		case reflection.BaseTypeFloat:
-			out.Type, out.Reader, out.Writer = "Number", "float32", "addFloat32"
-			out.Default = floatLiteral(f.DefaultReal())
-		default:
-			return o, fmt.Errorf("%s.%s: %s is not supported yet (supported: float, int, uint)", fullName, name, fType.BaseType())
 		}
 		o.Fields = append(o.Fields, out)
 	}

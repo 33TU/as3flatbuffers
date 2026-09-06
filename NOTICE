@@ -1,4 +1,5 @@
-The Int64, UInt64, Int64Vector, and UInt64Vector classes in
+The Int64, UInt64, Int64Vector, UInt64Vector, OptionalInt, OptionalUint,
+OptionalNumber, and OptionalBoolean classes in
 runtime/src/as3flatbuffers/types/ are adapted from AS3PB:
 
     https://github.com/33TU/as3pb

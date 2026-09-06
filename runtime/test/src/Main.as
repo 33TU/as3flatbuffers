@@ -182,6 +182,8 @@ package
                 check(namingCopy.snakeCase_ == -2 && namingCopy.bind_2 == 456, "Named unpack");
                 namingCopy.reset();
                 check(namingCopy.snakeCase_ == 22 && namingCopy.bind_2 == 77, "Named reset");
+                PrimitiveTests.run(directory, check, read, write);
+                OptionalTests.run(directory, check, read, write);
                 result.ok = true;
                 result.checks = checks;
                 status = 0;
