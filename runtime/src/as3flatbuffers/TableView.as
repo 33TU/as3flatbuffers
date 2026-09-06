@@ -16,25 +16,31 @@ package as3flatbuffers
         {
             // An unsuccessful bind must not leave an older table usable.
             bytes = null;
-            if (!input) throw new ArgumentError("Input must be non-null");
+
+            if (!input)
+                throw new ArgumentError("Input must be non-null");
             if (offset > input.length || input.length - offset < 4)
                 throw new RangeError("Truncated root offset");
+
             input.endian = Endian.LITTLE_ENDIAN;
             input.position = offset;
             const root:uint = input.readUnsignedInt();
             if (root < 4 || root > input.length - offset - 4)
                 throw new RangeError("Invalid root offset");
+
             const tablePosition:uint = offset + root;
             input.position = tablePosition;
             const vtablePosition:Number = Number(tablePosition) - input.readInt();
             if (vtablePosition < 0 || vtablePosition > input.length - 4)
                 throw new RangeError("Invalid vtable offset");
+
             input.position = uint(vtablePosition);
             const vtSize:uint = input.readUnsignedShort();
             const objSize:uint = input.readUnsignedShort();
             if (vtSize < 4 || (vtSize & 1) || vtSize > input.length - vtablePosition ||
-                objSize < 4 || objSize > input.length - tablePosition)
+                    objSize < 4 || objSize > input.length - tablePosition)
                 throw new RangeError("Invalid table size");
+
             table = tablePosition;
             vtable = uint(vtablePosition);
             vtableSize = vtSize;
@@ -44,20 +50,27 @@ package as3flatbuffers
 
         protected function field(slot:uint, width:uint):uint
         {
-            if (!bytes) throw new Error("View is not bound");
-            if (slot >= (vtableSize - 4) / 2) return 0;
+            if (!bytes)
+                throw new Error("View is not bound");
+            if (slot >= (vtableSize - 4) / 2)
+                return 0;
+
             bytes.position = vtable + 4 + slot * 2;
             const relative:uint = bytes.readUnsignedShort();
-            if (!relative) return 0;
+            if (!relative)
+                return 0;
             if (relative < 4 || relative > objectSize || width > objectSize - relative)
                 throw new RangeError("Field lies outside its table");
+
             return table + relative;
         }
 
         protected function float32(slot:uint, defaultValue:Number = 0):Number
         {
             const position:uint = field(slot, 4);
-            if (!position) return defaultValue;
+            if (!position)
+                return defaultValue;
+
             bytes.position = position;
             return bytes.readFloat();
         }
@@ -65,7 +78,9 @@ package as3flatbuffers
         protected function int32(slot:uint, defaultValue:int = 0):int
         {
             const position:uint = field(slot, 4);
-            if (!position) return defaultValue;
+            if (!position)
+                return defaultValue;
+
             bytes.position = position;
             return bytes.readInt();
         }
@@ -73,7 +88,9 @@ package as3flatbuffers
         protected function uint32(slot:uint, defaultValue:uint = 0):uint
         {
             const position:uint = field(slot, 4);
-            if (!position) return defaultValue;
+            if (!position)
+                return defaultValue;
+
             bytes.position = position;
             return bytes.readUnsignedInt();
         }
