@@ -73,9 +73,6 @@ package fixtures.geometry
                 throw new ArgumentError("Source and destination must be non-null");
 
             const builder:as3flatbuffers.Builder = BUILDER;
-            if (builder.bound)
-                throw new Error("Packing this class is already in progress");
-
             try
             {
                 builder.reset(dst, false);

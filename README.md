@@ -62,8 +62,8 @@ error may leave partial output in `dst`.
 Each generated class owns a `private static const BUILDER`. Its `pack()` resets
 that builder for `dst` and detaches the destination in `finally`, including on
 failure. The class retains construction state and its reusable field vector, but
-not output buffers. Reentrant `pack()` calls on the same class are rejected before
-changing the active builder. Nested tables and structs share the parent's active builder via
+not output buffers. Packing is synchronous; nested tables and structs share the
+parent's active builder via
 `packInto(source, builder)`.
 
 The forward builder reserves vtable space before writing each table, then patches

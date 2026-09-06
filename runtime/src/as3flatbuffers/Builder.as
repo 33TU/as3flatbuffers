@@ -19,12 +19,6 @@ package as3flatbuffers
         private const ancestors:Vector.<Object> = new Vector.<Object>();
         private var rootReserved:Boolean;
 
-        /** Whether a destination is attached, including after finish(). */
-        public function get bound():Boolean
-        {
-            return bytes != null;
-        }
-
         /** Replace dst's contents, or detach when dst is null. Endian is unchanged. */
         public function reset(dst:ByteArray = null, reserveRoot:Boolean = true):void
         {

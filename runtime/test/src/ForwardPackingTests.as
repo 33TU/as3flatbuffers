@@ -34,9 +34,7 @@ package
 
             // Output appears in dst during construction, before finish patches the root.
             const builder:Builder = new Builder();
-            check(!builder.bound, "New builder has no destination");
             builder.reset(dst);
-            check(builder.bound, "Reset attaches the destination");
             builder.startTable(2, 4);
             builder.addFloat32(0, 42);
             const end:uint = dst.position;
@@ -48,7 +46,6 @@ package
             builder.reset();
             check(dst.length == length && dst.position == 0, "Detaching leaves finished bytes untouched");
             rejects(function():void { builder.putInt32(7); }, check, "Detached builder cannot write");
-            check(!builder.bound, "Reset without a destination clears the binding");
 
             const other:ByteArray = FixtureBuffer.create();
             builder.reset(other);
