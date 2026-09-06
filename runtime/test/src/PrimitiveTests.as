@@ -26,7 +26,7 @@ package
             for (var i:int = 0; i < cases.length; i++)
             {
                 const expected:Array = cases[i];
-                view.bind(read(directory.resolvePath("primitive-python-" + i + ".bin")));
+                FixtureBuffer.bindRoot(view, read(directory.resolvePath("primitive-python-" + i + ".bin")));
                 check(view.unpack(value) === value, "Primitive unpack reuses destination");
                 check(value.i64 === signed && value.u64 === unsigned, "Unpack reuses 64-bit words");
                 verify(value, expected, check);
@@ -42,7 +42,7 @@ package
                 builder.reset();
                 const output:ByteArray = builder.finish(copy.pack(builder));
                 write(directory.resolvePath("primitive-as3-" + i + ".bin"), output);
-                view.bind(output);
+                FixtureBuffer.bindRoot(view, output);
                 verify(view.unpack(), expected, check);
                 copy.i64.low ^= 1;
                 copy.u64.high ^= 1;
@@ -50,13 +50,13 @@ package
                 if (i == 3)
                     retained = output;
             }
-            view.bind(retained);
+            FixtureBuffer.bindRoot(view, retained);
             verify(view.unpack(), cases[3], check);
             value.reset();
             check(value.i64 === signed && value.u64 === unsigned, "Reset reuses 64-bit words");
             verify(value, cases[0], check);
             // Omitted fields overwrite reused words, including nonzero defaults.
-            view.bind(read(directory.resolvePath("primitive-python-0.bin")));
+            FixtureBuffer.bindRoot(view, read(directory.resolvePath("primitive-python-0.bin")));
             value.i64.set(1, 2);
             value.u64.set(3, 4);
             view.unpack(value);
@@ -76,7 +76,7 @@ package
 
             const special:SpecialFloats = new SpecialFloats();
             builder.reset();
-            const specialView:SpecialFloatsView = new SpecialFloatsView().bind(builder.finish(special.pack(builder)));
+            const specialView:SpecialFloatsView = FixtureBuffer.bindRoot(new SpecialFloatsView(), builder.finish(special.pack(builder)));
             check(isNaN(specialView.f32) && specialView.f64 == Number.POSITIVE_INFINITY &&
                 specialView.negative == Number.NEGATIVE_INFINITY, "Nonfinite schema defaults");
 

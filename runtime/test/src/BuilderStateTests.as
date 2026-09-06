@@ -16,7 +16,7 @@ package
             builder.endTable();
             builder.startTable(2);
             builder.addFloat32(1, 7);
-            view.bind(builder.finish(builder.endTable()));
+            FixtureBuffer.bindRoot(view, builder.finish(builder.endTable()));
             check(view.x == 0 && view.y == 7, "Reused field storage clears previous table offsets");
             rejects(function():void { builder.startTable(0); }, check, "Finished builder requires reset");
 
@@ -33,7 +33,7 @@ package
             builder.startTable(4);
             builder.addFloat32(0, 11);
             builder.addFloat32(1, 12);
-            view.bind(builder.finish(builder.endTable()));
+            FixtureBuffer.bindRoot(view, builder.finish(builder.endTable()));
             check(view.x == 11 && view.y == 12, "Field storage grows after an empty table");
 
             // Reset must also discard an unfinished table's slots and state.
@@ -46,7 +46,7 @@ package
             rejects(function():void { builder.startTable(32766); }, check, "Excessive field count rejected");
             builder.startTable(2);
             builder.addFloat32(1, 3);
-            view.bind(builder.finish(builder.endTable()));
+            FixtureBuffer.bindRoot(view, builder.finish(builder.endTable()));
             check(view.x == 0 && view.y == 3, "Reset clears offsets before reuse");
         }
 

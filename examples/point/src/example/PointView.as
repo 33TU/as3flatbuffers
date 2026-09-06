@@ -13,48 +13,30 @@ package example
         private var vtableSize:uint;
         private var objectSize:uint;
 
-        /** Bind through a root-offset word at rootOffset. */
-        public function bind(input:flash.utils.ByteArray, rootOffset:uint = 0):PointView
-        {
-            bytes = null;
-            if (!input)
-                throw new ArgumentError("Input must be non-null");
-            if (rootOffset > input.length || input.length - rootOffset < 4)
-                throw new RangeError("Truncated root offset");
-
-            input.endian = Endian.LITTLE_ENDIAN;
-            input.position = rootOffset;
-            const root:uint = input.readUnsignedInt();
-            if (root < 4 || root > input.length - rootOffset - 4)
-                throw new RangeError("Invalid root offset");
-
-            return bindAt(input, rootOffset + root);
-        }
-
         /** Bind directly to a table's absolute byte position. */
-        public function bindAt(input:flash.utils.ByteArray, tablePosition:uint):PointView
+        public function bind(input:flash.utils.ByteArray, offset:uint):PointView
         {
             bytes = null;
             if (!input)
                 throw new ArgumentError("Input must be non-null");
-            if (tablePosition > input.length || input.length - tablePosition < 4)
+            if (offset > input.length || input.length - offset < 4)
                 throw new RangeError("Truncated table");
 
             input.endian = Endian.LITTLE_ENDIAN;
-            input.position = tablePosition;
-            const vtablePosition:Number = Number(tablePosition) - input.readInt();
-            if (vtablePosition < 0 || vtablePosition > input.length - 4)
+            input.position = offset;
+            const voffset:Number = Number(offset) - input.readInt();
+            if (voffset < 0 || voffset > input.length - 4)
                 throw new RangeError("Invalid vtable offset");
 
-            input.position = uint(vtablePosition);
+            input.position = uint(voffset);
             const vtSize:uint = input.readUnsignedShort();
             const objSize:uint = input.readUnsignedShort();
-            if (vtSize < 4 || (vtSize & 1) || vtSize > input.length - vtablePosition ||
-                    objSize < 4 || objSize > input.length - tablePosition)
+            if (vtSize < 4 || (vtSize & 1) || vtSize > input.length - voffset ||
+                    objSize < 4 || objSize > input.length - offset)
                 throw new RangeError("Invalid table size");
 
-            table = tablePosition;
-            vtable = uint(vtablePosition);
+            table = offset;
+            vtable = uint(voffset);
             vtableSize = vtSize;
             objectSize = objSize;
             bytes = input;
@@ -104,8 +86,27 @@ package example
             if (!destination)
                 destination = new Point();
 
-            destination.x = this.x;
-            destination.y = this.y;
+            const position0:uint = fieldOffset(4, 4);
+            if (!position0)
+            {
+                destination.x = 0;
+            }
+            else
+            {
+                bytes.position = position0;
+                destination.x = bytes.readFloat();
+            }
+
+            const position1:uint = fieldOffset(6, 4);
+            if (!position1)
+            {
+                destination.y = 0;
+            }
+            else
+            {
+                bytes.position = position1;
+                destination.y = bytes.readFloat();
+            }
             return destination;
         }
     }

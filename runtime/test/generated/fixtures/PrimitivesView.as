@@ -15,48 +15,30 @@ package fixtures
         private var vtableSize:uint;
         private var objectSize:uint;
 
-        /** Bind through a root-offset word at rootOffset. */
-        public function bind(input:flash.utils.ByteArray, rootOffset:uint = 0):PrimitivesView
-        {
-            bytes = null;
-            if (!input)
-                throw new ArgumentError("Input must be non-null");
-            if (rootOffset > input.length || input.length - rootOffset < 4)
-                throw new RangeError("Truncated root offset");
-
-            input.endian = Endian.LITTLE_ENDIAN;
-            input.position = rootOffset;
-            const root:uint = input.readUnsignedInt();
-            if (root < 4 || root > input.length - rootOffset - 4)
-                throw new RangeError("Invalid root offset");
-
-            return bindAt(input, rootOffset + root);
-        }
-
         /** Bind directly to a table's absolute byte position. */
-        public function bindAt(input:flash.utils.ByteArray, tablePosition:uint):PrimitivesView
+        public function bind(input:flash.utils.ByteArray, offset:uint):PrimitivesView
         {
             bytes = null;
             if (!input)
                 throw new ArgumentError("Input must be non-null");
-            if (tablePosition > input.length || input.length - tablePosition < 4)
+            if (offset > input.length || input.length - offset < 4)
                 throw new RangeError("Truncated table");
 
             input.endian = Endian.LITTLE_ENDIAN;
-            input.position = tablePosition;
-            const vtablePosition:Number = Number(tablePosition) - input.readInt();
-            if (vtablePosition < 0 || vtablePosition > input.length - 4)
+            input.position = offset;
+            const voffset:Number = Number(offset) - input.readInt();
+            if (voffset < 0 || voffset > input.length - 4)
                 throw new RangeError("Invalid vtable offset");
 
-            input.position = uint(vtablePosition);
+            input.position = uint(voffset);
             const vtSize:uint = input.readUnsignedShort();
             const objSize:uint = input.readUnsignedShort();
-            if (vtSize < 4 || (vtSize & 1) || vtSize > input.length - vtablePosition ||
-                    objSize < 4 || objSize > input.length - tablePosition)
+            if (vtSize < 4 || (vtSize & 1) || vtSize > input.length - voffset ||
+                    objSize < 4 || objSize > input.length - offset)
                 throw new RangeError("Invalid table size");
 
-            table = tablePosition;
-            vtable = uint(vtablePosition);
+            table = offset;
+            vtable = uint(voffset);
             vtableSize = vtSize;
             objectSize = objSize;
             bytes = input;
@@ -196,13 +178,82 @@ package fixtures
             if (!destination)
                 destination = new Primitives();
 
-            destination.enabled = this.enabled;
-            destination.i8 = this.i8;
-            destination.u8 = this.u8;
-            destination.i16 = this.i16;
-            destination.u16 = this.u16;
-            destination.i32 = this.i32;
-            destination.u32 = this.u32;
+            const position0:uint = fieldOffset(4, 1);
+            if (!position0)
+            {
+                destination.enabled = true;
+            }
+            else
+            {
+                bytes.position = position0;
+                destination.enabled = bytes.readBoolean();
+            }
+
+            const position1:uint = fieldOffset(6, 1);
+            if (!position1)
+            {
+                destination.i8 = -7;
+            }
+            else
+            {
+                bytes.position = position1;
+                destination.i8 = bytes.readByte();
+            }
+
+            const position2:uint = fieldOffset(8, 1);
+            if (!position2)
+            {
+                destination.u8 = 255;
+            }
+            else
+            {
+                bytes.position = position2;
+                destination.u8 = bytes.readUnsignedByte();
+            }
+
+            const position3:uint = fieldOffset(10, 2);
+            if (!position3)
+            {
+                destination.i16 = -1234;
+            }
+            else
+            {
+                bytes.position = position3;
+                destination.i16 = bytes.readShort();
+            }
+
+            const position4:uint = fieldOffset(12, 2);
+            if (!position4)
+            {
+                destination.u16 = 65535;
+            }
+            else
+            {
+                bytes.position = position4;
+                destination.u16 = bytes.readUnsignedShort();
+            }
+
+            const position5:uint = fieldOffset(14, 4);
+            if (!position5)
+            {
+                destination.i32 = -1234567;
+            }
+            else
+            {
+                bytes.position = position5;
+                destination.i32 = bytes.readInt();
+            }
+
+            const position6:uint = fieldOffset(16, 4);
+            if (!position6)
+            {
+                destination.u32 = 4294967295;
+            }
+            else
+            {
+                bytes.position = position6;
+                destination.u32 = bytes.readUnsignedInt();
+            }
 
             const position7:uint = fieldOffset(18, 8);
             if (!destination.i64)
@@ -232,8 +283,27 @@ package fixtures
                 destination.u64.set(bytes.readUnsignedInt(), bytes.readUnsignedInt());
             }
 
-            destination.f32 = this.f32;
-            destination.f64 = this.f64;
+            const position9:uint = fieldOffset(22, 4);
+            if (!position9)
+            {
+                destination.f32 = 0.5;
+            }
+            else
+            {
+                bytes.position = position9;
+                destination.f32 = bytes.readFloat();
+            }
+
+            const position10:uint = fieldOffset(24, 8);
+            if (!position10)
+            {
+                destination.f64 = 1.2345678901234567;
+            }
+            else
+            {
+                bytes.position = position10;
+                destination.f64 = bytes.readDouble();
+            }
             return destination;
         }
     }

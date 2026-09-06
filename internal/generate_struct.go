@@ -111,7 +111,7 @@ func generateStructView(w *IndentWriter, o object) {
 	w.Dedent()
 	w.BlankLine()
 	for i, f := range o.Fields {
-		if i > 0 && (unpackBlock(f) || unpackBlock(o.Fields[i-1])) {
+		if i > 0 {
 			w.BlankLine()
 		}
 		if f.Struct {
@@ -125,7 +125,8 @@ func generateStructView(w *IndentWriter, o object) {
 			w.Line("bytes.position = base + %d;", f.Offset)
 			w.Line("destination.%s.set(bytes.readUnsignedInt(), bytes.%s());", f.Name, highReader(f))
 		} else {
-			w.Line("destination.%s = this.%s;", f.Name, f.Name)
+			w.Line("bytes.position = base + %d;", f.Offset)
+			w.Line("destination.%s = bytes.%s();", f.Name, scalarRead(f))
 		}
 	}
 	w.Line("return destination;")

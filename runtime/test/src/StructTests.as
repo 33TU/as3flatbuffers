@@ -25,7 +25,7 @@ package
             {
                 const item:Object = cases[i];
                 const oldFrame:Frame = value.frame;
-                view.bind(read(directory.resolvePath("struct-python-" + i + ".bin")));
+                FixtureBuffer.bindRoot(view, read(directory.resolvePath("struct-python-" + i + ".bin")));
                 check(view.unpack(value) === value, "Struct-containing table reuse");
                 check(value.label_ == i && value.pointView == 42, "Struct cache names avoid field collisions");
                 check((value.point != null) == item.present && (view.point != null) == item.present, "Struct table-field presence");
@@ -56,18 +56,18 @@ package
                 builder.reset();
                 const output:ByteArray = builder.finish(value.pack(builder));
                 write(directory.resolvePath("struct-as3-" + i + ".bin"), output);
-                const roundTrip:InlineRoot = new InlineRootView().bind(output).unpack();
+                const roundTrip:InlineRoot = FixtureBuffer.bindRoot(new InlineRootView(), output).unpack();
                 if (item.present) verifyFrame(roundTrip.frame, primitives[item["case"]], item, check);
             }
-            view.bind(read(directory.resolvePath("struct-python-1.bin")));
+            FixtureBuffer.bindRoot(view, read(directory.resolvePath("struct-python-1.bin")));
             const retainedChild:PointView = view.point;
             const snapshot:Point = retainedChild.unpack();
-            view.bind(read(directory.resolvePath("struct-python-2.bin")));
+            FixtureBuffer.bindRoot(view, read(directory.resolvePath("struct-python-2.bin")));
             check(view.point === retainedChild && retainedChild.x == cases[2].x && snapshot.x == cases[1].x,
                 "Getter rebinds the cached child; owned snapshots remain independent");
-            view.bind(read(directory.resolvePath("struct-python-3.bin"))).unpack(value);
+            FixtureBuffer.bindRoot(view, read(directory.resolvePath("struct-python-3.bin"))).unpack(value);
             check(retainedChild.x == cases[3].x, "Unpack and getters share the cached child");
-            view.bind(read(directory.resolvePath("struct-python-0.bin")));
+            FixtureBuffer.bindRoot(view, read(directory.resolvePath("struct-python-0.bin")));
             check(view.point == null && retainedChild.x == cases[3].x,
                 "Absent field returns null without rebinding a retained child");
 

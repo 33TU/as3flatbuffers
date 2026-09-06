@@ -16,6 +16,8 @@ build-generator:
 generate: build-generator
     {{ FLATC }} -b --schema -o bin examples/point/schema/point.fbs
     bin/as3flatc -o examples/point/src bin/point.bfbs
+    {{ FLATC }} -b --schema -o bin examples/struct/schema/struct.fbs
+    bin/as3flatc -o examples/struct/src bin/struct.bfbs
     {{ FLATC }} -b --schema -o bin internal/testdata/scalars.fbs
     bin/as3flatc -o runtime/test/generated bin/scalars.bfbs
     {{ FLATC }} -b --schema -o bin internal/testdata/naming.fbs

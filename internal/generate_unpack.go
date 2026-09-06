@@ -10,24 +10,16 @@ func generateUnpack(w *IndentWriter, o object) {
 	w.Dedent()
 	w.BlankLine()
 	for i, f := range o.Fields {
-		if i > 0 && (unpackBlock(f) || unpackBlock(o.Fields[i-1])) {
+		if i > 0 {
 			w.BlankLine()
 		}
 		if f.Struct {
 			generateStructFieldUnpack(w, f, false)
-		} else if f.Optional {
-			generateTableScalarUnpack(w, f)
-		} else if f.WordDefault != "" {
-			generateTableScalarUnpack(w, f)
 		} else {
-			w.Line("destination.%s = this.%s;", f.Name, f.Name)
+			generateTableScalarUnpack(w, f)
 		}
 	}
 	w.Line("return destination;")
 	w.Dedent()
 	w.Line("}")
-}
-
-func unpackBlock(f field) bool {
-	return f.Struct || f.Optional || f.WordDefault != ""
 }

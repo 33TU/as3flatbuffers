@@ -21,9 +21,25 @@ func generateTableGetter(w *IndentWriter, f field) {
 	}
 }
 
-// Read mutable scalar helpers directly, preserving destination object reuse.
+// Read scalars directly, preserving defaults and mutable helper reuse.
 func generateTableScalarUnpack(w *IndentWriter, f field) {
 	w.Line("const position%d:uint = fieldOffset(%d, %d);", f.ID, 4+uint32(f.ID)*2, f.Width)
+	if !f.Optional && f.WordDefault == "" {
+		w.Line("if (!position%d)", f.ID)
+		w.Line("{")
+		w.Indent()
+		w.Line("destination.%s = %s;", f.Name, f.Default)
+		w.Dedent()
+		w.Line("}")
+		w.Line("else")
+		w.Line("{")
+		w.Indent()
+		w.Line("bytes.position = position%d;", f.ID)
+		w.Line("destination.%s = bytes.%s();", f.Name, scalarRead(f))
+		w.Dedent()
+		w.Line("}")
+		return
+	}
 	if f.Optional {
 		w.Line("if (!position%d)", f.ID)
 		w.Line("{")

@@ -13,48 +13,30 @@ package fixtures
         private var vtableSize:uint;
         private var objectSize:uint;
 
-        /** Bind through a root-offset word at rootOffset. */
-        public function bind(input:flash.utils.ByteArray, rootOffset:uint = 0):NamingView
-        {
-            bytes = null;
-            if (!input)
-                throw new ArgumentError("Input must be non-null");
-            if (rootOffset > input.length || input.length - rootOffset < 4)
-                throw new RangeError("Truncated root offset");
-
-            input.endian = Endian.LITTLE_ENDIAN;
-            input.position = rootOffset;
-            const root:uint = input.readUnsignedInt();
-            if (root < 4 || root > input.length - rootOffset - 4)
-                throw new RangeError("Invalid root offset");
-
-            return bindAt(input, rootOffset + root);
-        }
-
         /** Bind directly to a table's absolute byte position. */
-        public function bindAt(input:flash.utils.ByteArray, tablePosition:uint):NamingView
+        public function bind(input:flash.utils.ByteArray, offset:uint):NamingView
         {
             bytes = null;
             if (!input)
                 throw new ArgumentError("Input must be non-null");
-            if (tablePosition > input.length || input.length - tablePosition < 4)
+            if (offset > input.length || input.length - offset < 4)
                 throw new RangeError("Truncated table");
 
             input.endian = Endian.LITTLE_ENDIAN;
-            input.position = tablePosition;
-            const vtablePosition:Number = Number(tablePosition) - input.readInt();
-            if (vtablePosition < 0 || vtablePosition > input.length - 4)
+            input.position = offset;
+            const voffset:Number = Number(offset) - input.readInt();
+            if (voffset < 0 || voffset > input.length - 4)
                 throw new RangeError("Invalid vtable offset");
 
-            input.position = uint(vtablePosition);
+            input.position = uint(voffset);
             const vtSize:uint = input.readUnsignedShort();
             const objSize:uint = input.readUnsignedShort();
-            if (vtSize < 4 || (vtSize & 1) || vtSize > input.length - vtablePosition ||
-                    objSize < 4 || objSize > input.length - tablePosition)
+            if (vtSize < 4 || (vtSize & 1) || vtSize > input.length - voffset ||
+                    objSize < 4 || objSize > input.length - offset)
                 throw new RangeError("Invalid table size");
 
-            table = tablePosition;
-            vtable = uint(vtablePosition);
+            table = offset;
+            vtable = uint(voffset);
             vtableSize = vtSize;
             objectSize = objSize;
             bytes = input;
@@ -204,18 +186,137 @@ package fixtures
             if (!destination)
                 destination = new Naming();
 
-            destination.snakeCase = this.snakeCase;
-            destination.snakeCase_ = this.snakeCase_;
-            destination.reset_ = this.reset_;
-            destination.reset__ = this.reset__;
-            destination.reset___ = this.reset___;
-            destination.bind_ = this.bind_;
-            destination.bind_2 = this.bind_2;
-            destination.__leadingName = this.__leadingName;
-            destination.trailingName_ = this.trailingName_;
-            destination.value_Name = this.value_Name;
-            destination.bytes_ = this.bytes_;
-            destination.class_ = this.class_;
+            const position0:uint = fieldOffset(4, 4);
+            if (!position0)
+            {
+                destination.snakeCase = 11;
+            }
+            else
+            {
+                bytes.position = position0;
+                destination.snakeCase = bytes.readInt();
+            }
+
+            const position1:uint = fieldOffset(6, 4);
+            if (!position1)
+            {
+                destination.snakeCase_ = 22;
+            }
+            else
+            {
+                bytes.position = position1;
+                destination.snakeCase_ = bytes.readInt();
+            }
+
+            const position2:uint = fieldOffset(8, 4);
+            if (!position2)
+            {
+                destination.reset_ = 33;
+            }
+            else
+            {
+                bytes.position = position2;
+                destination.reset_ = bytes.readInt();
+            }
+
+            const position3:uint = fieldOffset(10, 4);
+            if (!position3)
+            {
+                destination.reset__ = 44;
+            }
+            else
+            {
+                bytes.position = position3;
+                destination.reset__ = bytes.readInt();
+            }
+
+            const position4:uint = fieldOffset(12, 4);
+            if (!position4)
+            {
+                destination.reset___ = 55;
+            }
+            else
+            {
+                bytes.position = position4;
+                destination.reset___ = bytes.readInt();
+            }
+
+            const position5:uint = fieldOffset(14, 4);
+            if (!position5)
+            {
+                destination.bind_ = 66;
+            }
+            else
+            {
+                bytes.position = position5;
+                destination.bind_ = bytes.readInt();
+            }
+
+            const position6:uint = fieldOffset(16, 4);
+            if (!position6)
+            {
+                destination.bind_2 = 77;
+            }
+            else
+            {
+                bytes.position = position6;
+                destination.bind_2 = bytes.readInt();
+            }
+
+            const position7:uint = fieldOffset(18, 4);
+            if (!position7)
+            {
+                destination.__leadingName = 88;
+            }
+            else
+            {
+                bytes.position = position7;
+                destination.__leadingName = bytes.readInt();
+            }
+
+            const position8:uint = fieldOffset(20, 4);
+            if (!position8)
+            {
+                destination.trailingName_ = 99;
+            }
+            else
+            {
+                bytes.position = position8;
+                destination.trailingName_ = bytes.readInt();
+            }
+
+            const position9:uint = fieldOffset(22, 4);
+            if (!position9)
+            {
+                destination.value_Name = 111;
+            }
+            else
+            {
+                bytes.position = position9;
+                destination.value_Name = bytes.readInt();
+            }
+
+            const position10:uint = fieldOffset(24, 4);
+            if (!position10)
+            {
+                destination.bytes_ = 122;
+            }
+            else
+            {
+                bytes.position = position10;
+                destination.bytes_ = bytes.readInt();
+            }
+
+            const position11:uint = fieldOffset(26, 4);
+            if (!position11)
+            {
+                destination.class_ = 133;
+            }
+            else
+            {
+                bytes.position = position11;
+                destination.class_ = bytes.readInt();
+            }
             return destination;
         }
     }

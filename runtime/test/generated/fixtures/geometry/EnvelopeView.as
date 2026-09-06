@@ -14,7 +14,7 @@ package fixtures.geometry
 
         private const frameView:fixtures.geometry.FrameView = new fixtures.geometry.FrameView();
 
-        public function bind(input:flash.utils.ByteArray, offset:uint = 0):EnvelopeView
+        public function bind(input:flash.utils.ByteArray, offset:uint):EnvelopeView
         {
             bytes = null;
             if (!input)
@@ -61,11 +61,13 @@ package fixtures.geometry
             if (!destination)
                 destination = new Envelope();
 
-            destination.lead = this.lead;
+            bytes.position = base + 0;
+            destination.lead = bytes.readByte();
 
             destination.frame = this.frameView.bind(bytes, base + 8).unpack(destination.frame);
 
-            destination.tail = this.tail;
+            bytes.position = base + 64;
+            destination.tail = bytes.readShort();
             return destination;
         }
     }

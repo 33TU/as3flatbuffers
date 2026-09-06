@@ -47,7 +47,7 @@ package
                 {
                     const item:Object = manifest[i];
                     const input:ByteArray = read(directory.resolvePath(item.file));
-                    view.bind(input);
+                    FixtureBuffer.bindRoot(view, input);
                     check(view.x == item.x && view.y == item.y, "Official builder -> AS3 view");
                     check(view.unpack(owned) === owned && owned.x == item.x && owned.y == item.y,
                         "Unpack reuses and overwrites destination");
@@ -57,20 +57,20 @@ package
                     builder.reset();
                     const output:ByteArray = builder.finish(owned.pack(builder));
                     write(directory.resolvePath("as3-" + i + ".bin"), output);
-                    view.bind(output);
+                    FixtureBuffer.bindRoot(view, output);
                     check(view.x == item.x && view.y == item.y, "AS3 builder round trip");
                     output.position = 0;
                     const absoluteTable:uint = output.readUnsignedInt();
-                    check(view.bindAt(output, absoluteTable) === view && view.x == item.x && view.y == item.y,
+                    check(view.bind(output, absoluteTable) === view && view.x == item.x && view.y == item.y,
                         "Direct binding uses the absolute table position");
                     check(owned.x == cloned.x && owned.y == cloned.y, "Pack leaves owned values unchanged");
                     const prefixed:ByteArray = new ByteArray();
                     prefixed.writeUnsignedInt(0);
                     prefixed.writeBytes(output);
-                    check(view.bind(prefixed, 4).x == item.x && view.y == item.y, "Root at nonzero offset");
+                    check(FixtureBuffer.bindRoot(view, prefixed, 4).x == item.x && view.y == item.y, "Root at nonzero offset");
                     if (i == 0) retained = output;
                 }
-                view.bind(retained);
+                FixtureBuffer.bindRoot(view, retained);
                 check(view.x == manifest[0].x && view.y == manifest[0].y,
                     "Builder reset leaves finished buffers independent");
                 check(builder.capacity > 16, "Builder storage grew");
@@ -80,7 +80,7 @@ package
 
                 // Borrowing is observable; unpacked values remain independent.
                 const pointBytes:ByteArray = read(directory.resolvePath("as3-0.bin"));
-                view.bind(pointBytes).unpack(owned);
+                FixtureBuffer.bindRoot(view, pointBytes).unpack(owned);
                 pointBytes.position = 0;
                 const table:uint = pointBytes.readUnsignedInt();
                 pointBytes.position = table;
@@ -92,14 +92,14 @@ package
                 check(view.x == 42 && owned.x == manifest[0].x, "View borrows; object owns");
 
                 var caught:Boolean = false;
-                try { view.bind(new ByteArray()); } catch (e:RangeError) { caught = true; }
-                check(caught, "Truncated root rejected");
+                try { view.bind(new ByteArray(), 0); } catch (e:RangeError) { caught = true; }
+                check(caught, "Truncated table rejected");
                 caught = false;
                 try { owned.x = view.x; } catch (unbound:Error) { caught = true; }
                 check(caught, "Failed bind invalidates old view");
-                view.bind(retained);
+                FixtureBuffer.bindRoot(view, retained);
                 caught = false;
-                try { view.bindAt(retained, uint.MAX_VALUE); } catch (directError:RangeError) { caught = true; }
+                try { view.bind(retained, uint.MAX_VALUE); } catch (directError:RangeError) { caught = true; }
                 check(caught, "Direct binding rejects an invalid table position");
                 caught = false;
                 try { owned.x = view.x; } catch (directUnbound:Error) { caught = true; }
@@ -108,12 +108,12 @@ package
                 const broken:ByteArray = read(directory.resolvePath("as3-0.bin"));
                 broken.position = 0; broken.writeUnsignedInt(0xffffffff);
                 caught = false;
-                try { view.bind(broken); } catch (rootError:RangeError) { caught = true; }
+                try { FixtureBuffer.bindRoot(view, broken); } catch (rootError:RangeError) { caught = true; }
                 check(caught, "Out-of-range root rejected");
                 const badField:ByteArray = read(directory.resolvePath("as3-0.bin"));
                 badField.position = vtable + 4; badField.writeShort(65535);
                 caught = false;
-                try { owned.x = view.bind(badField).x; } catch (fieldError:RangeError) { caught = true; }
+                try { owned.x = FixtureBuffer.bindRoot(view, badField).x; } catch (fieldError:RangeError) { caught = true; }
                 check(caught, "Field outside table rejected");
 
                 // Integers preserve high bits rather than passing through Number.
@@ -147,7 +147,7 @@ package
                     "Generated owned defaults");
                 builder.reset();
                 const scalarView:ScalarDefaultsView = new ScalarDefaultsView();
-                scalarView.bind(builder.finish(scalar.pack(builder)));
+                FixtureBuffer.bindRoot(scalarView, builder.finish(scalar.pack(builder)));
                 check(scalarView.xAxis == 1.25 && scalarView.signedValue == -7 &&
                     scalarView.unsignedValue == uint.MAX_VALUE && scalarView.reset_ == 9,
                     "Generated view omitted defaults");
@@ -158,7 +158,7 @@ package
                 builder.reset();
                 const scalarBytes:ByteArray = builder.finish(scalar.pack(builder));
                 write(directory.resolvePath("scalars.bin"), scalarBytes);
-                scalarView.bind(scalarBytes);
+                FixtureBuffer.bindRoot(scalarView, scalarBytes);
                 const scalarCopy:ScalarDefaults = scalarView.unpack();
                 check(scalarCopy.xAxis == -2.5 && scalarCopy.signedValue == int.MIN_VALUE &&
                     scalarCopy.unsignedValue == 0 && scalarCopy.reset_ == 42,
@@ -183,7 +183,7 @@ package
                 builder.reset();
                 const namingBytes:ByteArray = builder.finish(naming.pack(builder));
                 write(directory.resolvePath("naming.bin"), namingBytes);
-                const namingView:NamingView = new NamingView().bind(namingBytes);
+                const namingView:NamingView = FixtureBuffer.bindRoot(new NamingView(), namingBytes);
                 check(namingView.snakeCase == -1 && namingView.snakeCase_ == -2 &&
                     namingView.bind_ == 123 && namingView.bind_2 == 456 &&
                     namingView.bytes_ == -9 && namingView.class_ == 17 &&

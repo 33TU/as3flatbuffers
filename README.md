@@ -18,6 +18,7 @@ import as3flatbuffers.Builder;
 import example.Point;
 import example.PointView;
 import flash.utils.ByteArray;
+import flash.utils.Endian;
 
 const builder:Builder = new Builder();
 const point:Point = new Point();
@@ -25,7 +26,9 @@ point.x = 1.25;
 point.y = -2.5;
 const bytes:ByteArray = builder.finish(point.pack(builder));
 
-const view:PointView = new PointView().bind(bytes);
+bytes.endian = Endian.LITTLE_ENDIAN;
+bytes.position = 0;
+const view:PointView = new PointView().bind(bytes, bytes.readUnsignedInt());
 trace(view.x, view.y);              // Reads the input directly.
 const owned:Point = view.unpack();  // Independent mutable value.
 view.unpack(owned);                // Overwrites a reusable destination.
@@ -33,7 +36,9 @@ view.unpack(owned);                // Overwrites a reusable destination.
 builder.reset();                   // Retains builder capacity.
 point.x = 42;
 const next:ByteArray = builder.finish(point.pack(builder));
-view.bind(next);                   // Reuses the view, pointing it at new bytes.
+next.endian = Endian.LITTLE_ENDIAN;
+next.position = 0;
+view.bind(next, next.readUnsignedInt()); // Reuses the view at the new table position.
 ```
 
 `PointView` borrows its input; changing that input can change values read through
@@ -45,9 +50,12 @@ while using a bound view.
 Views are self-contained generated classes: they own their buffer/offset state
 and read directly from ByteArray, with no runtime view base class. Table views
 contain a private `[Inline] fieldOffset()` helper and validate field ranges.
-`bind(bytes, rootOffset)` follows the root-offset word; `bindAt(bytes, tablePosition)`
-binds directly to an absolute table position. Both validate the table and invalidate
-the old binding on failure. Struct views bind directly to their inline position.
+Both table and struct views use `bind(bytes, offset)`, with a required absolute
+byte position. Binding validates the object and invalidates the old binding on
+failure. Resolve a table's root-offset word explicitly before binding, as above;
+`bind()` does not follow it. If the buffer starts at a nonzero position, add that
+position to the relative root offset. Struct views bind directly to their inline
+position.
 
 `Builder.finish()` currently copies its finished region into an independent
 ByteArray. Resetting or growing the builder cannot invalidate previously returned
@@ -90,7 +98,8 @@ Structs produce the same owned class / borrowed view pair. Their views hold a
 ByteArray and base offset; scalar getters read fixed positions directly, without
 a vtable lookup. `bind(bytes, offset)` takes the absolute location of the struct,
 checks its full byte range, and sets little-endian order. For example, the
-`fixtures.geometry.Point` struct in `internal/testdata/inline.fbs` has this layout:
+`example.geometry.Point` struct in [examples/struct](examples/struct/README.md)
+has this layout:
 
 ```as3
 const view:PointView = new PointView().bind(bytes, structOffset);
@@ -169,6 +178,8 @@ Source generation uses AS3PB's `IndentWriter` approach: focused Go emitters for
 owned fields and methods, packing, unpacking, binding, and direct view reads under
 `internal/`. Shared Go emitters keep the generator logic in one place while each
 generated view contains its own implementation.
+`unpack()` emits direct scalar reads into the destination instead of calling
+getters. Nested structs use the cached child views' `unpack()` methods.
 
 Field IDs and deprecated slot gaps come from the binary schema. Case conversion
 uses AS3PB's naming helpers: field names become lower camel case while leading,
@@ -199,6 +210,7 @@ runtime/src/as3flatbuffers/  Builder and scalar helpers
 runtime/test/               AIR tests
 examples/point/schema/      Reference .fbs schema
 examples/point/src/         Generated owned object and view
+examples/struct/            Inline Point schema, generated classes, and usage
 tools/                      Reference-runtime interoperability harness
 ```
 

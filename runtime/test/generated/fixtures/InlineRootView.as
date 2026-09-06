@@ -29,48 +29,30 @@ package fixtures
 
         private const alignedView:fixtures.geometry.AlignedView = new fixtures.geometry.AlignedView();
 
-        /** Bind through a root-offset word at rootOffset. */
-        public function bind(input:flash.utils.ByteArray, rootOffset:uint = 0):InlineRootView
-        {
-            bytes = null;
-            if (!input)
-                throw new ArgumentError("Input must be non-null");
-            if (rootOffset > input.length || input.length - rootOffset < 4)
-                throw new RangeError("Truncated root offset");
-
-            input.endian = Endian.LITTLE_ENDIAN;
-            input.position = rootOffset;
-            const root:uint = input.readUnsignedInt();
-            if (root < 4 || root > input.length - rootOffset - 4)
-                throw new RangeError("Invalid root offset");
-
-            return bindAt(input, rootOffset + root);
-        }
-
         /** Bind directly to a table's absolute byte position. */
-        public function bindAt(input:flash.utils.ByteArray, tablePosition:uint):InlineRootView
+        public function bind(input:flash.utils.ByteArray, offset:uint):InlineRootView
         {
             bytes = null;
             if (!input)
                 throw new ArgumentError("Input must be non-null");
-            if (tablePosition > input.length || input.length - tablePosition < 4)
+            if (offset > input.length || input.length - offset < 4)
                 throw new RangeError("Truncated table");
 
             input.endian = Endian.LITTLE_ENDIAN;
-            input.position = tablePosition;
-            const vtablePosition:Number = Number(tablePosition) - input.readInt();
-            if (vtablePosition < 0 || vtablePosition > input.length - 4)
+            input.position = offset;
+            const voffset:Number = Number(offset) - input.readInt();
+            if (voffset < 0 || voffset > input.length - 4)
                 throw new RangeError("Invalid vtable offset");
 
-            input.position = uint(vtablePosition);
+            input.position = uint(voffset);
             const vtSize:uint = input.readUnsignedShort();
             const objSize:uint = input.readUnsignedShort();
-            if (vtSize < 4 || (vtSize & 1) || vtSize > input.length - vtablePosition ||
-                    objSize < 4 || objSize > input.length - tablePosition)
+            if (vtSize < 4 || (vtSize & 1) || vtSize > input.length - voffset ||
+                    objSize < 4 || objSize > input.length - offset)
                 throw new RangeError("Invalid table size");
 
-            table = tablePosition;
-            vtable = uint(vtablePosition);
+            table = offset;
+            vtable = uint(voffset);
             vtableSize = vtSize;
             objectSize = objSize;
             bytes = input;
@@ -184,8 +166,27 @@ package fixtures
                 destination.aligned = this.alignedView.bind(bytes, alignedViewPosition).unpack(destination.aligned);
             }
 
-            destination.label_ = this.label_;
-            destination.pointView = this.pointView;
+            const position4:uint = fieldOffset(12, 4);
+            if (!position4)
+            {
+                destination.label_ = 0;
+            }
+            else
+            {
+                bytes.position = position4;
+                destination.label_ = bytes.readInt();
+            }
+
+            const position5:uint = fieldOffset(14, 4);
+            if (!position5)
+            {
+                destination.pointView = 0;
+            }
+            else
+            {
+                bytes.position = position5;
+                destination.pointView = bytes.readInt();
+            }
             return destination;
         }
     }

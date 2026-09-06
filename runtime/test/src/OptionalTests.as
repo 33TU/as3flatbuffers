@@ -23,7 +23,7 @@ package
                 const previous:Array = [];
                 for each (var name:String in FIELDS)
                     previous.push(value[name]);
-                view.bind(read(directory.resolvePath("optional-python-" + i + ".bin")));
+                FixtureBuffer.bindRoot(view, read(directory.resolvePath("optional-python-" + i + ".bin")));
                 check(view.unpack(value) === value, "Optional unpack reuses destination");
                 verify(value, cases[i], check);
                 verify(view, cases[i], check);
@@ -51,7 +51,7 @@ package
                 builder.reset();
                 const output:ByteArray = builder.finish(copy.pack(builder));
                 write(directory.resolvePath("optional-as3-" + i + ".bin"), output);
-                view.bind(output);
+                FixtureBuffer.bindRoot(view, output);
                 verify(view.unpack(), cases[i], check);
                 if (copy.i64) copy.i64.low ^= 1;
                 if (copy.u64) copy.u64.high ^= 1;

@@ -10,7 +10,7 @@ package fixtures.geometry
         private var bytes:flash.utils.ByteArray;
         private var base:uint;
 
-        public function bind(input:flash.utils.ByteArray, offset:uint = 0):PointView
+        public function bind(input:flash.utils.ByteArray, offset:uint):PointView
         {
             bytes = null;
             if (!input)
@@ -49,8 +49,11 @@ package fixtures.geometry
             if (!destination)
                 destination = new Point();
 
-            destination.x = this.x;
-            destination.y = this.y;
+            bytes.position = base + 0;
+            destination.x = bytes.readFloat();
+
+            bytes.position = base + 4;
+            destination.y = bytes.readFloat();
             return destination;
         }
     }

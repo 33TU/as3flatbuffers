@@ -16,7 +16,7 @@ package fixtures.geometry
 
         private const pointView:fixtures.geometry.PointView = new fixtures.geometry.PointView();
 
-        public function bind(input:flash.utils.ByteArray, offset:uint = 0):FrameView
+        public function bind(input:flash.utils.ByteArray, offset:uint):FrameView
         {
             bytes = null;
             if (!input)
@@ -144,11 +144,13 @@ package fixtures.geometry
             if (!destination)
                 destination = new Frame();
 
-            destination.tag = this.tag;
+            bytes.position = base + 0;
+            destination.tag = bytes.readUnsignedByte();
 
             destination.point = this.pointView.bind(bytes, base + 4).unpack(destination.point);
 
-            destination.count = this.count;
+            bytes.position = base + 12;
+            destination.count = bytes.readShort();
 
             if (!destination.signedValue)
                 destination.signedValue = new as3flatbuffers.types.Int64();
@@ -162,13 +164,26 @@ package fixtures.geometry
             bytes.position = base + 24;
             destination.unsignedValue.set(bytes.readUnsignedInt(), bytes.readUnsignedInt());
 
-            destination.weight = this.weight;
-            destination.enabled = this.enabled;
-            destination.tiny = this.tiny;
-            destination.small = this.small;
-            destination.number = this.number;
-            destination.unsignedNumber = this.unsignedNumber;
-            destination.fraction = this.fraction;
+            bytes.position = base + 32;
+            destination.weight = bytes.readDouble();
+
+            bytes.position = base + 40;
+            destination.enabled = bytes.readBoolean();
+
+            bytes.position = base + 41;
+            destination.tiny = bytes.readByte();
+
+            bytes.position = base + 42;
+            destination.small = bytes.readUnsignedShort();
+
+            bytes.position = base + 44;
+            destination.number = bytes.readInt();
+
+            bytes.position = base + 48;
+            destination.unsignedNumber = bytes.readUnsignedInt();
+
+            bytes.position = base + 52;
+            destination.fraction = bytes.readFloat();
             return destination;
         }
     }
