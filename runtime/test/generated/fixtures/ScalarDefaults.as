@@ -11,10 +11,6 @@ package fixtures
         public var unsignedValue:uint = 4294967295;
         public var reset_:int = 9;
 
-        public function ScalarDefaults()
-        {
-        }
-
         public function reset():void
         {
             this.xAxis = 1.25;

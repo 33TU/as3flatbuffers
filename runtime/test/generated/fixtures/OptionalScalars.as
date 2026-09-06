@@ -24,10 +24,6 @@ package fixtures
         public var f32:as3flatbuffers.types.OptionalNumber = null;
         public var f64:as3flatbuffers.types.OptionalNumber = null;
 
-        public function OptionalScalars()
-        {
-        }
-
         public function reset():void
         {
             this.enabled = null;

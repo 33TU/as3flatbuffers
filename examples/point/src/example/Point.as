@@ -9,10 +9,6 @@ package example
         public var x:Number = 0;
         public var y:Number = 0;
 
-        public function Point()
-        {
-        }
-
         public function reset():void
         {
             this.x = 0;

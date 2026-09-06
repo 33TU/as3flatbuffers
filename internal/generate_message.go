@@ -11,8 +11,6 @@ func generateMessage(w *IndentWriter, o object) {
 	w.Indent()
 	generateFields(w, o)
 	w.BlankLine()
-	generateConstructor(w, o)
-	w.BlankLine()
 	generateReset(w, o)
 	w.BlankLine()
 	generateCopyFrom(w, o)
@@ -29,12 +27,6 @@ func generateFields(w *IndentWriter, o object) {
 	for _, f := range o.Fields {
 		w.Line("public var %s:%s = %s;", f.Name, f.Type, f.Default)
 	}
-}
-
-func generateConstructor(w *IndentWriter, o object) {
-	w.Line("public function %s()", o.Name)
-	w.Line("{")
-	w.Line("}")
 }
 
 func generateReset(w *IndentWriter, o object) {

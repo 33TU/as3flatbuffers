@@ -19,10 +19,6 @@ package fixtures
         public var bytes_:int = 122;
         public var class_:int = 133;
 
-        public function Naming()
-        {
-        }
-
         public function reset():void
         {
             this.snakeCase = 11;

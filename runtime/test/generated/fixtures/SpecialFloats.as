@@ -10,10 +10,6 @@ package fixtures
         public var f64:Number = Number.POSITIVE_INFINITY;
         public var negative:Number = Number.NEGATIVE_INFINITY;
 
-        public function SpecialFloats()
-        {
-        }
-
         public function reset():void
         {
             this.f32 = NaN;

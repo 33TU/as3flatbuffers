@@ -20,10 +20,6 @@ package fixtures
         public var f32:Number = 0.5;
         public var f64:Number = 1.2345678901234567;
 
-        public function Primitives()
-        {
-        }
-
         public function reset():void
         {
             this.enabled = true;
