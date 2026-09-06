@@ -164,7 +164,8 @@ package as3flatbuffers
             bytes.writeShort(value);
         }
 
-        private function prepare(alignment:uint):void
+        [Inline]
+        private final function prepare(alignment:uint):void
         {
             const padding:uint = (alignment - (offset % alignment)) % alignment;
 
