@@ -12,6 +12,7 @@ from flatbuffers import number_types, table
 import primitive_interop
 import optional_interop
 import struct_interop
+import nested_interop
 
 
 def main():
@@ -22,6 +23,7 @@ def main():
     primitive_interop.create(work)
     optional_interop.create(work)
     struct_interop.create(work)
+    nested_interop.create(work)
     # Test omitted defaults, field order, growth, signed values and
     # many exactly representable float32 values. Keep JSON metadata finite.
     cases = [(1.25, -2.5), (0, 0), (0, 42), (-123, 0)]
@@ -83,6 +85,7 @@ def main():
     primitive_interop.verify(work)
     optional_interop.verify(work)
     struct_interop.verify(work)
+    nested_interop.verify(work)
     print(f"FlatBuffers Python {flatbuffers.__version__}; artifacts: {work.relative_to(root)}")
 
 

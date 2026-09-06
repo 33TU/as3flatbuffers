@@ -1,0 +1,21 @@
+namespace fixtures.nested;
+
+struct Position (force_align: 16) { x:double; y:double; }
+
+table Node {
+    value:int;
+    next:Node;
+    position:Position;
+    branch:Node;
+}
+
+table Left { code:int; right:Right; }
+table Right { weight:double; left:Left; }
+
+table Scene {
+    head:Node;
+    alternate:Node;
+    pair:Left;
+    serial:int;
+}
+root_type Scene;

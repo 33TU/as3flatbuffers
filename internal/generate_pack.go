@@ -42,6 +42,12 @@ func generatePack(w *IndentWriter, o object) {
 	w.Line("{")
 	w.Indent()
 	generatePackCheck(w)
+	if hasTableFields(o) {
+		w.Line("builder.enter(source);")
+		w.Line("try")
+		w.Line("{")
+		w.Indent()
+	}
 	alignment := uint32(4)
 	for _, f := range o.Fields {
 		if f.Alignment > alignment {
@@ -50,6 +56,10 @@ func generatePack(w *IndentWriter, o object) {
 	}
 	w.Line("builder.startTable(%d, %d);", o.Count, alignment)
 	for _, f := range o.Fields {
+		if f.Table {
+			w.Line("const offset%d:uint = source.%s ? builder.reserveOffset(%d) : 0;", f.ID, f.Name, f.ID)
+			continue
+		}
 		if f.Struct {
 			w.Line("if (source.%s)", f.Name)
 			w.Indent()
@@ -67,7 +77,28 @@ func generatePack(w *IndentWriter, o object) {
 		}
 		w.Line("builder.%s(%d, source.%s, %s);", f.Writer, f.ID, f.Name, defaults)
 	}
-	w.Line("return builder.endTable();")
+	if hasTableFields(o) {
+		w.Line("const table:uint = builder.endTable();")
+		for _, f := range o.Fields {
+			if f.Table {
+				w.Line("if (offset%d)", f.ID)
+				w.Indent()
+				w.Line("builder.patchOffset(offset%d, %s.packInto(source.%s, builder));", f.ID, f.Type, f.Name)
+				w.Dedent()
+			}
+		}
+		w.Dedent()
+		w.Line("}")
+		w.Line("finally")
+		w.Line("{")
+		w.Indent()
+		w.Line("builder.leave();")
+		w.Dedent()
+		w.Line("}")
+		w.Line("return table;")
+	} else {
+		w.Line("return builder.endTable();")
+	}
 	w.Dedent()
 	w.Line("}")
 }

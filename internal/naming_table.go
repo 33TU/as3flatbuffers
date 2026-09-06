@@ -13,6 +13,7 @@ var tableMembers = map[string]struct{}{
 	"BUILDER":      {},
 	"bindAt":       {},
 	"fieldOffset":  {},
+	"tableOffset":  {},
 	"base":         {},
 	"bindStruct":   {},
 	"requireBound": {},

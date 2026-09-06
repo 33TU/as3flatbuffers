@@ -115,10 +115,16 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, dataLengt
 		var out field
 		if fType.BaseType() == reflection.BaseTypeObj {
 			var target reflection.Object
-			if fType.Index() < 0 || int(fType.Index()) >= schema.ObjectsLength() || !schema.Objects(&target, int(fType.Index())) || !target.IsStruct() {
-				return o, fmt.Errorf("%s.%s: only references to structs are supported yet", fullName, name)
+			if fType.Index() < 0 || int(fType.Index()) >= schema.ObjectsLength() || !schema.Objects(&target, int(fType.Index())) {
+				return o, fmt.Errorf("%s.%s: invalid object reference", fullName, name)
 			}
-			out = field{Name: name, ID: f.Id(), Type: string(target.Name()), Struct: true, Width: uint32(target.Bytesize()), Alignment: uint32(target.Minalign()), Default: "null"}
+			out = field{Name: name, ID: f.Id(), Type: string(target.Name()), Struct: target.IsStruct(), Table: !target.IsStruct(), Width: 4, Alignment: 4, Default: "null"}
+			if out.Struct {
+				out.Width, out.Alignment = uint32(target.Bytesize()), uint32(target.Minalign())
+			}
+			if o.Struct && out.Table {
+				return o, fmt.Errorf("%s.%s: structs cannot contain tables", fullName, name)
+			}
 			if o.Struct {
 				out.Default = "new " + out.Type + "()"
 			}
@@ -152,7 +158,7 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, dataLengt
 		o.Fields[i].Name = names.Field(o.Fields[i].ID, o.Fields[i].Name)
 	}
 	for i := range o.Fields {
-		if o.Fields[i].Struct {
+		if o.Fields[i].Struct || o.Fields[i].Table {
 			o.Fields[i].ViewCache = uniqueName(o.Fields[i].Name+"View", names.used)
 		}
 	}

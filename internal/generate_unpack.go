@@ -14,7 +14,9 @@ func generateUnpack(w *IndentWriter, o object) {
 		if i > 0 {
 			w.BlankLine()
 		}
-		if f.Struct {
+		if f.Table {
+			generateTableFieldUnpack(w, f)
+		} else if f.Struct {
 			generateStructFieldUnpack(w, f, false)
 		} else {
 			generateTableScalarUnpack(w, f)

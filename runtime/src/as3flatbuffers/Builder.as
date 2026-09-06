@@ -14,7 +14,9 @@ package as3flatbuffers
         private var vtableStart:uint;
         private var tableAlignment:uint;
         private var finished:Boolean;
-        private var lastTable:uint;
+        private const tables:Vector.<uint> = new Vector.<uint>();
+        private const pending:Vector.<uint> = new Vector.<uint>();
+        private const ancestors:Vector.<Object> = new Vector.<Object>();
         private var rootReserved:Boolean;
 
         /** Whether a destination is attached, including after finish(). */
@@ -32,7 +34,9 @@ package as3flatbuffers
             tableStart = 0;
             vtableStart = 0;
             tableAlignment = 0;
-            lastTable = 0;
+            tables.length = 0;
+            pending.length = 0;
+            ancestors.length = 0;
             finished = false;
             rootReserved = reserveRoot;
             if (bytes)
@@ -200,6 +204,49 @@ package as3flatbuffers
             fields[slot] = offset - 4;
         }
 
+        /** Reserve a present table-reference field for a later forward-offset patch. */
+        public function reserveOffset(slot:uint):uint
+        {
+            checkSlot(slot);
+            prepare(4, 4);
+            const position:uint = offset;
+            bytes.writeUnsignedInt(0);
+            fields[slot] = position;
+            pending.push(position);
+            return position;
+        }
+
+        public function patchOffset(position:uint, target:uint):void
+        {
+            if (!bytes || finished || tableOpen)
+                throw new Error("Patch references after closing the table");
+            const index:int = pending.indexOf(position);
+            if (index < 0 || target <= position || tables.indexOf(target) < 0)
+                throw new RangeError("Expected a reserved reference to a completed table ahead of it");
+
+            const end:uint = offset;
+            bytes.position = position;
+            bytes.writeUnsignedInt(target - position);
+            bytes.position = end;
+            pending[index] = pending[pending.length - 1];
+            pending.pop();
+        }
+
+        /** Track the current source path; repeated siblings may still be packed independently. */
+        public function enter(source:Object):void
+        {
+            if (!bytes || finished || tableOpen)
+                throw new Error("Recursive packing requires a bound builder with no open table");
+            if (ancestors.indexOf(source) >= 0)
+                throw new ArgumentError("Cyclic table values cannot be packed");
+            ancestors.push(source);
+        }
+
+        public function leave():void
+        {
+            ancestors.pop();
+        }
+
         /** Record an inline struct immediately after its packInto() call. */
         public function addStruct(slot:uint, structOffset:uint):void
         {
@@ -249,7 +296,7 @@ package as3flatbuffers
             bytes.position = end;
             fields.length = 0;
             tableOpen = false;
-            lastTable = tableStart;
+            tables.push(tableStart);
             return tableStart;
         }
 
@@ -258,9 +305,11 @@ package as3flatbuffers
         {
             if (!bytes || finished || tableOpen)
                 throw new Error("Finish requires a bound, unfinished builder with no open table");
-            if (rootReserved && (!root || root != lastTable))
-                throw new Error("Finish requires the most recently completed table");
-            if (!rootReserved && (root != 0 || lastTable))
+            if (pending.length || ancestors.length)
+                throw new Error("Finish requires all child offsets and recursive writes to be completed");
+            if (rootReserved && tables.indexOf(root) < 0)
+                throw new Error("Finish requires a completed table");
+            if (!rootReserved && (root != 0 || tables.length))
                 throw new Error("A raw struct must begin at zero and contain no tables");
 
             bytes.position = 0;

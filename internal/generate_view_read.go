@@ -1,6 +1,17 @@
 package internal
 
 func generateTableGetter(w *IndentWriter, f field) {
+	if f.Table {
+		w.Line("const position:uint = tableOffset(%d);", 4+uint32(f.ID)*2)
+		w.Line("if (!position)")
+		w.Indent()
+		w.Line("return null;")
+		w.Dedent()
+		w.BlankLine()
+		generateLazyTableView(w, f, "this")
+		w.Line("return this.%s.bind(bytes, position);", f.ViewCache)
+		return
+	}
 	w.Line("const position:uint = fieldOffset(%d, %d);", 4+uint32(f.ID)*2, f.Width)
 	if f.Struct {
 		w.Line("return position ? this.%s.bind(bytes, position) : null;", f.ViewCache)

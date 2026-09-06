@@ -25,6 +25,10 @@ func generateView(w *IndentWriter, o object) {
 	generateTableBind(w, o)
 	w.BlankLine()
 	generateFieldOffset(w)
+	if hasTableFields(o) {
+		w.BlankLine()
+		generateTableOffset(w)
+	}
 	generateViewAccessors(w, o)
 	w.BlankLine()
 	generateUnpack(w, o)
@@ -37,7 +41,7 @@ func generateViewAccessors(w *IndentWriter, o object) {
 	for _, f := range o.Fields {
 		w.BlankLine()
 		viewType := f.Type
-		if f.Struct {
+		if f.Struct || f.Table {
 			viewType += "View"
 		}
 		w.Line("public function get %s():%s", f.Name, viewType)

@@ -71,7 +71,7 @@ func generateClone(w *IndentWriter, o object) {
 	w.BlankLine()
 	w.Line("const destination:%s = new %s();", o.Name, o.Name)
 	for _, f := range o.Fields {
-		if f.Struct {
+		if f.Struct || f.Table {
 			w.Line("destination.%s = %s.clone(source.%s);", f.Name, f.Type, f.Name)
 		} else if f.Optional {
 			w.Line("destination.%s = source.%s ? source.%s.clone() : null;", f.Name, f.Name, f.Name)

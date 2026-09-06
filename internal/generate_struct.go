@@ -8,7 +8,7 @@ import (
 func generateStructImports(w *IndentWriter, o object, view bool) {
 	imports := make(map[string]bool)
 	for _, f := range o.Fields {
-		if f.Struct && strings.Contains(f.Type, ".") {
+		if (f.Struct || f.Table) && strings.Contains(f.Type, ".") {
 			imports[f.Type] = true
 			if view {
 				imports[f.Type+"View"] = true
@@ -27,7 +27,10 @@ func generateStructImports(w *IndentWriter, o object, view bool) {
 
 func generateViewCaches(w *IndentWriter, o object) {
 	for _, f := range o.Fields {
-		if f.Struct {
+		if f.Table {
+			w.Line("private var %s:%sView;", f.ViewCache, f.Type)
+			w.BlankLine()
+		} else if f.Struct {
 			w.Line("private const %s:%sView = new %sView();", f.ViewCache, f.Type, f.Type)
 			w.BlankLine()
 		}

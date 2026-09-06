@@ -6,7 +6,8 @@ around owned objects and reusable views into binary data.
 This initial branch includes a Go code generator and a working runtime for
 tables and inline structs with scalar fields (`bool`, `byte`, `ubyte`, `short`,
 `ushort`, `int`, `uint`, `long`, `ulong`, `float`, and `double` in `.fbs` schemas).
-Tables and structs can also contain inline structs. The runtime provides
+Tables and structs can also contain inline structs. Tables may reference other
+tables, including recursive and mutually recursive types. The runtime provides
 a reusable forward builder, borrowed views, and 64-bit word helpers.
 `Point` / `PointView` are generated from the example schema. This is not yet a
 general FlatBuffers implementation; unsupported schema features produce errors.
@@ -62,7 +63,7 @@ Each generated class owns a `private static const BUILDER`. Its `pack()` resets
 that builder for `dst` and detaches the destination in `finally`, including on
 failure. The class retains construction state and its reusable field vector, but
 not output buffers. Reentrant `pack()` calls on the same class are rejected before
-changing the active builder. Nested structs share the parent's active builder via
+changing the active builder. Nested tables and structs share the parent's active builder via
 `packInto(source, builder)`.
 
 The forward builder reserves vtable space before writing each table, then patches
@@ -141,6 +142,54 @@ raw-struct output; `builder.reset(dst)` reserves a root-offset word for a table.
 `builder.finish(root)` patches that word and returns the destination without a copy.
 Fixed-size arrays inside structs are not supported yet.
 
+## Nested and recursive tables
+
+Table fields may refer to any table, including their own type:
+
+```fbs
+table Node {
+    value:int;
+    next:Node;
+}
+root_type Node;
+```
+
+```as3
+const first:Node = new Node();
+first.value = 1;
+first.next = new Node();
+first.next.value = 2;
+
+const bytes:ByteArray = new ByteArray();
+bytes.endian = Endian.LITTLE_ENDIAN;
+Node.pack(first, bytes);
+const view:NodeView = new NodeView().bind(bytes, bytes.readUnsignedInt());
+trace(view.next.value); // 2
+NodeView.unpack(view, first); // Reuses the existing nodes.
+Node.reset(first);            // Clears next to null and value to zero.
+```
+
+Absent table fields return null. Table child views are allocated on first access
+and then reused by getters and `unpack()`. They are lazy so constructing a recursive
+view does not recursively construct an infinite chain. As with struct views,
+subsequent access after rebinding can change a retained child view's binding.
+`clone()` makes independent nested objects; `unpack(view, destination)` reuses
+existing child objects and clears children that are absent in the input.
+
+Packing reserves each present reference inside the parent, closes that table,
+then writes children and patches the reserved offsets. `packInto()` always returns
+the parent's absolute offset even when descendants were written afterward.
+`finish(root)` accepts any completed table and requires all reserved references
+to be patched. Manual writers use `reserveOffset(slot)` and
+`patchOffset(position, childTableOffset)` for the same sequence.
+
+Owned input must be acyclic. Packing detects cycles and throws, then detaches the
+static builder so it can be used again. Repeated references to the same child
+on separate branches are serialized independently; object identity is not preserved.
+`clone()` also expects acyclic input. Deep recursive operations are limited by
+AIR's call stack. Structs still cannot contain tables or recursively contain
+themselves, because their inline layout must have a finite fixed size.
+
 ## Build and test
 
 Requirements: Go 1.26.5+, `flatc` 25.12.19, AIR SDK tools (`compc`, `amxmlc`, `adl`),
@@ -174,6 +223,8 @@ between present and absent fields in reused destinations.
 Struct fixtures use `flatc`-generated Python builders/readers to check nested
 layouts, padding, all scalar types, omitted fields, and 16-byte alignment. AIR
 also checks direct binding at nonzero offsets, borrowed reads, and deep reuse.
+Nested-table fixtures additionally cover a 32-node list, sibling branches, mutual
+recursion, aligned structs, malformed references, cycle rejection, and recovery.
 
 ## Generate ActionScript
 
@@ -196,7 +247,7 @@ owned fields and methods, packing, unpacking, binding, and direct view reads und
 `internal/`. Shared Go emitters keep the generator logic in one place while each
 generated view contains its own implementation.
 `unpack()` emits direct scalar reads into the destination instead of calling
-getters. Nested structs pass cached child views into their static `unpack()` methods.
+getters. Nested tables and structs pass cached child views into their static `unpack()` methods.
 
 Field IDs and deprecated slot gaps come from the binary schema. Case conversion
 uses AS3PB's naming helpers: field names become lower camel case while leading,
@@ -208,7 +259,7 @@ still rejected.
 Schema validation completes before any output files are written. The CLI overwrites
 matching generated files, but does not remove stale files after schema renames.
 
-Strings, vectors, nested tables, fixed-size arrays, enums/unions, required/key
+Strings, vectors, fixed-size arrays, enums/unions, required/key
 fields, services, and file identifiers are currently unsupported.
 The CLI reports an error for unsupported features instead of emitting partial APIs.
 
@@ -231,8 +282,7 @@ examples/struct/            Inline Point schema, generated classes, and usage
 tools/                      Reference-runtime interoperability harness
 ```
 
-The next milestones are offset fields, strings, vectors, nested tables, fixed-size
-arrays, and enums/unions. Schema-specific verification, file identifiers,
+The next milestones are strings, vectors, fixed-size arrays, and enums/unions. Schema-specific verification, file identifiers,
 size-prefixed roots, and vtable deduplication are also not implemented yet.
 No Royale compatibility layer is included.
 
