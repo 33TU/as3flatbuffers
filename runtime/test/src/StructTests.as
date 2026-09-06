@@ -20,7 +20,7 @@ package
             const primitives:Array = JSON.parse(primitiveManifest.readUTFBytes(primitiveManifest.length)) as Array;
             const value:InlineRoot = new InlineRoot();
             const view:InlineRootView = new InlineRootView();
-            const builder:Builder = new Builder(17);
+            const builder:Builder = new Builder();
             check(Point.clone(null) == null && InlineRoot.clone(null) == null, "Static struct and containing-table null clones");
             for (var i:int = 0; i < cases.length; i++)
             {
@@ -54,8 +54,8 @@ package
                 }
                 else
                     check(!value.frame && !value.envelope && !value.aligned, "Absent structs clear reused destination");
-                builder.reset();
-                const output:ByteArray = builder.finish(InlineRoot.pack(value, builder));
+                builder.reset(FixtureBuffer.create());
+                const output:ByteArray = InlineRoot.pack(value, FixtureBuffer.create());
                 write(directory.resolvePath("struct-as3-" + i + ".bin"), output);
                 const roundTrip:InlineRoot = InlineRootView.unpack(FixtureBuffer.bindRoot(new InlineRootView(), output));
                 if (item.present) verifyFrame(roundTrip.frame, primitives[item["case"]], item, check);
@@ -77,10 +77,10 @@ package
             const retainedWords:Object = frame.signedValue;
             frame.point.x = 9;
             frame.signedValue.set(1, 2);
-            frame.reset();
+            Frame.reset(frame);
             check(frame.point === retainedPoint && frame.point.x == 0 && frame.signedValue === retainedWords &&
                 frame.signedValue.low == 0 && frame.signedValue.high == 0, "Struct reset reuses nested values and resets words");
-            value.reset();
+            InlineRoot.reset(value);
             check(!value.point && !value.frame && !value.envelope && !value.aligned, "Table reset clears struct references");
 
             // A raw Point needs only its buffer and absolute starting offset.
@@ -106,9 +106,9 @@ package
             try { direct.bind(raw, uint.MAX_VALUE); } catch (overflow:RangeError) { caught = true; }
             check(caught, "Struct offset overflow rejected");
 
-            builder.reset();
-            const tooEarly:uint = Point.pack(new Point(), builder);
-            builder.startTable(1);
+            builder.reset(FixtureBuffer.create());
+            const tooEarly:uint = Point.packInto(new Point(), builder);
+            builder.startTable(1, 8);
             caught = false;
             try { builder.addStruct(0, tooEarly); } catch (inlineError:Error) { caught = true; }
             check(caught, "Struct must be written inside its containing table");

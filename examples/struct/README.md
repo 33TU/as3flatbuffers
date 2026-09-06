@@ -8,7 +8,6 @@ Regenerate the classes from the repository root with `just generate`.
 Include `runtime/src` and `examples/struct/src` on your AS3 source path.
 
 ```as3
-import as3flatbuffers.Builder;
 import example.geometry.Point;
 import example.geometry.PointView;
 import example.geometry.PointMessage;
@@ -16,15 +15,14 @@ import example.geometry.PointMessageView;
 import flash.utils.ByteArray;
 import flash.utils.Endian;
 
-const builder:Builder = new Builder();
 const message:PointMessage = new PointMessage();
 message.point = new Point();
 message.point.x = 1.25;
 message.point.y = -2.5;
 
-const bytes:ByteArray = builder.finish(PointMessage.pack(message, builder));
+const bytes:ByteArray = new ByteArray();
 bytes.endian = Endian.LITTLE_ENDIAN;
-bytes.position = 0;
+PointMessage.pack(message, bytes);
 const messageView:PointMessageView = new PointMessageView().bind(bytes, bytes.readUnsignedInt());
 const pointView:PointView = messageView.point;
 trace(pointView.x, pointView.y);
@@ -32,12 +30,9 @@ trace(pointView.x, pointView.y);
 const owned:Point = PointView.unpack(pointView);
 PointView.unpack(pointView, owned); // Reuse an independent owned Point.
 
-builder.reset();
 message.point.x = 42;
-const next:ByteArray = builder.finish(PointMessage.pack(message, builder));
-next.endian = Endian.LITTLE_ENDIAN;
-next.position = 0;
-messageView.bind(next, next.readUnsignedInt());
+PointMessage.pack(message, bytes); // Replaces the same destination directly.
+messageView.bind(bytes, bytes.readUnsignedInt());
 trace(messageView.point === pointView); // The getter rebinds the cached child view.
 trace(pointView.x);                     // 42
 trace(owned.x);                         // Still 1.25
@@ -49,5 +44,8 @@ at a root-offset word. The struct view checks its byte range and sets little-end
 order when bound.
 
 `PointMessage.point` defaults to null and may be omitted. A present Point always
-stores both coordinates, including zeros. `Point.pack(point, builder)` writes inline;
-the generated `PointMessage.pack()` places it inside the table automatically.
+stores both coordinates, including zeros. `PointMessage.pack(message, dst)` places
+it inside the table automatically, sharing the parent’s builder through `Point.packInto()`.
+`Point.pack(point, dst)` writes a standalone raw Point at offset zero, with no root
+word. Both public pack methods require a caller-selected little-endian destination,
+replace its contents, and return it positioned at zero.

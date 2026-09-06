@@ -118,7 +118,7 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, dataLengt
 			if fType.Index() < 0 || int(fType.Index()) >= schema.ObjectsLength() || !schema.Objects(&target, int(fType.Index())) || !target.IsStruct() {
 				return o, fmt.Errorf("%s.%s: only references to structs are supported yet", fullName, name)
 			}
-			out = field{Name: name, ID: f.Id(), Type: string(target.Name()), Struct: true, Width: uint32(target.Bytesize()), Default: "null"}
+			out = field{Name: name, ID: f.Id(), Type: string(target.Name()), Struct: true, Width: uint32(target.Bytesize()), Alignment: uint32(target.Minalign()), Default: "null"}
 			if o.Struct {
 				out.Default = "new " + out.Type + "()"
 			}
@@ -133,6 +133,7 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, dataLengt
 			}
 			out.Width = map[string]uint32{"bool": 1, "int8": 1, "uint8": 1, "int16": 2, "uint16": 2,
 				"int32": 4, "uint32": 4, "float32": 4, "int64": 8, "uint64": 8, "float64": 8}[out.Reader]
+			out.Alignment = out.Width
 			if f.Optional() {
 				out.Optional, out.Default = true, "null"
 				if out.WordDefault == "" {

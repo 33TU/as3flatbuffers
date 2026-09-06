@@ -3,62 +3,66 @@ package as3flatbuffers
     import as3flatbuffers.types.Int64;
     import as3flatbuffers.types.UInt64;
     import flash.utils.ByteArray;
-    import flash.utils.Endian;
 
-    /**
-     * Reusable backwards builder for FlatBuffers tables and inline structs.
-     * Offsets refer to distance from the end of storage, so growth preserves them.
-     * Scalar add methods accept force=true to retain present nullable defaults.
-     */
+    /** Writes FlatBuffers forwards into a caller-owned little-endian ByteArray. */
     public final class Builder
     {
         private var bytes:ByteArray;
-        private var space:uint;
         private const fields:Vector.<uint> = new Vector.<uint>();
         private var tableOpen:Boolean;
         private var tableStart:uint;
+        private var vtableStart:uint;
+        private var tableAlignment:uint;
         private var finished:Boolean;
         private var lastTable:uint;
-        private var maxAlignment:uint = 4;
+        private var rootReserved:Boolean;
 
-        public function Builder(initialCapacity:uint = 64)
+        /** Whether a destination is attached, including after finish(). */
+        public function get bound():Boolean
         {
-            if (initialCapacity > 0x3fffffff)
-                throw new RangeError("Builder capacity is too large");
-
-            bytes = new ByteArray();
-            bytes.endian = Endian.LITTLE_ENDIAN;
-            bytes.length = initialCapacity < 16 ? 16 : initialCapacity;
-            space = bytes.length;
+            return bytes != null;
         }
 
-        public function get capacity():uint
+        /** Replace dst's contents, or detach when dst is null. Endian is unchanged. */
+        public function reset(dst:ByteArray = null, reserveRoot:Boolean = true):void
         {
-            return bytes.length;
-        }
-
-        /** Clears construction state while retaining storage. */
-        public function reset():void
-        {
-            space = bytes.length;
+            bytes = dst;
             fields.length = 0;
             tableOpen = false;
+            tableStart = 0;
+            vtableStart = 0;
+            tableAlignment = 0;
             lastTable = 0;
-            maxAlignment = 4;
             finished = false;
+            rootReserved = reserveRoot;
+            if (bytes)
+            {
+                bytes.length = 0;
+                bytes.position = 0;
+                if (reserveRoot)
+                    bytes.writeUnsignedInt(0);
+            }
         }
 
         [Inline]
-        public final function startTable(fieldCount:uint):void
+        public final function startTable(fieldCount:uint, alignment:uint):void
         {
-            if (finished || tableOpen)
-                throw new Error("Reset a finished builder; tables cannot be nested");
+            if (!bytes || finished || tableOpen)
+                throw new Error("Bind a destination and reset finished builders; tables cannot be nested");
             if (fieldCount > 32765)
                 throw new RangeError("Too many table fields");
+            if (alignment < 4 || alignment > 256 || (alignment & (alignment - 1)))
+                throw new RangeError("Invalid table alignment");
 
             fields.length = fieldCount;
-            tableOpen = true;
+            prepare(2, 0);
+            vtableStart = offset;
+            pad((fieldCount + 2) * 2);
+            prepare(alignment, 4);
             tableStart = offset;
+            bytes.writeInt(int(tableStart - vtableStart));
+            tableAlignment = alignment;
+            tableOpen = true;
         }
 
         public function addBool(slot:uint, value:Boolean, defaultValue:Boolean = false, force:Boolean = false):void
@@ -68,10 +72,8 @@ package as3flatbuffers
                 return;
 
             prepare(1, 0);
-            space -= 1;
-            bytes.position = space;
             bytes.writeBoolean(value);
-            fields[slot] = offset;
+            fields[slot] = offset - 1;
         }
 
         public function addInt8(slot:uint, value:int, defaultValue:int = 0, force:Boolean = false):void
@@ -83,10 +85,8 @@ package as3flatbuffers
                 return;
 
             prepare(1, 0);
-            space -= 1;
-            bytes.position = space;
             bytes.writeByte(value);
-            fields[slot] = offset;
+            fields[slot] = offset - 1;
         }
 
         public function addUint8(slot:uint, value:uint, defaultValue:uint = 0, force:Boolean = false):void
@@ -98,10 +98,8 @@ package as3flatbuffers
                 return;
 
             prepare(1, 0);
-            space -= 1;
-            bytes.position = space;
             bytes.writeByte(value);
-            fields[slot] = offset;
+            fields[slot] = offset - 1;
         }
 
         public function addInt16(slot:uint, value:int, defaultValue:int = 0, force:Boolean = false):void
@@ -113,10 +111,8 @@ package as3flatbuffers
                 return;
 
             prepare(2, 0);
-            space -= 2;
-            bytes.position = space;
             bytes.writeShort(value);
-            fields[slot] = offset;
+            fields[slot] = offset - 2;
         }
 
         public function addUint16(slot:uint, value:uint, defaultValue:uint = 0, force:Boolean = false):void
@@ -128,10 +124,8 @@ package as3flatbuffers
                 return;
 
             prepare(2, 0);
-            space -= 2;
-            bytes.position = space;
             bytes.writeShort(value);
-            fields[slot] = offset;
+            fields[slot] = offset - 2;
         }
 
         public function addFloat64(slot:uint, value:Number, defaultValue:Number = 0, force:Boolean = false):void
@@ -141,10 +135,8 @@ package as3flatbuffers
                 return;
 
             prepare(8, 0);
-            space -= 8;
-            bytes.position = space;
             bytes.writeDouble(value);
-            fields[slot] = offset;
+            fields[slot] = offset - 8;
         }
 
         public function addInt64(slot:uint, value:Int64, defaultLow:uint = 0, defaultHigh:int = 0, force:Boolean = false):void
@@ -156,11 +148,9 @@ package as3flatbuffers
                 return;
 
             prepare(8, 0);
-            space -= 8;
-            bytes.position = space;
             bytes.writeUnsignedInt(value.low);
             bytes.writeUnsignedInt(uint(value.high));
-            fields[slot] = offset;
+            fields[slot] = offset - 8;
         }
 
         public function addUint64(slot:uint, value:UInt64, defaultLow:uint = 0, defaultHigh:uint = 0, force:Boolean = false):void
@@ -172,11 +162,9 @@ package as3flatbuffers
                 return;
 
             prepare(8, 0);
-            space -= 8;
-            bytes.position = space;
             bytes.writeUnsignedInt(value.low);
             bytes.writeUnsignedInt(uint(value.high));
-            fields[slot] = offset;
+            fields[slot] = offset - 8;
         }
 
         public function addFloat32(slot:uint, value:Number, defaultValue:Number = 0, force:Boolean = false):void
@@ -186,10 +174,8 @@ package as3flatbuffers
                 return;
 
             prepare(4, 0);
-            space -= 4;
-            bytes.position = space;
             bytes.writeFloat(value);
-            fields[slot] = offset;
+            fields[slot] = offset - 4;
         }
 
         public function addInt32(slot:uint, value:int, defaultValue:int = 0, force:Boolean = false):void
@@ -199,10 +185,8 @@ package as3flatbuffers
                 return;
 
             prepare(4, 0);
-            space -= 4;
-            bytes.position = space;
             bytes.writeInt(value);
-            fields[slot] = offset;
+            fields[slot] = offset - 4;
         }
 
         public function addUint32(slot:uint, value:uint, defaultValue:uint = 0, force:Boolean = false):void
@@ -212,22 +196,20 @@ package as3flatbuffers
                 return;
 
             prepare(4, 0);
-            space -= 4;
-            bytes.position = space;
             bytes.writeUnsignedInt(value);
-            fields[slot] = offset;
+            fields[slot] = offset - 4;
         }
 
-        /** Record a struct immediately after its pack() call inside this table. */
+        /** Record an inline struct immediately after its packInto() call. */
         public function addStruct(slot:uint, structOffset:uint):void
         {
             checkSlot(slot);
-            if (!structOffset || structOffset != offset || structOffset <= tableStart)
+            if (structOffset < tableStart + 4 || structOffset >= offset)
                 throw new Error("Struct must be written inline in the open table");
             fields[slot] = structOffset;
         }
 
-        /** Align and reserve storage before generated backwards struct writes. */
+        /** Align the destination before generated forward struct writes. */
         public function prepareStruct(size:uint, alignment:uint):void
         {
             if (finished) throw new Error("Reset a finished builder");
@@ -239,14 +221,9 @@ package as3flatbuffers
 
         public function pad(count:uint):void
         {
-            if (finished) throw new Error("Reset a finished builder");
-            if (count > 65535) throw new RangeError("Struct padding is too large");
             prepare(1, count);
             for (var i:uint = 0; i < count; i++)
-            {
-                bytes.position = --space;
                 bytes.writeByte(0);
-            }
         }
 
         public function endTable():uint
@@ -254,9 +231,8 @@ package as3flatbuffers
             if (!tableOpen)
                 throw new Error("No table is open");
 
-            putInt32(0);
-            const objectOffset:uint = offset;
-            const objectSize:uint = objectOffset - tableStart;
+            const end:uint = offset;
+            const objectSize:uint = end - tableStart;
             if (objectSize > 65535)
                 throw new RangeError("Table is too large");
 
@@ -264,38 +240,43 @@ package as3flatbuffers
             while (count && fields[count - 1] == 0)
                 count--;
 
-            for (var i:int = int(count) - 1; i >= 0; i--)
-                putUint16(fields[i] ? objectOffset - fields[i] : 0);
+            bytes.position = vtableStart;
+            bytes.writeShort((count + 2) * 2);
+            bytes.writeShort(objectSize);
+            for (var i:uint = 0; i < count; i++)
+                bytes.writeShort(fields[i] ? fields[i] - tableStart : 0);
 
-            putUint16(objectSize);
-            putUint16((count + 2) * 2);
-            bytes.position = bytes.length - objectOffset;
-            bytes.writeInt(int(offset - objectOffset));
+            bytes.position = end;
             fields.length = 0;
             tableOpen = false;
-            lastTable = objectOffset;
-            return objectOffset;
+            lastTable = tableStart;
+            return tableStart;
         }
 
-        /** Finishes the most recent table and returns independent, owned bytes. */
+        /** Patch the root offset and return dst itself, positioned at zero. No copy. */
         public function finish(root:uint):ByteArray
         {
-            if (finished || tableOpen || !root || root != lastTable)
+            if (!bytes || finished || tableOpen)
+                throw new Error("Finish requires a bound, unfinished builder with no open table");
+            if (rootReserved && (!root || root != lastTable))
                 throw new Error("Finish requires the most recently completed table");
+            if (!rootReserved && (root != 0 || lastTable))
+                throw new Error("A raw struct must begin at zero and contain no tables");
 
-            prepare(maxAlignment, 4);
-            putInt32(int(offset + 4 - root));
+            bytes.position = 0;
+            if (rootReserved)
+                bytes.writeUnsignedInt(root);
+            bytes.position = 0;
             finished = true;
-            const result:ByteArray = new ByteArray();
-            result.endian = Endian.LITTLE_ENDIAN;
-            result.writeBytes(bytes, space, offset);
-            result.position = 0;
-            return result;
+            return bytes;
         }
 
+        /** Absolute write position in the destination. */
         public function get offset():uint
         {
-            return bytes.length - space;
+            if (!bytes)
+                throw new Error("Builder has no destination");
+            return bytes.position;
         }
 
         private function checkSlot(slot:uint):void
@@ -310,8 +291,6 @@ package as3flatbuffers
         {
             if (finished) throw new Error("Reset a finished builder");
             prepare(1, 0);
-            space -= 1;
-            bytes.position = space;
             bytes.writeBoolean(value);
         }
 
@@ -320,8 +299,6 @@ package as3flatbuffers
             if (finished) throw new Error("Reset a finished builder");
             if (value < -128 || value > 127) throw new RangeError("Int8 value is out of range");
             prepare(1, 0);
-            space -= 1;
-            bytes.position = space;
             bytes.writeByte(value);
         }
 
@@ -330,8 +307,6 @@ package as3flatbuffers
             if (finished) throw new Error("Reset a finished builder");
             if (value > 255) throw new RangeError("Uint8 value is out of range");
             prepare(1, 0);
-            space -= 1;
-            bytes.position = space;
             bytes.writeByte(value);
         }
 
@@ -340,8 +315,6 @@ package as3flatbuffers
             if (finished) throw new Error("Reset a finished builder");
             if (value < -32768 || value > 32767) throw new RangeError("Int16 value is out of range");
             prepare(2, 0);
-            space -= 2;
-            bytes.position = space;
             bytes.writeShort(value);
         }
 
@@ -349,8 +322,6 @@ package as3flatbuffers
         {
             if (finished) throw new Error("Reset a finished builder");
             prepare(4, 0);
-            space -= 4;
-            bytes.position = space;
             bytes.writeUnsignedInt(value);
         }
 
@@ -358,8 +329,6 @@ package as3flatbuffers
         {
             if (finished) throw new Error("Reset a finished builder");
             prepare(4, 0);
-            space -= 4;
-            bytes.position = space;
             bytes.writeFloat(value);
         }
 
@@ -367,8 +336,6 @@ package as3flatbuffers
         {
             if (finished) throw new Error("Reset a finished builder");
             prepare(8, 0);
-            space -= 8;
-            bytes.position = space;
             bytes.writeDouble(value);
         }
 
@@ -377,8 +344,6 @@ package as3flatbuffers
             if (finished) throw new Error("Reset a finished builder");
             if (!value) throw new ArgumentError("Int64 value must be non-null");
             prepare(8, 0);
-            space -= 8;
-            bytes.position = space;
             bytes.writeUnsignedInt(value.low);
             bytes.writeUnsignedInt(uint(value.high));
         }
@@ -388,8 +353,6 @@ package as3flatbuffers
             if (finished) throw new Error("Reset a finished builder");
             if (!value) throw new ArgumentError("UInt64 value must be non-null");
             prepare(8, 0);
-            space -= 8;
-            bytes.position = space;
             bytes.writeUnsignedInt(value.low);
             bytes.writeUnsignedInt(uint(value.high));
         }
@@ -398,8 +361,6 @@ package as3flatbuffers
         {
             if (finished) throw new Error("Reset a finished builder");
             prepare(4, 0);
-            space -= 4;
-            bytes.position = space;
             bytes.writeInt(value);
         }
 
@@ -408,43 +369,23 @@ package as3flatbuffers
             if (finished) throw new Error("Reset a finished builder");
             if (value > 65535) throw new RangeError("Uint16 value is out of range");
             prepare(2, 0);
-            space -= 2;
-            bytes.position = space;
             bytes.writeShort(value);
         }
 
         [Inline]
         private final function prepare(alignment:uint, additionalBytes:uint):void
         {
-            if (alignment > maxAlignment)
-                maxAlignment = alignment;
+            if (!bytes || finished)
+                throw new Error("Bind a destination and reset finished builders");
+            if (tableOpen && alignment > tableAlignment)
+                throw new RangeError("Field alignment exceeds the table alignment");
 
-            const padding:uint = (alignment - ((offset + additionalBytes) % alignment)) % alignment;
-
-            while (space < padding + alignment + additionalBytes)
-            {
-                if (bytes.length >= 0x40000000)
-                    throw new RangeError("Builder capacity is too large");
-
-                const grown:ByteArray = new ByteArray();
-                grown.endian = Endian.LITTLE_ENDIAN;
-                grown.length = bytes.length * 2;
-
-                const used:uint = offset;
-                grown.position = grown.length - used;
-
-                if (used)
-                    grown.writeBytes(bytes, space, used);
-
-                space = grown.length - used;
-                bytes = grown;
-            }
+            const padding:uint = (alignment - (bytes.position % alignment)) % alignment;
+            if (Number(bytes.position) + padding + alignment + additionalBytes > 0x40000000)
+                throw new RangeError("Buffer is too large");
 
             for (var i:uint = 0; i < padding; i++)
-            {
-                bytes.position = --space;
                 bytes.writeByte(0);
-            }
         }
     }
 }

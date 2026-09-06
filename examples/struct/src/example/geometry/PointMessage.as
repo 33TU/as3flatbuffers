@@ -2,16 +2,19 @@
 package example.geometry
 {
     import as3flatbuffers.Builder;
+    import flash.utils.ByteArray;
     import example.geometry.Point;
 
-    /** Owned mutable value. pack() returns an offset for Builder.finish(). */
+    /** Owned mutable value. pack() writes a complete FlatBuffer into the destination. */
     public final class PointMessage
     {
+        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+
         public var point:example.geometry.Point = null;
 
-        public function reset():void
+        public static function reset(msg:PointMessage):void
         {
-            this.point = null;
+            msg.point = null;
         }
 
         public static function clone(source:PointMessage):PointMessage
@@ -25,14 +28,37 @@ package example.geometry
             return destination;
         }
 
-        public static function pack(source:PointMessage, builder:as3flatbuffers.Builder):uint
+        /** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */
+        public static function pack(source:PointMessage, dst:flash.utils.ByteArray):flash.utils.ByteArray
+        {
+            if (!source || !dst)
+                throw new ArgumentError("Source and destination must be non-null");
+
+            const builder:as3flatbuffers.Builder = BUILDER;
+            if (builder.bound)
+                throw new Error("Packing this class is already in progress");
+
+            try
+            {
+                builder.reset(dst, true);
+                builder.finish(packInto(source, builder));
+            }
+            finally
+            {
+                builder.reset();
+            }
+            return dst;
+        }
+
+        /** Write into an active builder and return the absolute object offset. */
+        public static function packInto(source:PointMessage, builder:as3flatbuffers.Builder):uint
         {
             if (!source || !builder)
                 throw new ArgumentError("Source and builder must be non-null");
 
-            builder.startTable(1);
+            builder.startTable(1, 4);
             if (source.point)
-                builder.addStruct(0, example.geometry.Point.pack(source.point, builder));
+                builder.addStruct(0, example.geometry.Point.packInto(source.point, builder));
             return builder.endTable();
         }
     }

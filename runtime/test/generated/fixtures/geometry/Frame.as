@@ -2,13 +2,16 @@
 package fixtures.geometry
 {
     import as3flatbuffers.Builder;
+    import flash.utils.ByteArray;
     import as3flatbuffers.types.Int64;
     import as3flatbuffers.types.UInt64;
     import fixtures.geometry.Point;
 
-    /** Owned inline struct. pack() writes at the current builder position. */
+    /** Owned inline struct. pack() writes raw struct bytes into the destination. */
     public final class Frame
     {
+        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+
         public var tag:uint = 0;
         public var point:fixtures.geometry.Point = new fixtures.geometry.Point();
         public var count:int = 0;
@@ -22,23 +25,23 @@ package fixtures.geometry
         public var unsignedNumber:uint = 0;
         public var fraction:Number = 0;
 
-        public function reset():void
+        public static function reset(msg:Frame):void
         {
-            this.tag = 0;
-            if (!this.point) this.point = new fixtures.geometry.Point();
-            else this.point.reset();
-            this.count = 0;
-            if (!this.signedValue) this.signedValue = new as3flatbuffers.types.Int64(0, 0);
-            else this.signedValue.reset();
-            if (!this.unsignedValue) this.unsignedValue = new as3flatbuffers.types.UInt64(0, 0);
-            else this.unsignedValue.reset();
-            this.weight = 0;
-            this.enabled = false;
-            this.tiny = 0;
-            this.small = 0;
-            this.number = 0;
-            this.unsignedNumber = 0;
-            this.fraction = 0;
+            msg.tag = 0;
+            if (!msg.point) msg.point = new fixtures.geometry.Point();
+            else fixtures.geometry.Point.reset(msg.point);
+            msg.count = 0;
+            if (!msg.signedValue) msg.signedValue = new as3flatbuffers.types.Int64(0, 0);
+            else msg.signedValue.reset();
+            if (!msg.unsignedValue) msg.unsignedValue = new as3flatbuffers.types.UInt64(0, 0);
+            else msg.unsignedValue.reset();
+            msg.weight = 0;
+            msg.enabled = false;
+            msg.tiny = 0;
+            msg.small = 0;
+            msg.number = 0;
+            msg.unsignedNumber = 0;
+            msg.fraction = 0;
         }
 
         public static function clone(source:Frame):Frame
@@ -63,27 +66,51 @@ package fixtures.geometry
             return destination;
         }
 
-        public static function pack(source:Frame, builder:as3flatbuffers.Builder):uint
+        /** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */
+        public static function pack(source:Frame, dst:flash.utils.ByteArray):flash.utils.ByteArray
+        {
+            if (!source || !dst)
+                throw new ArgumentError("Source and destination must be non-null");
+
+            const builder:as3flatbuffers.Builder = BUILDER;
+            if (builder.bound)
+                throw new Error("Packing this class is already in progress");
+
+            try
+            {
+                builder.reset(dst, false);
+                builder.finish(packInto(source, builder));
+            }
+            finally
+            {
+                builder.reset();
+            }
+            return dst;
+        }
+
+        /** Write into an active builder and return the absolute object offset. */
+        public static function packInto(source:Frame, builder:as3flatbuffers.Builder):uint
         {
             if (!source || !builder)
                 throw new ArgumentError("Source and builder must be non-null");
 
             builder.prepareStruct(56, 8);
-            builder.putFloat32(source.fraction);
-            builder.putUint32(source.unsignedNumber);
-            builder.putInt32(source.number);
-            builder.putUint16(source.small);
-            builder.putInt8(source.tiny);
-            builder.putBool(source.enabled);
-            builder.putFloat64(source.weight);
-            builder.putUint64(source.unsignedValue);
-            builder.putInt64(source.signedValue);
-            builder.pad(2);
-            builder.putInt16(source.count);
-            fixtures.geometry.Point.pack(source.point, builder);
-            builder.pad(3);
+            const start:uint = builder.offset;
             builder.putUint8(source.tag);
-            return builder.offset;
+            builder.pad(3);
+            fixtures.geometry.Point.packInto(source.point, builder);
+            builder.putInt16(source.count);
+            builder.pad(2);
+            builder.putInt64(source.signedValue);
+            builder.putUint64(source.unsignedValue);
+            builder.putFloat64(source.weight);
+            builder.putBool(source.enabled);
+            builder.putInt8(source.tiny);
+            builder.putUint16(source.small);
+            builder.putInt32(source.number);
+            builder.putUint32(source.unsignedNumber);
+            builder.putFloat32(source.fraction);
+            return start;
         }
     }
 }

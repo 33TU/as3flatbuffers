@@ -2,17 +2,20 @@
 package fixtures.geometry
 {
     import as3flatbuffers.Builder;
+    import flash.utils.ByteArray;
 
-    /** Owned inline struct. pack() writes at the current builder position. */
+    /** Owned inline struct. pack() writes raw struct bytes into the destination. */
     public final class Point
     {
+        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+
         public var x:Number = 0;
         public var y:Number = 0;
 
-        public function reset():void
+        public static function reset(msg:Point):void
         {
-            this.x = 0;
-            this.y = 0;
+            msg.x = 0;
+            msg.y = 0;
         }
 
         public static function clone(source:Point):Point
@@ -27,15 +30,39 @@ package fixtures.geometry
             return destination;
         }
 
-        public static function pack(source:Point, builder:as3flatbuffers.Builder):uint
+        /** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */
+        public static function pack(source:Point, dst:flash.utils.ByteArray):flash.utils.ByteArray
+        {
+            if (!source || !dst)
+                throw new ArgumentError("Source and destination must be non-null");
+
+            const builder:as3flatbuffers.Builder = BUILDER;
+            if (builder.bound)
+                throw new Error("Packing this class is already in progress");
+
+            try
+            {
+                builder.reset(dst, false);
+                builder.finish(packInto(source, builder));
+            }
+            finally
+            {
+                builder.reset();
+            }
+            return dst;
+        }
+
+        /** Write into an active builder and return the absolute object offset. */
+        public static function packInto(source:Point, builder:as3flatbuffers.Builder):uint
         {
             if (!source || !builder)
                 throw new ArgumentError("Source and builder must be non-null");
 
             builder.prepareStruct(8, 4);
-            builder.putFloat32(source.y);
+            const start:uint = builder.offset;
             builder.putFloat32(source.x);
-            return builder.offset;
+            builder.putFloat32(source.y);
+            return start;
         }
     }
 }

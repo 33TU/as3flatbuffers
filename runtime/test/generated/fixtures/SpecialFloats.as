@@ -2,19 +2,22 @@
 package fixtures
 {
     import as3flatbuffers.Builder;
+    import flash.utils.ByteArray;
 
-    /** Owned mutable value. pack() returns an offset for Builder.finish(). */
+    /** Owned mutable value. pack() writes a complete FlatBuffer into the destination. */
     public final class SpecialFloats
     {
+        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+
         public var f32:Number = NaN;
         public var f64:Number = Number.POSITIVE_INFINITY;
         public var negative:Number = Number.NEGATIVE_INFINITY;
 
-        public function reset():void
+        public static function reset(msg:SpecialFloats):void
         {
-            this.f32 = NaN;
-            this.f64 = Number.POSITIVE_INFINITY;
-            this.negative = Number.NEGATIVE_INFINITY;
+            msg.f32 = NaN;
+            msg.f64 = Number.POSITIVE_INFINITY;
+            msg.negative = Number.NEGATIVE_INFINITY;
         }
 
         public static function clone(source:SpecialFloats):SpecialFloats
@@ -30,12 +33,35 @@ package fixtures
             return destination;
         }
 
-        public static function pack(source:SpecialFloats, builder:as3flatbuffers.Builder):uint
+        /** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */
+        public static function pack(source:SpecialFloats, dst:flash.utils.ByteArray):flash.utils.ByteArray
+        {
+            if (!source || !dst)
+                throw new ArgumentError("Source and destination must be non-null");
+
+            const builder:as3flatbuffers.Builder = BUILDER;
+            if (builder.bound)
+                throw new Error("Packing this class is already in progress");
+
+            try
+            {
+                builder.reset(dst, true);
+                builder.finish(packInto(source, builder));
+            }
+            finally
+            {
+                builder.reset();
+            }
+            return dst;
+        }
+
+        /** Write into an active builder and return the absolute object offset. */
+        public static function packInto(source:SpecialFloats, builder:as3flatbuffers.Builder):uint
         {
             if (!source || !builder)
                 throw new ArgumentError("Source and builder must be non-null");
 
-            builder.startTable(3);
+            builder.startTable(3, 8);
             builder.addFloat32(0, source.f32, NaN);
             builder.addFloat64(1, source.f64, Number.POSITIVE_INFINITY);
             builder.addFloat64(2, source.negative, Number.NEGATIVE_INFINITY);

@@ -6,6 +6,13 @@ package
     /** Test-only convenience for fixtures containing a root-offset word. */
     public final class FixtureBuffer
     {
+        public static function create():ByteArray
+        {
+            const bytes:ByteArray = new ByteArray();
+            bytes.endian = Endian.LITTLE_ENDIAN;
+            return bytes;
+        }
+
         public static function bindRoot(view:Object, bytes:ByteArray, rootOffset:uint = 0):*
         {
             if (rootOffset > bytes.length || bytes.length - rootOffset < 4)

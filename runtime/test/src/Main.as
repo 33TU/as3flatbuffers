@@ -39,7 +39,7 @@ package
             {
                 const manifestBytes:ByteArray = read(directory.resolvePath("manifest.json"));
                 const manifest:Array = JSON.parse(manifestBytes.readUTFBytes(manifestBytes.length)) as Array;
-                const builder:Builder = new Builder(16);
+                const builder:Builder = new Builder();
                 const view:PointView = new PointView();
                 const owned:Point = new Point();
                 check(Point.clone(null) == null, "Static table clone preserves null");
@@ -55,8 +55,8 @@ package
                     const cloned:Point = Point.clone(owned);
                     check(cloned !== owned && cloned.x == owned.x && cloned.y == owned.y, "Owned clone");
                     check(PointView.unpack(view) !== owned, "Fresh unpack");
-                    builder.reset();
-                    const output:ByteArray = builder.finish(Point.pack(owned, builder));
+                    builder.reset(FixtureBuffer.create());
+                    const output:ByteArray = Point.pack(owned, FixtureBuffer.create());
                     write(directory.resolvePath("as3-" + i + ".bin"), output);
                     FixtureBuffer.bindRoot(view, output);
                     check(view.x == item.x && view.y == item.y, "AS3 builder round trip");
@@ -73,11 +73,7 @@ package
                 }
                 FixtureBuffer.bindRoot(view, retained);
                 check(view.x == manifest[0].x && view.y == manifest[0].y,
-                    "Builder reset leaves finished buffers independent");
-                check(builder.capacity > 16, "Builder storage grew");
-                const capacity:uint = builder.capacity;
-                builder.reset();
-                check(builder.capacity == capacity, "Reset retains builder capacity");
+                    "Static builder reuse leaves other destinations unchanged");
 
                 // Borrowing is observable; unpacked values remain independent.
                 const pointBytes:ByteArray = read(directory.resolvePath("as3-0.bin"));
@@ -124,7 +120,7 @@ package
                 check(caught, "Field outside table rejected");
 
                 // Integers preserve high bits rather than passing through Number.
-                builder.reset(); builder.startTable(2);
+                builder.reset(FixtureBuffer.create()); builder.startTable(2, 8);
                 builder.addInt32(0, int.MIN_VALUE); builder.addUint32(1, uint.MAX_VALUE);
                 write(directory.resolvePath("integers.bin"), builder.finish(builder.endTable()));
                 const signed:Int64 = new Int64(0xffffffff, -1);
@@ -137,11 +133,11 @@ package
                 const unsignedVector:UInt64Vector = new UInt64Vector();
                 unsignedVector.push(unsigned.low, unsigned.high);
                 check(unsignedVector.clone().getValue(0, new UInt64()).eq(unsigned), "Unsigned word vector");
-                builder.reset();
+                builder.reset(FixtureBuffer.create());
                 caught = false;
                 try { builder.finish(1); } catch (stateError:Error) { caught = true; }
                 check(caught, "Finish without a table rejected");
-                builder.startTable(1); builder.addInt32(0, 1);
+                builder.startTable(1, 8); builder.addInt32(0, 1);
                 caught = false;
                 try { builder.addInt32(0, 2); } catch (duplicate:Error) { caught = true; }
                 check(caught, "Duplicate field rejected");
@@ -152,9 +148,9 @@ package
                 check(scalar.xAxis == 1.25 && scalar.signedValue == -7 &&
                     scalar.unsignedValue == uint.MAX_VALUE && scalar.reset_ == 9,
                     "Generated owned defaults");
-                builder.reset();
+                builder.reset(FixtureBuffer.create());
                 const scalarView:ScalarDefaultsView = new ScalarDefaultsView();
-                FixtureBuffer.bindRoot(scalarView, builder.finish(ScalarDefaults.pack(scalar, builder)));
+                FixtureBuffer.bindRoot(scalarView, ScalarDefaults.pack(scalar, FixtureBuffer.create()));
                 check(scalarView.xAxis == 1.25 && scalarView.signedValue == -7 &&
                     scalarView.unsignedValue == uint.MAX_VALUE && scalarView.reset_ == 9,
                     "Generated view omitted defaults");
@@ -162,8 +158,8 @@ package
                 scalar.signedValue = int.MIN_VALUE;
                 scalar.unsignedValue = 0;
                 scalar.reset_ = 42;
-                builder.reset();
-                const scalarBytes:ByteArray = builder.finish(ScalarDefaults.pack(scalar, builder));
+                builder.reset(FixtureBuffer.create());
+                const scalarBytes:ByteArray = ScalarDefaults.pack(scalar, FixtureBuffer.create());
                 write(directory.resolvePath("scalars.bin"), scalarBytes);
                 FixtureBuffer.bindRoot(scalarView, scalarBytes);
                 const scalarCopy:ScalarDefaults = ScalarDefaultsView.unpack(scalarView);
@@ -171,7 +167,7 @@ package
                     scalarCopy.unsignedValue == 0 && scalarCopy.reset_ == 42,
                     "Generated full scalar unpack");
                 check(ScalarDefaultsView.unpack(scalarView, scalarCopy) === scalarCopy, "Generated scalar reuse");
-                scalarCopy.reset();
+                ScalarDefaults.reset(scalarCopy);
                 check(scalarCopy.xAxis == 1.25 && scalarCopy.signedValue == -7 &&
                     scalarCopy.unsignedValue == uint.MAX_VALUE && scalarCopy.reset_ == 9,
                     "Generated reset uses schema defaults");
@@ -187,8 +183,8 @@ package
                 naming.bind_2 = 456;
                 naming.bytes_ = -9;
                 naming.class_ = 17;
-                builder.reset();
-                const namingBytes:ByteArray = builder.finish(Naming.pack(naming, builder));
+                builder.reset(FixtureBuffer.create());
+                const namingBytes:ByteArray = Naming.pack(naming, FixtureBuffer.create());
                 write(directory.resolvePath("naming.bin"), namingBytes);
                 const namingView:NamingView = FixtureBuffer.bindRoot(new NamingView(), namingBytes);
                 check(namingView.snakeCase == -1 && namingView.snakeCase_ == -2 &&
@@ -198,11 +194,12 @@ package
                     namingView.value_Name == 111, "Generated view uses identical allocated names");
                 const namingCopy:Naming = NamingView.unpack(namingView);
                 check(namingCopy.snakeCase_ == -2 && namingCopy.bind_2 == 456, "Named unpack");
-                namingCopy.reset();
+                Naming.reset(namingCopy);
                 check(namingCopy.snakeCase_ == 22 && namingCopy.bind_2 == 77, "Named reset");
                 PrimitiveTests.run(directory, check, read, write);
                 OptionalTests.run(directory, check, read, write);
                 BuilderStateTests.run(check);
+                ForwardPackingTests.run(check);
                 StructTests.run(directory, check, read, write);
                 result.ok = true;
                 result.checks = checks;

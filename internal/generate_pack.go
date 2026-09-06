@@ -1,20 +1,59 @@
 package internal
 
 func generatePack(w *IndentWriter, o object) {
+	w.Line("/** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */")
+	w.Line("public static function pack(source:%s, dst:flash.utils.ByteArray):flash.utils.ByteArray", o.Name)
+	w.Line("{")
+	w.Indent()
+	w.Line("if (!source || !dst)")
+	w.Indent()
+	w.Line("throw new ArgumentError(\"Source and destination must be non-null\");")
+	w.Dedent()
+	w.BlankLine()
+	w.Line("const builder:as3flatbuffers.Builder = BUILDER;")
+	w.Line("if (builder.bound)")
+	w.Indent()
+	w.Line("throw new Error(\"Packing this class is already in progress\");")
+	w.Dedent()
+	w.BlankLine()
+	w.Line("try")
+	w.Line("{")
+	w.Indent()
+	w.Line("builder.reset(dst, %t);", !o.Struct)
+	w.Line("builder.finish(packInto(source, builder));")
+	w.Dedent()
+	w.Line("}")
+	w.Line("finally")
+	w.Line("{")
+	w.Indent()
+	w.Line("builder.reset();")
+	w.Dedent()
+	w.Line("}")
+	w.Line("return dst;")
+	w.Dedent()
+	w.Line("}")
+	w.BlankLine()
+	w.Line("/** Write into an active builder and return the absolute object offset. */")
 	if o.Struct {
 		generateStructPack(w, o)
 		return
 	}
-	w.Line("public static function pack(source:%s, builder:as3flatbuffers.Builder):uint", o.Name)
+	w.Line("public static function packInto(source:%s, builder:as3flatbuffers.Builder):uint", o.Name)
 	w.Line("{")
 	w.Indent()
 	generatePackCheck(w)
-	w.Line("builder.startTable(%d);", o.Count)
+	alignment := uint32(4)
+	for _, f := range o.Fields {
+		if f.Alignment > alignment {
+			alignment = f.Alignment
+		}
+	}
+	w.Line("builder.startTable(%d, %d);", o.Count, alignment)
 	for _, f := range o.Fields {
 		if f.Struct {
 			w.Line("if (source.%s)", f.Name)
 			w.Indent()
-			w.Line("builder.addStruct(%d, %s.pack(source.%s, builder));", f.ID, f.Type, f.Name)
+			w.Line("builder.addStruct(%d, %s.packInto(source.%s, builder));", f.ID, f.Type, f.Name)
 			w.Dedent()
 			continue
 		}

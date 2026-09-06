@@ -10,6 +10,7 @@ type TableNames struct {
 }
 
 var tableMembers = map[string]struct{}{
+	"BUILDER":      {},
 	"bindAt":       {},
 	"fieldOffset":  {},
 	"base":         {},
@@ -37,6 +38,7 @@ var tableMembers = map[string]struct{}{
 	"isPrototypeOf":           {},
 	"objectSize":              {},
 	"pack":                    {},
+	"packInto":                {},
 	"propertyIsEnumerable":    {},
 	"reset":                   {},
 	"setPropertyIsEnumerable": {},

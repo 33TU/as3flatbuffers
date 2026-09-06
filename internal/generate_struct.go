@@ -35,28 +35,28 @@ func generateViewCaches(w *IndentWriter, o object) {
 }
 
 func generateStructPack(w *IndentWriter, o object) {
-	w.Line("public static function pack(source:%s, builder:as3flatbuffers.Builder):uint", o.Name)
+	w.Line("public static function packInto(source:%s, builder:as3flatbuffers.Builder):uint", o.Name)
 	w.Line("{")
 	w.Indent()
 	generatePackCheck(w)
 	w.Line("builder.prepareStruct(%d, %d);", o.Size, o.Alignment)
-	cursor := o.Size
-	for i := len(o.Fields) - 1; i >= 0; i-- {
-		f := o.Fields[i]
-		if padding := cursor - f.Offset - f.Width; padding != 0 {
+	w.Line("const start:uint = builder.offset;")
+	var cursor uint32
+	for _, f := range o.Fields {
+		if padding := f.Offset - cursor; padding != 0 {
 			w.Line("builder.pad(%d);", padding)
 		}
 		if f.Struct {
-			w.Line("%s.pack(source.%s, builder);", f.Type, f.Name)
+			w.Line("%s.packInto(source.%s, builder);", f.Type, f.Name)
 		} else {
 			w.Line("builder.put%s(source.%s);", strings.TrimPrefix(f.Writer, "add"), f.Name)
 		}
-		cursor = f.Offset
+		cursor = f.Offset + f.Width
 	}
-	if cursor != 0 {
-		w.Line("builder.pad(%d);", cursor)
+	if cursor < o.Size {
+		w.Line("builder.pad(%d);", o.Size-cursor)
 	}
-	w.Line("return builder.offset;")
+	w.Line("return start;")
 	w.Dedent()
 	w.Line("}")
 }

@@ -2,6 +2,7 @@
 package fixtures
 {
     import as3flatbuffers.Builder;
+    import flash.utils.ByteArray;
     import as3flatbuffers.types.Int64;
     import as3flatbuffers.types.UInt64;
     import as3flatbuffers.types.OptionalInt;
@@ -9,9 +10,11 @@ package fixtures
     import as3flatbuffers.types.OptionalNumber;
     import as3flatbuffers.types.OptionalBoolean;
 
-    /** Owned mutable value. pack() returns an offset for Builder.finish(). */
+    /** Owned mutable value. pack() writes a complete FlatBuffer into the destination. */
     public final class OptionalScalars
     {
+        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+
         public var enabled:as3flatbuffers.types.OptionalBoolean = null;
         public var i8:as3flatbuffers.types.OptionalInt = null;
         public var u8:as3flatbuffers.types.OptionalUint = null;
@@ -24,19 +27,19 @@ package fixtures
         public var f32:as3flatbuffers.types.OptionalNumber = null;
         public var f64:as3flatbuffers.types.OptionalNumber = null;
 
-        public function reset():void
+        public static function reset(msg:OptionalScalars):void
         {
-            this.enabled = null;
-            this.i8 = null;
-            this.u8 = null;
-            this.i16 = null;
-            this.u16 = null;
-            this.i32 = null;
-            this.u32 = null;
-            this.i64 = null;
-            this.u64 = null;
-            this.f32 = null;
-            this.f64 = null;
+            msg.enabled = null;
+            msg.i8 = null;
+            msg.u8 = null;
+            msg.i16 = null;
+            msg.u16 = null;
+            msg.i32 = null;
+            msg.u32 = null;
+            msg.i64 = null;
+            msg.u64 = null;
+            msg.f32 = null;
+            msg.f64 = null;
         }
 
         public static function clone(source:OptionalScalars):OptionalScalars
@@ -60,12 +63,35 @@ package fixtures
             return destination;
         }
 
-        public static function pack(source:OptionalScalars, builder:as3flatbuffers.Builder):uint
+        /** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */
+        public static function pack(source:OptionalScalars, dst:flash.utils.ByteArray):flash.utils.ByteArray
+        {
+            if (!source || !dst)
+                throw new ArgumentError("Source and destination must be non-null");
+
+            const builder:as3flatbuffers.Builder = BUILDER;
+            if (builder.bound)
+                throw new Error("Packing this class is already in progress");
+
+            try
+            {
+                builder.reset(dst, true);
+                builder.finish(packInto(source, builder));
+            }
+            finally
+            {
+                builder.reset();
+            }
+            return dst;
+        }
+
+        /** Write into an active builder and return the absolute object offset. */
+        public static function packInto(source:OptionalScalars, builder:as3flatbuffers.Builder):uint
         {
             if (!source || !builder)
                 throw new ArgumentError("Source and builder must be non-null");
 
-            builder.startTable(11);
+            builder.startTable(11, 8);
             if (source.enabled) builder.addBool(0, source.enabled.value, false, true);
             if (source.i8) builder.addInt8(1, source.i8.value, 0, true);
             if (source.u8) builder.addUint8(2, source.u8.value, 0, true);

@@ -3,17 +3,20 @@ package internal
 func generateMessage(w *IndentWriter, o object) {
 	generatePackage(w, o)
 	w.Line("import as3flatbuffers.Builder;")
+	w.Line("import flash.utils.ByteArray;")
 	generateScalarImports(w, o)
 	generateStructImports(w, o, false)
 	w.BlankLine()
 	if o.Struct {
-		w.Line("/** Owned inline struct. pack() writes at the current builder position. */")
+		w.Line("/** Owned inline struct. pack() writes raw struct bytes into the destination. */")
 	} else {
-		w.Line("/** Owned mutable value. pack() returns an offset for Builder.finish(). */")
+		w.Line("/** Owned mutable value. pack() writes a complete FlatBuffer into the destination. */")
 	}
 	w.Line("public final class %s", o.Name)
 	w.Line("{")
 	w.Indent()
+	w.Line("private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();")
+	w.BlankLine()
 	generateFields(w, o)
 	w.BlankLine()
 	generateReset(w, o)
@@ -33,24 +36,24 @@ func generateFields(w *IndentWriter, o object) {
 }
 
 func generateReset(w *IndentWriter, o object) {
-	w.Line("public function reset():void")
+	w.Line("public static function reset(msg:%s):void", o.Name)
 	w.Line("{")
 	w.Indent()
 	for _, f := range o.Fields {
 		if f.Struct && o.Struct {
-			w.Line("if (!this.%s) this.%s = %s;", f.Name, f.Name, f.Default)
-			w.Line("else this.%s.reset();", f.Name)
+			w.Line("if (!msg.%s) msg.%s = %s;", f.Name, f.Name, f.Default)
+			w.Line("else %s.reset(msg.%s);", f.Type, f.Name)
 		} else if f.Optional {
-			w.Line("this.%s = null;", f.Name)
+			w.Line("msg.%s = null;", f.Name)
 		} else if f.WordDefault != "" {
-			w.Line("if (!this.%s) this.%s = %s;", f.Name, f.Name, f.Default)
+			w.Line("if (!msg.%s) msg.%s = %s;", f.Name, f.Name, f.Default)
 			if f.WordDefault == "0, 0" {
-				w.Line("else this.%s.reset();", f.Name)
+				w.Line("else msg.%s.reset();", f.Name)
 			} else {
-				w.Line("else this.%s.set(%s);", f.Name, f.WordDefault)
+				w.Line("else msg.%s.set(%s);", f.Name, f.WordDefault)
 			}
 		} else {
-			w.Line("this.%s = %s;", f.Name, f.Default)
+			w.Line("msg.%s = %s;", f.Name, f.Default)
 		}
 	}
 	w.Dedent()

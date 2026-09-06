@@ -2,10 +2,13 @@
 package fixtures
 {
     import as3flatbuffers.Builder;
+    import flash.utils.ByteArray;
 
-    /** Owned mutable value. pack() returns an offset for Builder.finish(). */
+    /** Owned mutable value. pack() writes a complete FlatBuffer into the destination. */
     public final class Naming
     {
+        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+
         public var snakeCase:int = 11;
         public var snakeCase_:int = 22;
         public var reset_:int = 33;
@@ -19,20 +22,20 @@ package fixtures
         public var bytes_:int = 122;
         public var class_:int = 133;
 
-        public function reset():void
+        public static function reset(msg:Naming):void
         {
-            this.snakeCase = 11;
-            this.snakeCase_ = 22;
-            this.reset_ = 33;
-            this.reset__ = 44;
-            this.reset___ = 55;
-            this.bind_ = 66;
-            this.bind_2 = 77;
-            this.__leadingName = 88;
-            this.trailingName_ = 99;
-            this.value_Name = 111;
-            this.bytes_ = 122;
-            this.class_ = 133;
+            msg.snakeCase = 11;
+            msg.snakeCase_ = 22;
+            msg.reset_ = 33;
+            msg.reset__ = 44;
+            msg.reset___ = 55;
+            msg.bind_ = 66;
+            msg.bind_2 = 77;
+            msg.__leadingName = 88;
+            msg.trailingName_ = 99;
+            msg.value_Name = 111;
+            msg.bytes_ = 122;
+            msg.class_ = 133;
         }
 
         public static function clone(source:Naming):Naming
@@ -57,12 +60,35 @@ package fixtures
             return destination;
         }
 
-        public static function pack(source:Naming, builder:as3flatbuffers.Builder):uint
+        /** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */
+        public static function pack(source:Naming, dst:flash.utils.ByteArray):flash.utils.ByteArray
+        {
+            if (!source || !dst)
+                throw new ArgumentError("Source and destination must be non-null");
+
+            const builder:as3flatbuffers.Builder = BUILDER;
+            if (builder.bound)
+                throw new Error("Packing this class is already in progress");
+
+            try
+            {
+                builder.reset(dst, true);
+                builder.finish(packInto(source, builder));
+            }
+            finally
+            {
+                builder.reset();
+            }
+            return dst;
+        }
+
+        /** Write into an active builder and return the absolute object offset. */
+        public static function packInto(source:Naming, builder:as3flatbuffers.Builder):uint
         {
             if (!source || !builder)
                 throw new ArgumentError("Source and builder must be non-null");
 
-            builder.startTable(12);
+            builder.startTable(12, 4);
             builder.addInt32(0, source.snakeCase, 11);
             builder.addInt32(1, source.snakeCase_, 22);
             builder.addInt32(2, source.reset_, 33);

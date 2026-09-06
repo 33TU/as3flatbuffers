@@ -16,7 +16,7 @@ package
             const cases:Array = JSON.parse(manifest.readUTFBytes(manifest.length)) as Array;
             const value:OptionalScalars = new OptionalScalars();
             const view:OptionalScalarsView = new OptionalScalarsView();
-            const builder:Builder = new Builder(17);
+            const builder:Builder = new Builder();
             verify(value, cases[0], check);
             for (var i:int = 0; i < cases.length; i++)
             {
@@ -47,8 +47,8 @@ package
                         check(previous[slot] === value[name], "Repeated optional unpack reuses present wrapper: " + name);
                 }
                 verify(value, cases[i], check);
-                builder.reset();
-                const output:ByteArray = builder.finish(OptionalScalars.pack(copy, builder));
+                builder.reset(FixtureBuffer.create());
+                const output:ByteArray = OptionalScalars.pack(copy, FixtureBuffer.create());
                 write(directory.resolvePath("optional-as3-" + i + ".bin"), output);
                 FixtureBuffer.bindRoot(view, output);
                 verify(OptionalScalarsView.unpack(view), cases[i], check);
@@ -56,19 +56,19 @@ package
                 if (copy.u64) copy.u64.high ^= 1;
                 if (copy.i32) copy.i32.value ^= 1;
                 verify(value, cases[i], check);
-                copy.reset();
+                OptionalScalars.reset(copy);
                 verify(copy, cases[0], check);
                 OptionalScalarsView.unpack(view, copy);
                 verify(copy, cases[i], check);
-                value.reset();
+                OptionalScalars.reset(value);
                 verify(value, cases[0], check);
                 // Leave populated wrappers for the next iteration's reuse check.
                 OptionalScalarsView.unpack(view, value);
             }
-            value.reset();
+            OptionalScalars.reset(value);
             verify(value, cases[0], check);
-            builder.reset();
-            builder.startTable(1);
+            builder.reset(FixtureBuffer.create());
+            builder.startTable(1, 8);
             builder.addInt32(0, 0, 0, true);
             var rejected:Boolean = false;
             try { builder.addInt32(0, 1); } catch (duplicate:Error) { rejected = true; }

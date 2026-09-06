@@ -2,21 +2,24 @@
 package fixtures.geometry
 {
     import as3flatbuffers.Builder;
+    import flash.utils.ByteArray;
     import fixtures.geometry.Frame;
 
-    /** Owned inline struct. pack() writes at the current builder position. */
+    /** Owned inline struct. pack() writes raw struct bytes into the destination. */
     public final class Envelope
     {
+        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+
         public var lead:int = 0;
         public var frame:fixtures.geometry.Frame = new fixtures.geometry.Frame();
         public var tail:int = 0;
 
-        public function reset():void
+        public static function reset(msg:Envelope):void
         {
-            this.lead = 0;
-            if (!this.frame) this.frame = new fixtures.geometry.Frame();
-            else this.frame.reset();
-            this.tail = 0;
+            msg.lead = 0;
+            if (!msg.frame) msg.frame = new fixtures.geometry.Frame();
+            else fixtures.geometry.Frame.reset(msg.frame);
+            msg.tail = 0;
         }
 
         public static function clone(source:Envelope):Envelope
@@ -32,18 +35,42 @@ package fixtures.geometry
             return destination;
         }
 
-        public static function pack(source:Envelope, builder:as3flatbuffers.Builder):uint
+        /** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */
+        public static function pack(source:Envelope, dst:flash.utils.ByteArray):flash.utils.ByteArray
+        {
+            if (!source || !dst)
+                throw new ArgumentError("Source and destination must be non-null");
+
+            const builder:as3flatbuffers.Builder = BUILDER;
+            if (builder.bound)
+                throw new Error("Packing this class is already in progress");
+
+            try
+            {
+                builder.reset(dst, false);
+                builder.finish(packInto(source, builder));
+            }
+            finally
+            {
+                builder.reset();
+            }
+            return dst;
+        }
+
+        /** Write into an active builder and return the absolute object offset. */
+        public static function packInto(source:Envelope, builder:as3flatbuffers.Builder):uint
         {
             if (!source || !builder)
                 throw new ArgumentError("Source and builder must be non-null");
 
             builder.prepareStruct(72, 8);
-            builder.pad(6);
-            builder.putInt16(source.tail);
-            fixtures.geometry.Frame.pack(source.frame, builder);
-            builder.pad(7);
+            const start:uint = builder.offset;
             builder.putInt8(source.lead);
-            return builder.offset;
+            builder.pad(7);
+            fixtures.geometry.Frame.packInto(source.frame, builder);
+            builder.putInt16(source.tail);
+            builder.pad(6);
+            return start;
         }
     }
 }

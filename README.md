@@ -7,38 +7,32 @@ This initial branch includes a Go code generator and a working runtime for
 tables and inline structs with scalar fields (`bool`, `byte`, `ubyte`, `short`,
 `ushort`, `int`, `uint`, `long`, `ulong`, `float`, and `double` in `.fbs` schemas).
 Tables and structs can also contain inline structs. The runtime provides
-a reusable backwards builder, borrowed views, and 64-bit word helpers.
+a reusable forward builder, borrowed views, and 64-bit word helpers.
 `Point` / `PointView` are generated from the example schema. This is not yet a
 general FlatBuffers implementation; unsupported schema features produce errors.
 
 ## Owned values and borrowed views
 
 ```as3
-import as3flatbuffers.Builder;
 import example.Point;
 import example.PointView;
 import flash.utils.ByteArray;
 import flash.utils.Endian;
 
-const builder:Builder = new Builder();
 const point:Point = new Point();
 point.x = 1.25;
 point.y = -2.5;
-const bytes:ByteArray = builder.finish(Point.pack(point, builder));
-
+const bytes:ByteArray = new ByteArray();
 bytes.endian = Endian.LITTLE_ENDIAN;
-bytes.position = 0;
+Point.pack(point, bytes);
 const view:PointView = new PointView().bind(bytes, bytes.readUnsignedInt());
 trace(view.x, view.y);              // Reads the input directly.
 const owned:Point = PointView.unpack(view);  // Independent mutable value.
 PointView.unpack(view, owned);     // Overwrites a reusable destination.
 
-builder.reset();                   // Retains builder capacity.
 point.x = 42;
-const next:ByteArray = builder.finish(Point.pack(point, builder));
-next.endian = Endian.LITTLE_ENDIAN;
-next.position = 0;
-view.bind(next, next.readUnsignedInt()); // Reuses the view at the new table position.
+Point.pack(point, bytes);          // Reuses the caller-owned destination.
+view.bind(bytes, bytes.readUnsignedInt()); // Rebind after replacing the buffer.
 ```
 
 `PointView` borrows its input; changing that input can change values read through
@@ -57,13 +51,28 @@ failure. Resolve a table's root-offset word explicitly before binding, as above;
 position to the relative root offset. Struct views bind directly to their inline
 position.
 
-`Builder.finish()` currently copies its finished region into an independent
-ByteArray. Resetting or growing the builder cannot invalidate previously returned
-buffers. `Point.pack()` returns a builder offset, not a complete buffer.
+`Point.pack(source, dst)` writes forwards directly into `dst`, replaces its contents,
+returns that same ByteArray, and leaves its position at zero. Set `dst.endian` to
+`Endian.LITTLE_ENDIAN` before packing; packing neither changes nor checks it.
+There is no scratch ByteArray or final byte copy. Repacking the same destination
+invalidates views into its previous contents; bind them again afterward. A packing
+error may leave partial output in `dst`.
+
+Each generated class owns a `private static const BUILDER`. Its `pack()` resets
+that builder for `dst` and detaches the destination in `finally`, including on
+failure. The class retains construction state and its reusable field vector, but
+not output buffers. Reentrant `pack()` calls on the same class are rejected before
+changing the active builder. Nested structs share the parent's active builder via
+`packInto(source, builder)`.
+
+The forward builder reserves vtable space before writing each table, then patches
+field offsets and the root offset. It reserves slots for all schema fields, including
+omitted fields, so the encoded size can differ from the previous backwards builder.
+The output remains compatible with standard FlatBuffers readers.
 
 `long` and `ulong` fields use `as3flatbuffers.types.Int64` and `UInt64`, with
 separate low/high words to preserve all 64 bits. Non-nullable owned fields start with non-null
-word objects; `reset()` and `unpack(view, existing)` reuse them, allocating
+word objects; `reset(msg)` and `unpack(view, existing)` reuse them, allocating
 replacements if the destination fields were set to null. `clone(source)` copies the
 words independently. A view's 64-bit getter returns a fresh word object;
 `unpack(view, existing)` avoids those getter allocations. Keep source word fields
@@ -110,7 +119,7 @@ PointView.unpack(view, point);    // Reuse an owned destination.
 
 Struct fields inside a table default to null and may be omitted. Struct fields
 inside another struct are always inline and start with owned child instances;
-keep them non-null when packing. `reset()` reuses those children and their 64-bit
+keep them non-null when packing. `reset(msg)` reuses those children and their 64-bit
 word objects. `clone(source)` copies deeply. Struct-valued getters and `unpack(view, existing)`
 reuse the same private child views, initialized with their parent and held in const
 fields. Repeated getter calls return the same child instance. After the parent is
@@ -120,11 +129,17 @@ and bind a separate view when you need an independent binding. An absent table
 field returns null; it does not invalidate an earlier returned child view.
 
 The generator uses reflected field offsets, sizes, and alignment, including
-padding and `force_align`. A struct's static `pack(source, builder)` writes inline
-at the current builder position. Generated table packing records it immediately with `addStruct`;
-for manual construction, use `builder.addStruct(slot, Point.pack(value, builder))` inside
-an open table. Struct offsets cannot be reused elsewhere. `Builder.finish()` still
-requires a table root. Fixed-size arrays inside structs are not supported yet.
+padding and `force_align`. A struct's static `pack(source, dst)` writes raw struct
+bytes starting at zero, without a root-offset word. Its `packInto(source, builder)`
+writes inline at the current aligned builder position and returns the absolute
+struct offset. Generated table packing records it immediately with `addStruct`.
+For manual construction, call `builder.startTable(fieldCount, alignment)` with the
+maximum field alignment (at least 4), then use
+`builder.addStruct(slot, Point.packInto(value, builder))` inside the open table.
+Struct offsets cannot be reused elsewhere. `builder.reset(dst, false)` selects
+raw-struct output; `builder.reset(dst)` reserves a root-offset word for a table.
+`builder.finish(root)` patches that word and returns the destination without a copy.
+Fixed-size arrays inside structs are not supported yet.
 
 ## Build and test
 
@@ -171,8 +186,8 @@ bin/as3flatc -o examples/point/src bin/point.bfbs
 ```
 
 Every supported table or struct produces an owned class and a `View` class. Owned objects
-have schema defaults and an instance `reset()`, plus static `clone(source)` and
-`pack(source, builder)` methods. `clone(null)` returns null. Generated owned classes
+have schema defaults and static `reset(msg)`, `clone(source)`, and
+`pack(source, dst)` methods, plus `packInto(source, builder)` for composition. `clone(null)` returns null. Generated owned classes
 do not expose `copyFrom()`.
 Views expose lazy field getters and static `unpack(sourceView, destination = null)`.
 

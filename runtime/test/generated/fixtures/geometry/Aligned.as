@@ -2,17 +2,20 @@
 package fixtures.geometry
 {
     import as3flatbuffers.Builder;
+    import flash.utils.ByteArray;
 
-    /** Owned inline struct. pack() writes at the current builder position. */
+    /** Owned inline struct. pack() writes raw struct bytes into the destination. */
     public final class Aligned
     {
+        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+
         public var id:int = 0;
         public var value:Number = 0;
 
-        public function reset():void
+        public static function reset(msg:Aligned):void
         {
-            this.id = 0;
-            this.value = 0;
+            msg.id = 0;
+            msg.value = 0;
         }
 
         public static function clone(source:Aligned):Aligned
@@ -27,16 +30,40 @@ package fixtures.geometry
             return destination;
         }
 
-        public static function pack(source:Aligned, builder:as3flatbuffers.Builder):uint
+        /** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */
+        public static function pack(source:Aligned, dst:flash.utils.ByteArray):flash.utils.ByteArray
+        {
+            if (!source || !dst)
+                throw new ArgumentError("Source and destination must be non-null");
+
+            const builder:as3flatbuffers.Builder = BUILDER;
+            if (builder.bound)
+                throw new Error("Packing this class is already in progress");
+
+            try
+            {
+                builder.reset(dst, false);
+                builder.finish(packInto(source, builder));
+            }
+            finally
+            {
+                builder.reset();
+            }
+            return dst;
+        }
+
+        /** Write into an active builder and return the absolute object offset. */
+        public static function packInto(source:Aligned, builder:as3flatbuffers.Builder):uint
         {
             if (!source || !builder)
                 throw new ArgumentError("Source and builder must be non-null");
 
             builder.prepareStruct(16, 16);
-            builder.putFloat64(source.value);
-            builder.pad(4);
+            const start:uint = builder.offset;
             builder.putInt32(source.id);
-            return builder.offset;
+            builder.pad(4);
+            builder.putFloat64(source.value);
+            return start;
         }
     }
 }

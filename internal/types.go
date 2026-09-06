@@ -16,7 +16,7 @@ type field struct {
 	ID                                  uint16
 	WordDefault                         string
 	Optional                            bool
-	Width                               uint32
+	Width, Alignment                    uint32
 	Offset                              uint32
 	Struct                              bool
 	ViewCache                           string

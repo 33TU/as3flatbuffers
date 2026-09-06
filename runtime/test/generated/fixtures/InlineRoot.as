@@ -2,14 +2,17 @@
 package fixtures
 {
     import as3flatbuffers.Builder;
+    import flash.utils.ByteArray;
     import fixtures.geometry.Aligned;
     import fixtures.geometry.Envelope;
     import fixtures.geometry.Frame;
     import fixtures.geometry.Point;
 
-    /** Owned mutable value. pack() returns an offset for Builder.finish(). */
+    /** Owned mutable value. pack() writes a complete FlatBuffer into the destination. */
     public final class InlineRoot
     {
+        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+
         public var point:fixtures.geometry.Point = null;
         public var frame:fixtures.geometry.Frame = null;
         public var envelope:fixtures.geometry.Envelope = null;
@@ -17,14 +20,14 @@ package fixtures
         public var label_:int = 0;
         public var pointView:int = 0;
 
-        public function reset():void
+        public static function reset(msg:InlineRoot):void
         {
-            this.point = null;
-            this.frame = null;
-            this.envelope = null;
-            this.aligned = null;
-            this.label_ = 0;
-            this.pointView = 0;
+            msg.point = null;
+            msg.frame = null;
+            msg.envelope = null;
+            msg.aligned = null;
+            msg.label_ = 0;
+            msg.pointView = 0;
         }
 
         public static function clone(source:InlineRoot):InlineRoot
@@ -43,20 +46,43 @@ package fixtures
             return destination;
         }
 
-        public static function pack(source:InlineRoot, builder:as3flatbuffers.Builder):uint
+        /** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */
+        public static function pack(source:InlineRoot, dst:flash.utils.ByteArray):flash.utils.ByteArray
+        {
+            if (!source || !dst)
+                throw new ArgumentError("Source and destination must be non-null");
+
+            const builder:as3flatbuffers.Builder = BUILDER;
+            if (builder.bound)
+                throw new Error("Packing this class is already in progress");
+
+            try
+            {
+                builder.reset(dst, true);
+                builder.finish(packInto(source, builder));
+            }
+            finally
+            {
+                builder.reset();
+            }
+            return dst;
+        }
+
+        /** Write into an active builder and return the absolute object offset. */
+        public static function packInto(source:InlineRoot, builder:as3flatbuffers.Builder):uint
         {
             if (!source || !builder)
                 throw new ArgumentError("Source and builder must be non-null");
 
-            builder.startTable(6);
+            builder.startTable(6, 16);
             if (source.point)
-                builder.addStruct(0, fixtures.geometry.Point.pack(source.point, builder));
+                builder.addStruct(0, fixtures.geometry.Point.packInto(source.point, builder));
             if (source.frame)
-                builder.addStruct(1, fixtures.geometry.Frame.pack(source.frame, builder));
+                builder.addStruct(1, fixtures.geometry.Frame.packInto(source.frame, builder));
             if (source.envelope)
-                builder.addStruct(2, fixtures.geometry.Envelope.pack(source.envelope, builder));
+                builder.addStruct(2, fixtures.geometry.Envelope.packInto(source.envelope, builder));
             if (source.aligned)
-                builder.addStruct(3, fixtures.geometry.Aligned.pack(source.aligned, builder));
+                builder.addStruct(3, fixtures.geometry.Aligned.packInto(source.aligned, builder));
             builder.addInt32(4, source.label_, 0);
             builder.addInt32(5, source.pointView, 0);
             return builder.endTable();

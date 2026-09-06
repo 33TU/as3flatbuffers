@@ -2,12 +2,15 @@
 package fixtures
 {
     import as3flatbuffers.Builder;
+    import flash.utils.ByteArray;
     import as3flatbuffers.types.Int64;
     import as3flatbuffers.types.UInt64;
 
-    /** Owned mutable value. pack() returns an offset for Builder.finish(). */
+    /** Owned mutable value. pack() writes a complete FlatBuffer into the destination. */
     public final class Primitives
     {
+        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+
         public var enabled:Boolean = true;
         public var i8:int = -7;
         public var u8:uint = 255;
@@ -20,21 +23,21 @@ package fixtures
         public var f32:Number = 0.5;
         public var f64:Number = 1.2345678901234567;
 
-        public function reset():void
+        public static function reset(msg:Primitives):void
         {
-            this.enabled = true;
-            this.i8 = -7;
-            this.u8 = 255;
-            this.i16 = -1234;
-            this.u16 = 65535;
-            this.i32 = -1234567;
-            this.u32 = 4294967295;
-            if (!this.i64) this.i64 = new as3flatbuffers.types.Int64(0, -2147483648);
-            else this.i64.set(0, -2147483648);
-            if (!this.u64) this.u64 = new as3flatbuffers.types.UInt64(4294967295, 2147483647);
-            else this.u64.set(4294967295, 2147483647);
-            this.f32 = 0.5;
-            this.f64 = 1.2345678901234567;
+            msg.enabled = true;
+            msg.i8 = -7;
+            msg.u8 = 255;
+            msg.i16 = -1234;
+            msg.u16 = 65535;
+            msg.i32 = -1234567;
+            msg.u32 = 4294967295;
+            if (!msg.i64) msg.i64 = new as3flatbuffers.types.Int64(0, -2147483648);
+            else msg.i64.set(0, -2147483648);
+            if (!msg.u64) msg.u64 = new as3flatbuffers.types.UInt64(4294967295, 2147483647);
+            else msg.u64.set(4294967295, 2147483647);
+            msg.f32 = 0.5;
+            msg.f64 = 1.2345678901234567;
         }
 
         public static function clone(source:Primitives):Primitives
@@ -58,12 +61,35 @@ package fixtures
             return destination;
         }
 
-        public static function pack(source:Primitives, builder:as3flatbuffers.Builder):uint
+        /** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */
+        public static function pack(source:Primitives, dst:flash.utils.ByteArray):flash.utils.ByteArray
+        {
+            if (!source || !dst)
+                throw new ArgumentError("Source and destination must be non-null");
+
+            const builder:as3flatbuffers.Builder = BUILDER;
+            if (builder.bound)
+                throw new Error("Packing this class is already in progress");
+
+            try
+            {
+                builder.reset(dst, true);
+                builder.finish(packInto(source, builder));
+            }
+            finally
+            {
+                builder.reset();
+            }
+            return dst;
+        }
+
+        /** Write into an active builder and return the absolute object offset. */
+        public static function packInto(source:Primitives, builder:as3flatbuffers.Builder):uint
         {
             if (!source || !builder)
                 throw new ArgumentError("Source and builder must be non-null");
 
-            builder.startTable(11);
+            builder.startTable(11, 8);
             builder.addBool(0, source.enabled, true);
             builder.addInt8(1, source.i8, -7);
             builder.addUint8(2, source.u8, 255);

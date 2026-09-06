@@ -21,7 +21,7 @@ package
             const value:Primitives = new Primitives();
             const signed:Int64 = value.i64;
             const unsigned:UInt64 = value.u64;
-            const builder:Builder = new Builder(17);
+            const builder:Builder = new Builder();
             var retained:ByteArray;
             for (var i:int = 0; i < cases.length; i++)
             {
@@ -39,8 +39,8 @@ package
                 const unsignedGetter:UInt64 = view.u64;
                 unsignedGetter.high ^= 1;
                 check(view.u64.eq(value.u64), "Unsigned getter returns independent words");
-                builder.reset();
-                const output:ByteArray = builder.finish(Primitives.pack(copy, builder));
+                builder.reset(FixtureBuffer.create());
+                const output:ByteArray = Primitives.pack(copy, FixtureBuffer.create());
                 write(directory.resolvePath("primitive-as3-" + i + ".bin"), output);
                 FixtureBuffer.bindRoot(view, output);
                 verify(PrimitivesView.unpack(view), expected, check);
@@ -52,7 +52,7 @@ package
             }
             FixtureBuffer.bindRoot(view, retained);
             verify(PrimitivesView.unpack(view), cases[3], check);
-            value.reset();
+            Primitives.reset(value);
             check(value.i64 === signed && value.u64 === unsigned, "Reset reuses 64-bit words");
             verify(value, cases[0], check);
             // Omitted fields overwrite reused words, including nonzero defaults.
@@ -67,22 +67,23 @@ package
             verify(value, cases[0], check);
             value.i64 = null;
             value.u64 = null;
-            value.reset();
+            Primitives.reset(value);
             verify(value, cases[0], check);
             const defaultClone:Primitives = Primitives.clone(PrimitivesView.unpack(view));
             verify(defaultClone, cases[0], check);
 
             const special:SpecialFloats = new SpecialFloats();
-            builder.reset();
-            const specialView:SpecialFloatsView = FixtureBuffer.bindRoot(new SpecialFloatsView(), builder.finish(SpecialFloats.pack(special, builder)));
+            builder.reset(FixtureBuffer.create());
+            const specialView:SpecialFloatsView = FixtureBuffer.bindRoot(new SpecialFloatsView(), SpecialFloats.pack(special, FixtureBuffer.create()));
             check(isNaN(specialView.f32) && specialView.f64 == Number.POSITIVE_INFINITY &&
                 specialView.negative == Number.NEGATIVE_INFINITY, "Nonfinite schema defaults");
 
             // A single 8-byte field exposes root-alignment bugs hidden by larger tables.
-            for (var capacity:uint = 16; capacity <= 25; capacity++)
+            for (var slots:uint = 1; slots <= 10; slots++)
             {
-                const small:Builder = new Builder(capacity);
-                small.startTable(1);
+                const small:Builder = new Builder();
+                small.reset(FixtureBuffer.create());
+                small.startTable(slots, 8);
                 small.addFloat64(0, Math.PI);
                 const aligned:ByteArray = small.finish(small.endTable());
                 aligned.position = 0;
@@ -92,7 +93,7 @@ package
                 aligned.position = vtable + 4;
                 const field:uint = root + aligned.readUnsignedShort();
                 aligned.position = field;
-                check(field % 8 == 0 && aligned.readDouble() == Math.PI, "8-byte alignment after finish/growth");
+                check(field % 8 == 0 && aligned.readDouble() == Math.PI, "8-byte alignment with different vtable sizes");
             }
 
             for each (var name:String in ["addInt8", "addUint8", "addInt16", "addUint16"])
@@ -101,15 +102,15 @@ package
                     name == "addUint8" ? [256] : name == "addInt16" ? [-32769, 32768] : [65536];
                 for each (var bad:int in invalid)
                 {
-                    builder.reset();
-                    builder.startTable(1);
+                    builder.reset(FixtureBuffer.create());
+                    builder.startTable(1, 8);
                     var rejected:Boolean = false;
                     try { builder[name](0, bad); } catch (range:RangeError) { rejected = true; }
                     check(rejected, "Reject out-of-range narrow integer");
                 }
             }
-            builder.reset();
-            builder.startTable(1);
+            builder.reset(FixtureBuffer.create());
+            builder.startTable(1, 8);
             rejected = false;
             try { builder.addInt64(0, null); } catch (missing:ArgumentError) { rejected = true; }
             check(rejected, "Reject missing 64-bit value");
