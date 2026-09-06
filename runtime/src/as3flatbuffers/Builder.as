@@ -14,7 +14,8 @@ package as3flatbuffers
     {
         private var bytes:ByteArray;
         private var space:uint;
-        private var fields:Vector.<uint>;
+        private const fields:Vector.<uint> = new Vector.<uint>();
+        private var tableOpen:Boolean;
         private var tableStart:uint;
         private var finished:Boolean;
         private var lastTable:uint;
@@ -40,20 +41,23 @@ package as3flatbuffers
         public function reset():void
         {
             space = bytes.length;
-            fields = null;
+            fields.length = 0;
+            tableOpen = false;
             lastTable = 0;
             maxAlignment = 4;
             finished = false;
         }
 
-        public function startTable(fieldCount:uint):void
+        [Inline]
+        public final function startTable(fieldCount:uint):void
         {
-            if (finished || fields != null)
+            if (finished || tableOpen)
                 throw new Error("Reset a finished builder; tables cannot be nested");
             if (fieldCount > 32765)
                 throw new RangeError("Too many table fields");
 
-            fields = new Vector.<uint>(fieldCount, true);
+            fields.length = fieldCount;
+            tableOpen = true;
             tableStart = offset;
         }
 
@@ -216,7 +220,7 @@ package as3flatbuffers
 
         public function endTable():uint
         {
-            if (fields == null)
+            if (!tableOpen)
                 throw new Error("No table is open");
 
             putInt32(0);
@@ -236,7 +240,8 @@ package as3flatbuffers
             putUint16((count + 2) * 2);
             bytes.position = bytes.length - objectOffset;
             bytes.writeInt(int(offset - objectOffset));
-            fields = null;
+            fields.length = 0;
+            tableOpen = false;
             lastTable = objectOffset;
             return objectOffset;
         }
@@ -244,7 +249,7 @@ package as3flatbuffers
         /** Finishes the most recent table and returns independent, owned bytes. */
         public function finish(root:uint):ByteArray
         {
-            if (finished || fields != null || !root || root != lastTable)
+            if (finished || tableOpen || !root || root != lastTable)
                 throw new Error("Finish requires the most recently completed table");
 
             prepare(maxAlignment, 4);
@@ -264,7 +269,7 @@ package as3flatbuffers
 
         private function checkSlot(slot:uint):void
         {
-            if (fields == null || slot >= fields.length)
+            if (!tableOpen || slot >= fields.length)
                 throw new RangeError("Field slot is outside the open table");
             if (fields[slot])
                 throw new Error("Field was already written");

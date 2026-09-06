@@ -184,6 +184,7 @@ package
                 check(namingCopy.snakeCase_ == 22 && namingCopy.bind_2 == 77, "Named reset");
                 PrimitiveTests.run(directory, check, read, write);
                 OptionalTests.run(directory, check, read, write);
+                BuilderStateTests.run(check);
                 result.ok = true;
                 result.checks = checks;
                 status = 0;
