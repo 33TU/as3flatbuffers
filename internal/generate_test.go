@@ -1,4 +1,4 @@
-package generator
+package internal
 
 import (
 	"bytes"
@@ -26,7 +26,7 @@ func TestPointMatchesCheckedInExample(t *testing.T) {
 		t.Fatalf("got %d files", len(files))
 	}
 	for _, file := range files {
-		expected, err := os.ReadFile(filepath.Join("../../examples/point/src", filepath.FromSlash(file.Name)))
+		expected, err := os.ReadFile(filepath.Join("../examples/point/src", filepath.FromSlash(file.Name)))
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -9,6 +9,10 @@ The original AS3PB code is by 33TU. These files retain its behavior, with the
 package renamed and protobuf-specific input/output comments generalized.
 This repository is distributed under the MIT License in LICENSE.
 
+internal/indent.go and its tests are also adapted from AS3PB's internal/indent.go
+and internal/indent_test.go at the same revision. The test import path points to
+this repository; the writer behavior is unchanged.
+
 The generated Point example and FlatBuffers table runtime follow the public
 FlatBuffers wire format. The test harness uses, but does not vendor, the official
 FlatBuffers Python package (Apache-2.0).

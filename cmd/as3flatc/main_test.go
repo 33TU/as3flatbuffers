@@ -9,7 +9,7 @@ import (
 
 func TestCLI(t *testing.T) {
 	output := filepath.Join(t.TempDir(), "generated")
-	if err := run([]string{"-o", output, "../../internal/generator/testdata/point.bfbs"}, io.Discard); err != nil {
+	if err := run([]string{"-o", output, "../../internal/testdata/point.bfbs"}, io.Discard); err != nil {
 		t.Fatal(err)
 	}
 	for _, name := range []string{"Point.as", "PointView.as"} {
@@ -25,7 +25,7 @@ func TestInvalidSchemaDoesNotTouchOutput(t *testing.T) {
 	if err := os.WriteFile(marker, []byte("unchanged"), 0644); err != nil {
 		t.Fatal(err)
 	}
-	if err := run([]string{"-o", output, "../../internal/generator/testdata/unsupported.bfbs"}, io.Discard); err == nil {
+	if err := run([]string{"-o", output, "../../internal/testdata/unsupported.bfbs"}, io.Discard); err == nil {
 		t.Fatal("expected error")
 	}
 	entries, err := os.ReadDir(output)

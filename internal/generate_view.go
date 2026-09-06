@@ -1,0 +1,41 @@
+package internal
+
+func generateView(w *IndentWriter, o object) {
+	generatePackage(w, o)
+	w.Line("import as3flatbuffers.TableView;")
+	w.Line("import flash.utils.ByteArray;")
+	w.BlankLine()
+	w.Line("/** Borrowed read-only view; unpack() produces independent owned values. */")
+	w.Line("public final class %sView extends as3flatbuffers.TableView", o.Name)
+	w.Line("{")
+	w.Indent()
+	generateBind(w, o)
+	generateViewAccessors(w, o)
+	w.BlankLine()
+	generateUnpack(w, o)
+	w.Dedent()
+	w.Line("}")
+	endPackage(w)
+}
+
+func generateBind(w *IndentWriter, o object) {
+	w.Line("public function bind(input:flash.utils.ByteArray, rootOffset:uint = 0):%sView", o.Name)
+	w.Line("{")
+	w.Indent()
+	w.Line("bindRoot(input, rootOffset);")
+	w.Line("return this;")
+	w.Dedent()
+	w.Line("}")
+}
+
+func generateViewAccessors(w *IndentWriter, o object) {
+	for _, f := range o.Fields {
+		w.BlankLine()
+		w.Line("public function get %s():%s", f.Name, f.Type)
+		w.Line("{")
+		w.Indent()
+		w.Line("return %s(%d, %s);", f.Reader, f.ID, f.Default)
+		w.Dedent()
+		w.Line("}")
+	}
+}

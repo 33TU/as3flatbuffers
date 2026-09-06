@@ -87,6 +87,9 @@ Every supported table produces an owned class and a `View` class. Owned objects
 have schema defaults, `reset()`, `copyFrom()`, `clone()`, and `pack(builder)`.
 Views expose lazy field getters and `unpack(destination = null)`.
 
+Source generation uses AS3PB's `IndentWriter` approach: focused Go emitters for
+owned fields and methods, packing, unpacking, and view accessors under `internal/`.
+
 Field IDs and deprecated slot gaps come from the binary schema. Snake-case field
 names become lower camel case; reserved words and runtime member conflicts gain
 a trailing underscore. Ambiguous names and output path collisions are rejected.
@@ -107,7 +110,7 @@ using the pinned compiler version.
 
 ```text
 cmd/as3flatc/               .bfbs -> AS3 command
-internal/generator/        Schema validation, naming, and source generation
+internal/                  Schema validation, naming, and source generation
 internal/reflection/       Official binary-schema bindings and source schema
 runtime/src/as3flatbuffers/  Builder, TableView, and integer types
 runtime/test/               AIR tests

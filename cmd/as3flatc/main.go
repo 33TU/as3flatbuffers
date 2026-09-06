@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/33TU/as3flatbuffers/internal/generator"
+	"github.com/33TU/as3flatbuffers/internal"
 )
 
 func run(args []string, stderr io.Writer) error {
@@ -30,7 +30,7 @@ func run(args []string, stderr io.Writer) error {
 	if err != nil {
 		return err
 	}
-	files, err := generator.Generate(data)
+	files, err := internal.Generate(data)
 	if err != nil {
 		return err
 	}

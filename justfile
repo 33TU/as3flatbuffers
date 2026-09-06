@@ -16,14 +16,14 @@ build-generator:
 generate: build-generator
     {{ FLATC }} -b --schema -o bin examples/point/schema/point.fbs
     bin/as3flatc -o examples/point/src bin/point.bfbs
-    {{ FLATC }} -b --schema -o bin internal/generator/testdata/scalars.fbs
+    {{ FLATC }} -b --schema -o bin internal/testdata/scalars.fbs
     bin/as3flatc -o runtime/test/generated bin/scalars.bfbs
 
 generate-reflection:
     {{ FLATC }} --go --gen-onefile --go-namespace reflection -o internal/reflection internal/reflection/upstream/reflection.fbs
 
 generate-test-schemas:
-    {{ FLATC }} -b --schema -o internal/generator/testdata internal/generator/testdata/*.fbs
+    {{ FLATC }} -b --schema -o internal/testdata internal/testdata/*.fbs
 
 test-go:
     go test ./...
