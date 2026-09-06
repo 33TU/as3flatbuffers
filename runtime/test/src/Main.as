@@ -17,6 +17,8 @@ package
     import example.PointView;
     import fixtures.ScalarDefaults;
     import fixtures.ScalarDefaultsView;
+    import fixtures.Naming;
+    import fixtures.NamingView;
 
     public final class Main extends Sprite
     {
@@ -155,6 +157,31 @@ package
                 check(scalarCopy.xAxis == 1.25 && scalarCopy.signedValue == -7 &&
                     scalarCopy.unsignedValue == uint.MAX_VALUE && scalarCopy.reset_ == 9,
                     "Generated reset uses schema defaults");
+                const naming:Naming = new Naming();
+                check(naming.snakeCase == 11 && naming.snakeCase_ == 22 &&
+                    naming.reset_ == 33 && naming.reset__ == 44 && naming.reset___ == 55 &&
+                    naming.bind_ == 66 && naming.bind_2 == 77 && naming.__leadingName == 88 &&
+                    naming.trailingName_ == 99 && naming.value_Name == 111 &&
+                    naming.bytes_ == 122 && naming.class_ == 133, "Generated naming defaults");
+                naming.snakeCase = -1;
+                naming.snakeCase_ = -2;
+                naming.bind_ = 123;
+                naming.bind_2 = 456;
+                naming.bytes_ = -9;
+                naming.class_ = 17;
+                builder.reset();
+                const namingBytes:ByteArray = builder.finish(naming.pack(builder));
+                write(directory.resolvePath("naming.bin"), namingBytes);
+                const namingView:NamingView = new NamingView().bind(namingBytes);
+                check(namingView.snakeCase == -1 && namingView.snakeCase_ == -2 &&
+                    namingView.bind_ == 123 && namingView.bind_2 == 456 &&
+                    namingView.bytes_ == -9 && namingView.class_ == 17 &&
+                    namingView.__leadingName == 88 && namingView.trailingName_ == 99 &&
+                    namingView.value_Name == 111, "Generated view uses identical allocated names");
+                const namingCopy:Naming = namingView.unpack();
+                check(namingCopy.snakeCase_ == -2 && namingCopy.bind_2 == 456, "Named unpack");
+                namingCopy.reset();
+                check(namingCopy.snakeCase_ == 22 && namingCopy.bind_2 == 77, "Named reset");
                 result.ok = true;
                 result.checks = checks;
                 status = 0;

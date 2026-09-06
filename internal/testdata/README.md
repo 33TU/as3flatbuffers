@@ -9,4 +9,6 @@ just generate-test-schemas
 ```
 
 `point.fbs` mirrors `examples/point/schema/point.fbs`. Other cases exercise defaults,
-deprecated IDs, escaped names, collisions and explicit unsupported-feature errors.
+deprecated IDs, escaped names, field collision allocation, class collision errors
+and explicit unsupported-feature errors. `naming.fbs` is also compiled into the AIR
+test suite; its mixed-case fields deliberately trigger flatc style warnings.

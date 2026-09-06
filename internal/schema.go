@@ -2,12 +2,13 @@ package internal
 
 import (
 	"fmt"
-	"github.com/33TU/as3flatbuffers/internal/reflection"
 	"math"
 	"path"
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/33TU/as3flatbuffers/internal/reflection"
 )
 
 func parseSchema(data []byte) ([]object, error) {
@@ -63,18 +64,19 @@ func parseObject(source *reflection.Object, dataLength int) (object, error) {
 	}
 	parts := strings.Split(fullName, ".")
 	for _, part := range parts {
-		if !identifier.MatchString(part) || reserved[part] {
+		if !identifier.MatchString(part) || IsAS3ReservedWord(part) {
 			return object{}, fmt.Errorf("%s: invalid or reserved AS3 identifier %q", fullName, part)
 		}
 	}
 	o := object{Name: parts[len(parts)-1], Package: strings.Join(parts[:len(parts)-1], ".")}
-	if typeNames[o.Name] || typeNames[o.Name+"View"] {
+	_, typeConflict := typeNames[o.Name]
+	_, viewConflict := typeNames[o.Name+"View"]
+	if typeConflict || viewConflict {
 		return o, fmt.Errorf("%s: class name conflicts with an AS3 or runtime type", fullName)
 	}
 	if source.FieldsLength() > 32765 || source.FieldsLength() > dataLength/4 {
 		return o, fmt.Errorf("%s: invalid or excessive field count", fullName)
 	}
-	names := make(map[string]bool)
 	ids := make(map[uint16]bool)
 	for i := 0; i < source.FieldsLength(); i++ {
 		var f reflection.Field
@@ -98,14 +100,6 @@ func parseObject(source *reflection.Object, dataLength int) (object, error) {
 		if f.Optional() || f.Required() || f.Key() || f.Offset64() {
 			return o, fmt.Errorf("%s.%s: optional, required, key or offset64 fields are not supported yet", fullName, name)
 		}
-		asName := camel(name)
-		if reserved[asName] || members[asName] || typeNames[asName] || asName == o.Name || asName == o.Name+"View" {
-			asName += "_"
-		}
-		if names[asName] {
-			return o, fmt.Errorf("%s: field name collision after AS3 conversion: %s", fullName, asName)
-		}
-		names[asName] = true
 		fType := f.Type(nil)
 		if fType == nil {
 			return o, fmt.Errorf("%s.%s: missing type", fullName, name)
@@ -113,7 +107,7 @@ func parseObject(source *reflection.Object, dataLength int) (object, error) {
 		if fType.Index() != -1 {
 			return o, fmt.Errorf("%s.%s: referenced types are not supported yet", fullName, name)
 		}
-		out := field{Name: asName, ID: f.Id()}
+		out := field{Name: name, ID: f.Id()}
 		switch fType.BaseType() {
 		case reflection.BaseTypeInt:
 			if f.DefaultInteger() < math.MinInt32 || f.DefaultInteger() > math.MaxInt32 {
@@ -136,5 +130,9 @@ func parseObject(source *reflection.Object, dataLength int) (object, error) {
 		o.Fields = append(o.Fields, out)
 	}
 	sort.Slice(o.Fields, func(i, j int) bool { return o.Fields[i].ID < o.Fields[j].ID })
+	names := NewTableNames(o.Name)
+	for i := range o.Fields {
+		o.Fields[i].Name = names.Field(o.Fields[i].ID, o.Fields[i].Name)
+	}
 	return o, nil
 }

@@ -13,6 +13,13 @@ internal/indent.go and its tests are also adapted from AS3PB's internal/indent.g
 and internal/indent_test.go at the same revision. The test import path points to
 this repository; the writer behavior is unchanged.
 
+internal/naming_cases.go, the reserved-word map in internal/naming.go, and
+uniqueName in internal/naming_table.go are adapted from AS3PB's naming_cases.go,
+naming.go, and naming_message.go at the same revision. The reserved-word test is
+adapted from naming_test.go. FlatBuffers-specific names and field-ID allocation
+replace the protobuf descriptor wrappers; the initial generator's additional
+keyword guards are retained.
+
 The generated Point example and FlatBuffers table runtime follow the public
 FlatBuffers wire format. The test harness uses, but does not vendor, the official
 FlatBuffers Python package (Apache-2.0).

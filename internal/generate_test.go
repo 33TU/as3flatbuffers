@@ -75,7 +75,7 @@ func TestDefaultsIDsAndEscaping(t *testing.T) {
 func TestUnsupportedSchemasProduceNoFiles(t *testing.T) {
 	for name, want := range map[string]string{
 		"unsupported": "not supported", "collision": "class name collision",
-		"field_collision": "field name collision", "structs": "not supported",
+		"structs":    "not supported",
 		"identifier": "file identifiers",
 	} {
 		t.Run(name, func(t *testing.T) {

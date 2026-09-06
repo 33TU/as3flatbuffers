@@ -2,32 +2,123 @@ package internal
 
 import (
 	"regexp"
-	"strings"
 )
 
 var identifier = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
-var reserved = wordSet(`as break case catch class const continue default delete do else extends false finally for function if implements import in instanceof interface internal is native new null package private protected public return super switch this throw to true try typeof use var void while with dynamic each final get include namespace override set static abstract boolean byte cast char debugger double enum export float goto intrinsic long prototype short synchronized throws transient type virtual volatile`)
-var members = wordSet(`reset clone copyFrom pack bind unpack bytes table vtable vtableSize objectSize bindRoot field float32 int32 uint32 toString valueOf hasOwnProperty isPrototypeOf propertyIsEnumerable setPropertyIsEnumerable constructor`)
-var typeNames = wordSet(`int uint Number Boolean String Object Array Vector Function Date Error RegExp XML XMLList Namespace QName Builder TableView ByteArray NaN Infinity undefined`)
 
-func wordSet(words string) map[string]bool {
-	m := make(map[string]bool)
-	for _, word := range strings.Fields(words) {
-		m[word] = true
-	}
-	return m
+var as3ReservedWords = map[string]struct{}{
+	"AS3":          {},
+	"as":           {},
+	"break":        {},
+	"case":         {},
+	"catch":        {},
+	"class":        {},
+	"const":        {},
+	"continue":     {},
+	"default":      {},
+	"delete":       {},
+	"do":           {},
+	"dynamic":      {},
+	"else":         {},
+	"extends":      {},
+	"false":        {},
+	"final":        {},
+	"finally":      {},
+	"flash_proxy":  {},
+	"for":          {},
+	"function":     {},
+	"get":          {},
+	"if":           {},
+	"implements":   {},
+	"import":       {},
+	"in":           {},
+	"include":      {},
+	"instanceof":   {},
+	"interface":    {},
+	"internal":     {},
+	"is":           {},
+	"label":        {},
+	"namespace":    {},
+	"native":       {},
+	"new":          {},
+	"null":         {},
+	"object_proxy": {},
+	"override":     {},
+	"package":      {},
+	"private":      {},
+	"protected":    {},
+	"public":       {},
+	"return":       {},
+	"set":          {},
+	"static":       {},
+	"super":        {},
+	"switch":       {},
+	"this":         {},
+	"throw":        {},
+	"true":         {},
+	"try":          {},
+	"typeof":       {},
+	"use":          {},
+	"var":          {},
+	"void":         {},
+	"while":        {},
+	"with":         {},
 }
 
-func camel(name string) string {
-	parts := strings.Split(name, "_")
-	// Keep leading/trailing underscores, including an explicit escaped spelling.
-	if len(parts) < 2 || parts[0] == "" || parts[len(parts)-1] == "" {
-		return name
-	}
-	for i := 1; i < len(parts); i++ {
-		if parts[i] != "" {
-			parts[i] = strings.ToUpper(parts[i][:1]) + parts[i][1:]
-		}
-	}
-	return strings.Join(parts, "")
+// IsAS3ReservedWord reports whether word is reserved in ActionScript 3.
+func IsAS3ReservedWord(word string) bool {
+	_, ok := as3ReservedWords[word]
+	_, additional := additionalReserved[word]
+	return ok || additional
+}
+
+var typeNames = map[string]struct{}{
+	"Array":     {},
+	"Boolean":   {},
+	"Builder":   {},
+	"ByteArray": {},
+	"Date":      {},
+	"Error":     {},
+	"Function":  {},
+	"Infinity":  {},
+	"NaN":       {},
+	"Namespace": {},
+	"Number":    {},
+	"Object":    {},
+	"QName":     {},
+	"RegExp":    {},
+	"String":    {},
+	"TableView": {},
+	"Vector":    {},
+	"XML":       {},
+	"XMLList":   {},
+	"int":       {},
+	"uint":      {},
+	"undefined": {},
+}
+
+var additionalReserved = map[string]struct{}{
+	"abstract":     {},
+	"boolean":      {},
+	"byte":         {},
+	"cast":         {},
+	"char":         {},
+	"debugger":     {},
+	"double":       {},
+	"each":         {},
+	"enum":         {},
+	"export":       {},
+	"float":        {},
+	"goto":         {},
+	"intrinsic":    {},
+	"long":         {},
+	"prototype":    {},
+	"short":        {},
+	"synchronized": {},
+	"throws":       {},
+	"to":           {},
+	"transient":    {},
+	"type":         {},
+	"virtual":      {},
+	"volatile":     {},
 }

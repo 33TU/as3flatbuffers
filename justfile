@@ -18,6 +18,8 @@ generate: build-generator
     bin/as3flatc -o examples/point/src bin/point.bfbs
     {{ FLATC }} -b --schema -o bin internal/testdata/scalars.fbs
     bin/as3flatc -o runtime/test/generated bin/scalars.bfbs
+    {{ FLATC }} -b --schema -o bin internal/testdata/naming.fbs
+    bin/as3flatc -o runtime/test/generated bin/naming.bfbs
 
 generate-reflection:
     {{ FLATC }} --go --gen-onefile --go-namespace reflection -o internal/reflection internal/reflection/upstream/reflection.fbs

@@ -69,7 +69,11 @@ def main():
     assert reader.Get(number_types.Int32Flags, reader.Pos + reader.Offset(8)) == -(2**31)
     assert reader.Get(number_types.Uint32Flags, reader.Pos + reader.Offset(10)) == 0
     assert reader.Get(number_types.Int32Flags, reader.Pos + reader.Offset(12)) == 42
-    print(f"Passed {result['checks']} AIR checks and {len(cases)} bidirectional Point fixtures, plus generated scalar/default interoperability.")
+    data = bytearray((work / "naming.bin").read_bytes())
+    reader = table.Table(data, struct.unpack_from("<I", data)[0])
+    for slot, expected in [(0, -1), (1, -2), (5, 123), (6, 456), (10, -9), (11, 17)]:
+        assert reader.Get(number_types.Int32Flags, reader.Pos + reader.Offset(4 + slot * 2)) == expected
+    print(f"Passed {result['checks']} AIR checks and {len(cases)} bidirectional Point fixtures, plus generated scalar/default/naming interoperability.")
     print(f"FlatBuffers Python {flatbuffers.__version__}; artifacts: {work.relative_to(root)}")
 
 

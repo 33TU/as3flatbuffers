@@ -90,9 +90,13 @@ Views expose lazy field getters and `unpack(destination = null)`.
 Source generation uses AS3PB's `IndentWriter` approach: focused Go emitters for
 owned fields and methods, packing, unpacking, and view accessors under `internal/`.
 
-Field IDs and deprecated slot gaps come from the binary schema. Snake-case field
-names become lower camel case; reserved words and runtime member conflicts gain
-a trailing underscore. Ambiguous names and output path collisions are rejected.
+Field IDs and deprecated slot gaps come from the binary schema. Case conversion
+uses AS3PB's naming helpers: field names become lower camel case while leading,
+trailing and repeated underscores are preserved according to its conventions.
+Reserved words are escaped, and collisions with other fields or runtime members
+receive stable suffixes (`name_`, `name_2`, etc.). Names are allocated in field-ID
+order and shared by the owned class and view. Class/output path collisions are
+still rejected.
 Schema validation completes before any output files are written. The CLI overwrites
 matching generated files, but does not remove stale files after schema renames.
 
