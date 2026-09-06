@@ -1,0 +1,10 @@
+<application xmlns="http://ns.adobe.com/air/application/51.3">
+    <id>as3flatbuffers.tests</id>
+    <versionNumber>0.1.0</versionNumber>
+    <filename>as3flatbuffers-tests</filename>
+    <initialWindow>
+        <content>test.swf</content>
+        <visible>false</visible>
+    </initialWindow>
+    <supportedProfiles>extendedDesktop</supportedProfiles>
+</application>

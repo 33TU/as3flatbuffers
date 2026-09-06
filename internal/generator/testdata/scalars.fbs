@@ -1,0 +1,9 @@
+namespace fixtures;
+table ScalarDefaults {
+  x_axis:float = 1.25;
+  old_value:int (deprecated);
+  signed_value:int = -7;
+  unsigned_value:uint = 4294967295;
+  reset:int = 9;
+}
+root_type ScalarDefaults;

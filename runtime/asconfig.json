@@ -1,0 +1,8 @@
+{
+  "type": "lib",
+  "config": "air",
+  "compilerOptions": {
+    "include-sources": ["src"],
+    "output": "bin/as3flatbuffers.swc"
+  }
+}

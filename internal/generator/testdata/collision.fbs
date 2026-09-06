@@ -1,0 +1,4 @@
+namespace fixtures;
+table Point { x:float; }
+table PointView { y:float; }
+root_type Point;

@@ -1,0 +1,8 @@
+namespace example;
+
+table Point {
+  x:float;
+  y:float;
+}
+
+root_type Point;
