@@ -17,12 +17,17 @@ type field struct {
 	WordDefault                         string
 	Optional                            bool
 	Width                               uint32
+	Offset                              uint32
+	Struct                              bool
+	ViewCache                           string
 }
 
 type object struct {
-	Name, Package string
-	Count         int
-	Fields        []field
+	Name, Package   string
+	Count           int
+	Fields          []field
+	Struct          bool
+	Size, Alignment uint32
 }
 
 func floatLiteral(value float64) string {

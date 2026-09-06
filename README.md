@@ -4,9 +4,10 @@ An experimental FlatBuffers runtime for ActionScript 3 and Flash/AIR, built
 around owned objects and reusable views into binary data.
 
 This initial branch includes a Go code generator and a working runtime for
-scalar-only tables (`bool`, `byte`, `ubyte`, `short`, `ushort`, `int`, `uint`,
-`long`, `ulong`, `float`, and `double` in `.fbs` schemas). The runtime provides
-a reusable backwards builder, bounded table access, and 64-bit word helpers.
+tables and inline structs with scalar fields (`bool`, `byte`, `ubyte`, `short`,
+`ushort`, `int`, `uint`, `long`, `ulong`, `float`, and `double` in `.fbs` schemas).
+Tables and structs can also contain inline structs. The runtime provides
+a reusable backwards builder, borrowed views, and 64-bit word helpers.
 `Point` / `PointView` are generated from the example schema. This is not yet a
 general FlatBuffers implementation; unsupported schema features produce errors.
 
@@ -73,8 +74,38 @@ reads it, so it cannot be detected from the BFBS alone. With that compiler, keep
 full unsigned range, including `18446744073709551615`; correctly encoded BFBS
 defaults also preserve the full range.
 
-The example uses a FlatBuffers **table**, so fields can be omitted and defaults
-read correctly. Inline FlatBuffers structs are a future addition.
+The Point example above uses a FlatBuffers **table**, so fields can be omitted
+and defaults read correctly.
+
+## Inline structs
+
+Structs produce the same owned class / borrowed view pair. Their views hold a
+ByteArray and base offset; scalar getters read fixed positions directly, without
+a vtable lookup. `bind(bytes, offset)` takes the absolute location of the struct,
+checks its full byte range, and sets little-endian order. For example, the
+`fixtures.geometry.Point` struct in `internal/testdata/inline.fbs` has this layout:
+
+```as3
+const view:PointView = new PointView().bind(bytes, structOffset);
+trace(view.x, view.y);  // Float32 at structOffset and structOffset + 4.
+const point:Point = view.unpack();
+view.unpack(point);    // Reuse an owned destination.
+```
+
+Struct fields inside a table default to null and may be omitted. Struct fields
+inside another struct are always inline and start with owned child instances;
+keep them non-null when packing. `reset()` reuses those children and their 64-bit
+word objects. `clone()` copies deeply. Struct-valued view getters return fresh
+borrowed child views, while `unpack(existing)` caches private child readers and
+reuses owned destinations. Returned child views keep their own binding when the
+parent view is rebound.
+
+The generator uses reflected field offsets, sizes, and alignment, including
+padding and `force_align`. A struct's `pack(builder)` writes inline at the current
+builder position. Generated table packing records it immediately with `addStruct`;
+for manual construction, use `builder.addStruct(slot, value.pack(builder))` inside
+an open table. Struct offsets cannot be reused elsewhere. `Builder.finish()` still
+requires a table root. Fixed-size arrays inside structs are not supported yet.
 
 ## Build and test
 
@@ -106,6 +137,9 @@ double precision, NaN/infinities, subnormal floats, signed zero, 8-byte alignmen
 nonzero defaults, and deep-copy versus reuse behavior.
 Nullable fixtures cover absence, present zero/false, mixed presence, and transitions
 between present and absent fields in reused destinations.
+Struct fixtures use `flatc`-generated Python builders/readers to check nested
+layouts, padding, all scalar types, omitted fields, and 16-byte alignment. AIR
+also checks direct binding at nonzero offsets, borrowed reads, and deep reuse.
 
 ## Generate ActionScript
 
@@ -117,7 +151,7 @@ flatc -b --schema -o bin examples/point/schema/point.fbs
 bin/as3flatc -o examples/point/src bin/point.bfbs
 ```
 
-Every supported table produces an owned class and a `View` class. Owned objects
+Every supported table or struct produces an owned class and a `View` class. Owned objects
 have schema defaults, `reset()`, `copyFrom()`, `clone()`, and `pack(builder)`.
 Views expose lazy field getters and `unpack(destination = null)`.
 
@@ -134,7 +168,7 @@ still rejected.
 Schema validation completes before any output files are written. The CLI overwrites
 matching generated files, but does not remove stale files after schema renames.
 
-Strings, vectors, nested objects, structs, enums/unions, key
+Strings, vectors, nested tables, fixed-size arrays, enums/unions, required/key
 fields, services, and file identifiers are currently unsupported.
 The CLI reports an error for unsupported features instead of emitting partial APIs.
 
@@ -149,15 +183,15 @@ using the pinned compiler version.
 cmd/as3flatc/               .bfbs -> AS3 command
 internal/                  Schema validation, naming, and source generation
 internal/reflection/       Official binary-schema bindings and source schema
-runtime/src/as3flatbuffers/  Builder, TableView, and integer types
+runtime/src/as3flatbuffers/  Builder, TableView, StructView, and scalar helpers
 runtime/test/               AIR tests
 examples/point/schema/      Reference .fbs schema
 examples/point/src/         Generated owned object and view
 tools/                      Reference-runtime interoperability harness
 ```
 
-The next milestones are offset fields, strings, vectors, nested tables, inline structs,
-and enums/unions. Schema-specific verification, file identifiers,
+The next milestones are offset fields, strings, vectors, nested tables, fixed-size
+arrays, and enums/unions. Schema-specific verification, file identifiers,
 size-prefixed roots, and vtable deduplication are also not implemented yet.
 No Royale compatibility layer is included.
 

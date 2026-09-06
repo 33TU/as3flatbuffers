@@ -10,14 +10,17 @@ type TableNames struct {
 }
 
 var tableMembers = map[string]struct{}{
-	"bool":    {},
-	"int8":    {},
-	"uint8":   {},
-	"int16":   {},
-	"uint16":  {},
-	"int64":   {},
-	"uint64":  {},
-	"float64": {},
+	"base":         {},
+	"bindStruct":   {},
+	"requireBound": {},
+	"bool":         {},
+	"int8":         {},
+	"uint8":        {},
+	"int16":        {},
+	"uint16":       {},
+	"int64":        {},
+	"uint64":       {},
+	"float64":      {},
 
 	"bind":                    {},
 	"bindRoot":                {},

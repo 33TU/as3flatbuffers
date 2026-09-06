@@ -37,7 +37,7 @@ func parseSchema(data []byte) ([]object, error) {
 		if !schema.Objects(&source, i) {
 			return nil, fmt.Errorf("missing schema object %d", i)
 		}
-		o, e := parseObject(&source, len(data))
+		o, e := parseObject(&source, schema, len(data))
 		if e != nil {
 			return nil, e
 		}
@@ -52,14 +52,14 @@ func parseSchema(data []byte) ([]object, error) {
 		}
 		objects = append(objects, o)
 	}
+	if err := validateStructs(objects); err != nil {
+		return nil, err
+	}
 	return objects, nil
 }
 
-func parseObject(source *reflection.Object, dataLength int) (object, error) {
+func parseObject(source *reflection.Object, schema *reflection.Schema, dataLength int) (object, error) {
 	fullName := string(source.Name())
-	if source.IsStruct() {
-		return object{}, fmt.Errorf("%s: inline structs are not supported yet", fullName)
-	}
 	parts := strings.Split(fullName, ".")
 	for _, part := range parts {
 		if !identifier.MatchString(part) || IsAS3ReservedWord(part) {
@@ -67,6 +67,13 @@ func parseObject(source *reflection.Object, dataLength int) (object, error) {
 		}
 	}
 	o := object{Name: parts[len(parts)-1], Package: strings.Join(parts[:len(parts)-1], ".")}
+	o.Struct = source.IsStruct()
+	if o.Struct {
+		if source.Bytesize() <= 0 || source.Bytesize() > 65535 || source.Minalign() <= 0 || source.Minalign() > 256 || source.Minalign()&(source.Minalign()-1) != 0 || source.Bytesize()%source.Minalign() != 0 {
+			return o, fmt.Errorf("%s: invalid struct size or alignment", fullName)
+		}
+		o.Size, o.Alignment = uint32(source.Bytesize()), uint32(source.Minalign())
+	}
 	_, typeConflict := typeNames[o.Name]
 	_, viewConflict := typeNames[o.Name+"View"]
 	if typeConflict || viewConflict {
@@ -81,12 +88,15 @@ func parseObject(source *reflection.Object, dataLength int) (object, error) {
 		if !source.Fields(&f, i) {
 			return o, fmt.Errorf("%s: missing field %d", fullName, i)
 		}
-		if f.Id() >= 32765 || ids[f.Id()] || uint32(f.Offset()) != 4+uint32(f.Id())*2 {
+		if f.Id() >= 32765 || ids[f.Id()] || (!o.Struct && uint32(f.Offset()) != 4+uint32(f.Id())*2) {
 			return o, fmt.Errorf("%s: invalid field id or vtable offset", fullName)
 		}
 		ids[f.Id()] = true
 		if int(f.Id())+1 > o.Count {
 			o.Count = int(f.Id()) + 1
+		}
+		if o.Struct && (f.Deprecated() || f.Optional()) {
+			return o, fmt.Errorf("%s: struct fields cannot be deprecated or optional", fullName)
 		}
 		if f.Deprecated() {
 			continue
@@ -102,29 +112,48 @@ func parseObject(source *reflection.Object, dataLength int) (object, error) {
 		if fType == nil {
 			return o, fmt.Errorf("%s.%s: missing type", fullName, name)
 		}
-		if fType.Index() != -1 {
-			return o, fmt.Errorf("%s.%s: referenced types are not supported yet", fullName, name)
-		}
-		out, err := parseScalar(&f)
-		if err != nil {
-			return o, fmt.Errorf("%s.%s: %w", fullName, name, err)
-		}
-		out.Width = map[string]uint32{"bool": 1, "int8": 1, "uint8": 1, "int16": 2, "uint16": 2,
-			"int32": 4, "uint32": 4, "float32": 4, "int64": 8, "uint64": 8, "float64": 8}[out.Reader]
-		if f.Optional() {
-			out.Optional, out.Default = true, "null"
-			if out.WordDefault == "" {
-				out.Type = "as3flatbuffers.types." + map[string]string{
-					"int": "OptionalInt", "uint": "OptionalUint", "Number": "OptionalNumber", "Boolean": "OptionalBoolean",
-				}[out.Type]
+		var out field
+		if fType.BaseType() == reflection.BaseTypeObj {
+			var target reflection.Object
+			if fType.Index() < 0 || int(fType.Index()) >= schema.ObjectsLength() || !schema.Objects(&target, int(fType.Index())) || !target.IsStruct() {
+				return o, fmt.Errorf("%s.%s: only references to structs are supported yet", fullName, name)
+			}
+			out = field{Name: name, ID: f.Id(), Type: string(target.Name()), Struct: true, Width: uint32(target.Bytesize()), Default: "null"}
+			if o.Struct {
+				out.Default = "new " + out.Type + "()"
+			}
+		} else {
+			if fType.Index() != -1 {
+				return o, fmt.Errorf("%s.%s: referenced types are not supported yet", fullName, name)
+			}
+			var err error
+			out, err = parseScalar(&f)
+			if err != nil {
+				return o, fmt.Errorf("%s.%s: %w", fullName, name, err)
+			}
+			out.Width = map[string]uint32{"bool": 1, "int8": 1, "uint8": 1, "int16": 2, "uint16": 2,
+				"int32": 4, "uint32": 4, "float32": 4, "int64": 8, "uint64": 8, "float64": 8}[out.Reader]
+			if f.Optional() {
+				out.Optional, out.Default = true, "null"
+				if out.WordDefault == "" {
+					out.Type = "as3flatbuffers.types." + map[string]string{
+						"int": "OptionalInt", "uint": "OptionalUint", "Number": "OptionalNumber", "Boolean": "OptionalBoolean",
+					}[out.Type]
+				}
 			}
 		}
+		out.Offset = uint32(f.Offset())
 		o.Fields = append(o.Fields, out)
 	}
 	sort.Slice(o.Fields, func(i, j int) bool { return o.Fields[i].ID < o.Fields[j].ID })
 	names := NewTableNames(o.Name)
 	for i := range o.Fields {
 		o.Fields[i].Name = names.Field(o.Fields[i].ID, o.Fields[i].Name)
+	}
+	for i := range o.Fields {
+		if o.Fields[i].Struct {
+			o.Fields[i].ViewCache = uniqueName(o.Fields[i].Name+"View", names.used)
+		}
 	}
 	return o, nil
 }

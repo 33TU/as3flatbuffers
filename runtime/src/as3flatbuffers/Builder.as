@@ -6,7 +6,7 @@ package as3flatbuffers
     import flash.utils.Endian;
 
     /**
-     * Reusable backwards builder for FlatBuffers tables with scalar primitive fields.
+     * Reusable backwards builder for FlatBuffers tables and inline structs.
      * Offsets refer to distance from the end of storage, so growth preserves them.
      * Scalar add methods accept force=true to retain present nullable defaults.
      */
@@ -218,6 +218,37 @@ package as3flatbuffers
             fields[slot] = offset;
         }
 
+        /** Record a struct immediately after its pack() call inside this table. */
+        public function addStruct(slot:uint, structOffset:uint):void
+        {
+            checkSlot(slot);
+            if (!structOffset || structOffset != offset || structOffset <= tableStart)
+                throw new Error("Struct must be written inline in the open table");
+            fields[slot] = structOffset;
+        }
+
+        /** Align and reserve storage before generated backwards struct writes. */
+        public function prepareStruct(size:uint, alignment:uint):void
+        {
+            if (finished) throw new Error("Reset a finished builder");
+            if (!size || size > 65535 || !alignment || alignment > 256 ||
+                (alignment & (alignment - 1)) || size % alignment)
+                throw new RangeError("Invalid struct size or alignment");
+            prepare(alignment, size);
+        }
+
+        public function pad(count:uint):void
+        {
+            if (finished) throw new Error("Reset a finished builder");
+            if (count > 65535) throw new RangeError("Struct padding is too large");
+            prepare(1, count);
+            for (var i:uint = 0; i < count; i++)
+            {
+                bytes.position = --space;
+                bytes.writeByte(0);
+            }
+        }
+
         public function endTable():uint
         {
             if (!tableOpen)
@@ -262,7 +293,7 @@ package as3flatbuffers
             return result;
         }
 
-        private function get offset():uint
+        public function get offset():uint
         {
             return bytes.length - space;
         }
@@ -275,16 +306,107 @@ package as3flatbuffers
                 throw new Error("Field was already written");
         }
 
-        private function putInt32(value:int):void
+        public function putBool(value:Boolean):void
         {
+            if (finished) throw new Error("Reset a finished builder");
+            prepare(1, 0);
+            space -= 1;
+            bytes.position = space;
+            bytes.writeBoolean(value);
+        }
+
+        public function putInt8(value:int):void
+        {
+            if (finished) throw new Error("Reset a finished builder");
+            if (value < -128 || value > 127) throw new RangeError("Int8 value is out of range");
+            prepare(1, 0);
+            space -= 1;
+            bytes.position = space;
+            bytes.writeByte(value);
+        }
+
+        public function putUint8(value:uint):void
+        {
+            if (finished) throw new Error("Reset a finished builder");
+            if (value > 255) throw new RangeError("Uint8 value is out of range");
+            prepare(1, 0);
+            space -= 1;
+            bytes.position = space;
+            bytes.writeByte(value);
+        }
+
+        public function putInt16(value:int):void
+        {
+            if (finished) throw new Error("Reset a finished builder");
+            if (value < -32768 || value > 32767) throw new RangeError("Int16 value is out of range");
+            prepare(2, 0);
+            space -= 2;
+            bytes.position = space;
+            bytes.writeShort(value);
+        }
+
+        public function putUint32(value:uint):void
+        {
+            if (finished) throw new Error("Reset a finished builder");
+            prepare(4, 0);
+            space -= 4;
+            bytes.position = space;
+            bytes.writeUnsignedInt(value);
+        }
+
+        public function putFloat32(value:Number):void
+        {
+            if (finished) throw new Error("Reset a finished builder");
+            prepare(4, 0);
+            space -= 4;
+            bytes.position = space;
+            bytes.writeFloat(value);
+        }
+
+        public function putFloat64(value:Number):void
+        {
+            if (finished) throw new Error("Reset a finished builder");
+            prepare(8, 0);
+            space -= 8;
+            bytes.position = space;
+            bytes.writeDouble(value);
+        }
+
+        public function putInt64(value:Int64):void
+        {
+            if (finished) throw new Error("Reset a finished builder");
+            if (!value) throw new ArgumentError("Int64 value must be non-null");
+            prepare(8, 0);
+            space -= 8;
+            bytes.position = space;
+            bytes.writeUnsignedInt(value.low);
+            bytes.writeUnsignedInt(uint(value.high));
+        }
+
+        public function putUint64(value:UInt64):void
+        {
+            if (finished) throw new Error("Reset a finished builder");
+            if (!value) throw new ArgumentError("UInt64 value must be non-null");
+            prepare(8, 0);
+            space -= 8;
+            bytes.position = space;
+            bytes.writeUnsignedInt(value.low);
+            bytes.writeUnsignedInt(uint(value.high));
+        }
+
+        public function putInt32(value:int):void
+        {
+            if (finished) throw new Error("Reset a finished builder");
             prepare(4, 0);
             space -= 4;
             bytes.position = space;
             bytes.writeInt(value);
         }
 
-        private function putUint16(value:uint):void
+        public function putUint16(value:uint):void
         {
+            if (finished) throw new Error("Reset a finished builder");
+            if (value > 65535) throw new RangeError("Uint16 value is out of range");
             prepare(2, 0);
             space -= 2;
             bytes.position = space;

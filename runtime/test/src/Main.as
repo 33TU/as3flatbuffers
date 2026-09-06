@@ -185,6 +185,7 @@ package
                 PrimitiveTests.run(directory, check, read, write);
                 OptionalTests.run(directory, check, read, write);
                 BuilderStateTests.run(check);
+                StructTests.run(directory, check, read, write);
                 result.ok = true;
                 result.checks = checks;
                 status = 0;

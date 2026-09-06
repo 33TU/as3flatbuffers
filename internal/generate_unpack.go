@@ -6,7 +6,9 @@ func generateUnpack(w *IndentWriter, o object) {
 	w.Indent()
 	w.Line("if (!destination) destination = new %s();", o.Name)
 	for _, f := range o.Fields {
-		if f.Optional {
+		if f.Struct {
+			generateStructFieldUnpack(w, f, false)
+		} else if f.Optional {
 			generateOptionalRead(w, f, "destination."+f.Name)
 		} else if f.WordDefault != "" {
 			w.Line("destination.%s = %s(%d, %s, destination.%s);", f.Name, f.Reader, f.ID, f.WordDefault, f.Name)

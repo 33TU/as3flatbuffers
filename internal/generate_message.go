@@ -4,8 +4,13 @@ func generateMessage(w *IndentWriter, o object) {
 	generatePackage(w, o)
 	w.Line("import as3flatbuffers.Builder;")
 	generateScalarImports(w, o)
+	generateStructImports(w, o, false)
 	w.BlankLine()
-	w.Line("/** Owned mutable value. pack() returns an offset for Builder.finish(). */")
+	if o.Struct {
+		w.Line("/** Owned inline struct. pack() writes at the current builder position. */")
+	} else {
+		w.Line("/** Owned mutable value. pack() returns an offset for Builder.finish(). */")
+	}
 	w.Line("public final class %s", o.Name)
 	w.Line("{")
 	w.Indent()
@@ -34,7 +39,10 @@ func generateReset(w *IndentWriter, o object) {
 	w.Line("{")
 	w.Indent()
 	for _, f := range o.Fields {
-		if f.Optional {
+		if f.Struct && o.Struct {
+			w.Line("if (!this.%s) this.%s = %s;", f.Name, f.Name, f.Default)
+			w.Line("else this.%s.reset();", f.Name)
+		} else if f.Optional {
 			w.Line("this.%s = null;", f.Name)
 		} else if f.WordDefault != "" {
 			w.Line("if (!this.%s) this.%s = %s;", f.Name, f.Name, f.Default)
@@ -56,7 +64,11 @@ func generateCopyFrom(w *IndentWriter, o object) {
 	w.Line("{")
 	w.Indent()
 	for _, f := range o.Fields {
-		if f.Optional {
+		if f.Struct {
+			w.Line("if (!source.%s) this.%s = null;", f.Name, f.Name)
+			w.Line("else if (!this.%s) this.%s = source.%s.clone();", f.Name, f.Name, f.Name)
+			w.Line("else this.%s.copyFrom(source.%s);", f.Name, f.Name)
+		} else if f.Optional {
 			generateOptionalCopy(w, f)
 		} else if f.WordDefault != "" {
 			w.Line("if (!this.%s) this.%s = %s;", f.Name, f.Name, f.Default)

@@ -24,6 +24,9 @@ generate: build-generator
     bin/as3flatc -o runtime/test/generated bin/primitives.bfbs
     {{ FLATC }} -b --schema -o bin internal/testdata/optional.fbs
     bin/as3flatc -o runtime/test/generated bin/optional.bfbs
+    {{ FLATC }} -b --schema -o bin internal/testdata/inline.fbs
+    bin/as3flatc -o runtime/test/generated bin/inline.bfbs
+    {{ FLATC }} --python -o runtime/bin/python internal/testdata/inline.fbs
 
 generate-reflection:
     {{ FLATC }} --go --gen-onefile --go-namespace reflection -o internal/reflection internal/reflection/upstream/reflection.fbs
