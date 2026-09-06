@@ -22,19 +22,19 @@ message.point = new Point();
 message.point.x = 1.25;
 message.point.y = -2.5;
 
-const bytes:ByteArray = builder.finish(message.pack(builder));
+const bytes:ByteArray = builder.finish(PointMessage.pack(message, builder));
 bytes.endian = Endian.LITTLE_ENDIAN;
 bytes.position = 0;
 const messageView:PointMessageView = new PointMessageView().bind(bytes, bytes.readUnsignedInt());
 const pointView:PointView = messageView.point;
 trace(pointView.x, pointView.y);
 
-const owned:Point = pointView.unpack();
-pointView.unpack(owned); // Reuse an independent owned Point.
+const owned:Point = PointView.unpack(pointView);
+PointView.unpack(pointView, owned); // Reuse an independent owned Point.
 
 builder.reset();
 message.point.x = 42;
-const next:ByteArray = builder.finish(message.pack(builder));
+const next:ByteArray = builder.finish(PointMessage.pack(message, builder));
 next.endian = Endian.LITTLE_ENDIAN;
 next.position = 0;
 messageView.bind(next, next.readUnsignedInt());
@@ -49,5 +49,5 @@ at a root-offset word. The struct view checks its byte range and sets little-end
 order when bound.
 
 `PointMessage.point` defaults to null and may be omitted. A present Point always
-stores both coordinates, including zeros. `Point.pack(builder)` writes inline;
+stores both coordinates, including zeros. `Point.pack(point, builder)` writes inline;
 the generated `PointMessage.pack()` places it inside the table automatically.

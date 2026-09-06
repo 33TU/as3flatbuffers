@@ -24,18 +24,18 @@ const builder:Builder = new Builder();
 const point:Point = new Point();
 point.x = 1.25;
 point.y = -2.5;
-const bytes:ByteArray = builder.finish(point.pack(builder));
+const bytes:ByteArray = builder.finish(Point.pack(point, builder));
 
 bytes.endian = Endian.LITTLE_ENDIAN;
 bytes.position = 0;
 const view:PointView = new PointView().bind(bytes, bytes.readUnsignedInt());
 trace(view.x, view.y);              // Reads the input directly.
-const owned:Point = view.unpack();  // Independent mutable value.
-view.unpack(owned);                // Overwrites a reusable destination.
+const owned:Point = PointView.unpack(view);  // Independent mutable value.
+PointView.unpack(view, owned);     // Overwrites a reusable destination.
 
 builder.reset();                   // Retains builder capacity.
 point.x = 42;
-const next:ByteArray = builder.finish(point.pack(builder));
+const next:ByteArray = builder.finish(Point.pack(point, builder));
 next.endian = Endian.LITTLE_ENDIAN;
 next.position = 0;
 view.bind(next, next.readUnsignedInt()); // Reuses the view at the new table position.
@@ -63,11 +63,11 @@ buffers. `Point.pack()` returns a builder offset, not a complete buffer.
 
 `long` and `ulong` fields use `as3flatbuffers.types.Int64` and `UInt64`, with
 separate low/high words to preserve all 64 bits. Non-nullable owned fields start with non-null
-word objects; `reset()`, `copyFrom()`, and `unpack(existing)` reuse them, allocating
-replacements if the destination fields were set to null. `clone()` copies the
+word objects; `reset()` and `unpack(view, existing)` reuse them, allocating
+replacements if the destination fields were set to null. `clone(source)` copies the
 words independently. A view's 64-bit getter returns a fresh word object;
-`unpack(existing)` avoids those getter allocations. Keep source word fields
-non-null when packing or copying. Narrow integer writes reject out-of-range values.
+`unpack(view, existing)` avoids those getter allocations. Keep source word fields
+non-null when packing or cloning. Narrow integer writes reject out-of-range values.
 
 Nullable scalar fields (`score:int = null` in a schema) use AS3PB's `OptionalInt`,
 `OptionalUint`, `OptionalNumber`, or `OptionalBoolean` wrappers. A null wrapper
@@ -75,9 +75,9 @@ represents absence; a non-null wrapper holds a present `.value`, including zero
 or false. Nullable `long` and `ulong` use `Int64` and `UInt64` directly, with null
 representing absence. All 11 scalar types support nullable fields.
 
-Nullable fields initialize and reset to null. `copyFrom()` and `unpack(existing)`
-reuse present destination wrappers, allocate missing ones, and clear absent fields.
-`clone()` deeply copies wrappers, and a view getter returns an independent wrapper
+Nullable fields initialize and reset to null. `unpack(view, existing)` reuses
+present destination wrappers, allocates missing ones, and clears absent fields.
+`clone(source)` deeply copies wrappers, and a view getter returns an independent wrapper
 or null. Packing preserves present zero/false values instead of omitting them.
 For manual construction, the builder's scalar `add*` methods accept a final
 `force` argument that writes a value even when it equals the supplied default.
@@ -104,14 +104,14 @@ has this layout:
 ```as3
 const view:PointView = new PointView().bind(bytes, structOffset);
 trace(view.x, view.y);  // Float32 at structOffset and structOffset + 4.
-const point:Point = view.unpack();
-view.unpack(point);    // Reuse an owned destination.
+const point:Point = PointView.unpack(view);
+PointView.unpack(view, point);    // Reuse an owned destination.
 ```
 
 Struct fields inside a table default to null and may be omitted. Struct fields
 inside another struct are always inline and start with owned child instances;
 keep them non-null when packing. `reset()` reuses those children and their 64-bit
-word objects. `clone()` copies deeply. Struct-valued getters and `unpack(existing)`
+word objects. `clone(source)` copies deeply. Struct-valued getters and `unpack(view, existing)`
 reuse the same private child views, initialized with their parent and held in const
 fields. Repeated getter calls return the same child instance. After the parent is
 rebound, a subsequent getter or unpack call rebinds that child, affecting any
@@ -120,9 +120,9 @@ and bind a separate view when you need an independent binding. An absent table
 field returns null; it does not invalidate an earlier returned child view.
 
 The generator uses reflected field offsets, sizes, and alignment, including
-padding and `force_align`. A struct's `pack(builder)` writes inline at the current
-builder position. Generated table packing records it immediately with `addStruct`;
-for manual construction, use `builder.addStruct(slot, value.pack(builder))` inside
+padding and `force_align`. A struct's static `pack(source, builder)` writes inline
+at the current builder position. Generated table packing records it immediately with `addStruct`;
+for manual construction, use `builder.addStruct(slot, Point.pack(value, builder))` inside
 an open table. Struct offsets cannot be reused elsewhere. `Builder.finish()` still
 requires a table root. Fixed-size arrays inside structs are not supported yet.
 
@@ -171,15 +171,17 @@ bin/as3flatc -o examples/point/src bin/point.bfbs
 ```
 
 Every supported table or struct produces an owned class and a `View` class. Owned objects
-have schema defaults, `reset()`, `copyFrom()`, `clone()`, and `pack(builder)`.
-Views expose lazy field getters and `unpack(destination = null)`.
+have schema defaults and an instance `reset()`, plus static `clone(source)` and
+`pack(source, builder)` methods. `clone(null)` returns null. Generated owned classes
+do not expose `copyFrom()`.
+Views expose lazy field getters and static `unpack(sourceView, destination = null)`.
 
 Source generation uses AS3PB's `IndentWriter` approach: focused Go emitters for
 owned fields and methods, packing, unpacking, binding, and direct view reads under
 `internal/`. Shared Go emitters keep the generator logic in one place while each
 generated view contains its own implementation.
 `unpack()` emits direct scalar reads into the destination instead of calling
-getters. Nested structs use the cached child views' `unpack()` methods.
+getters. Nested structs pass cached child views into their static `unpack()` methods.
 
 Field IDs and deprecated slot gaps come from the binary schema. Case conversion
 uses AS3PB's naming helpers: field names become lower camel case while leading,

@@ -35,43 +35,46 @@ package fixtures
             this.class_ = 133;
         }
 
-        public function copyFrom(source:Naming):Naming
+        public static function clone(source:Naming):Naming
         {
-            this.snakeCase = source.snakeCase;
-            this.snakeCase_ = source.snakeCase_;
-            this.reset_ = source.reset_;
-            this.reset__ = source.reset__;
-            this.reset___ = source.reset___;
-            this.bind_ = source.bind_;
-            this.bind_2 = source.bind_2;
-            this.__leadingName = source.__leadingName;
-            this.trailingName_ = source.trailingName_;
-            this.value_Name = source.value_Name;
-            this.bytes_ = source.bytes_;
-            this.class_ = source.class_;
-            return this;
+            if (!source)
+                return null;
+
+            const destination:Naming = new Naming();
+            destination.snakeCase = source.snakeCase;
+            destination.snakeCase_ = source.snakeCase_;
+            destination.reset_ = source.reset_;
+            destination.reset__ = source.reset__;
+            destination.reset___ = source.reset___;
+            destination.bind_ = source.bind_;
+            destination.bind_2 = source.bind_2;
+            destination.__leadingName = source.__leadingName;
+            destination.trailingName_ = source.trailingName_;
+            destination.value_Name = source.value_Name;
+            destination.bytes_ = source.bytes_;
+            destination.class_ = source.class_;
+
+            return destination;
         }
 
-        public function clone():Naming
+        public static function pack(source:Naming, builder:as3flatbuffers.Builder):uint
         {
-            return new Naming().copyFrom(this);
-        }
+            if (!source || !builder)
+                throw new ArgumentError("Source and builder must be non-null");
 
-        public function pack(builder:as3flatbuffers.Builder):uint
-        {
             builder.startTable(12);
-            builder.addInt32(0, this.snakeCase, 11);
-            builder.addInt32(1, this.snakeCase_, 22);
-            builder.addInt32(2, this.reset_, 33);
-            builder.addInt32(3, this.reset__, 44);
-            builder.addInt32(4, this.reset___, 55);
-            builder.addInt32(5, this.bind_, 66);
-            builder.addInt32(6, this.bind_2, 77);
-            builder.addInt32(7, this.__leadingName, 88);
-            builder.addInt32(8, this.trailingName_, 99);
-            builder.addInt32(9, this.value_Name, 111);
-            builder.addInt32(10, this.bytes_, 122);
-            builder.addInt32(11, this.class_, 133);
+            builder.addInt32(0, source.snakeCase, 11);
+            builder.addInt32(1, source.snakeCase_, 22);
+            builder.addInt32(2, source.reset_, 33);
+            builder.addInt32(3, source.reset__, 44);
+            builder.addInt32(4, source.reset___, 55);
+            builder.addInt32(5, source.bind_, 66);
+            builder.addInt32(6, source.bind_2, 77);
+            builder.addInt32(7, source.__leadingName, 88);
+            builder.addInt32(8, source.trailingName_, 99);
+            builder.addInt32(9, source.value_Name, 111);
+            builder.addInt32(10, source.bytes_, 122);
+            builder.addInt32(11, source.class_, 133);
             return builder.endTable();
         }
     }

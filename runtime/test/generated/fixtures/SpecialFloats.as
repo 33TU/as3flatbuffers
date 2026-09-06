@@ -17,25 +17,28 @@ package fixtures
             this.negative = Number.NEGATIVE_INFINITY;
         }
 
-        public function copyFrom(source:SpecialFloats):SpecialFloats
+        public static function clone(source:SpecialFloats):SpecialFloats
         {
-            this.f32 = source.f32;
-            this.f64 = source.f64;
-            this.negative = source.negative;
-            return this;
+            if (!source)
+                return null;
+
+            const destination:SpecialFloats = new SpecialFloats();
+            destination.f32 = source.f32;
+            destination.f64 = source.f64;
+            destination.negative = source.negative;
+
+            return destination;
         }
 
-        public function clone():SpecialFloats
+        public static function pack(source:SpecialFloats, builder:as3flatbuffers.Builder):uint
         {
-            return new SpecialFloats().copyFrom(this);
-        }
+            if (!source || !builder)
+                throw new ArgumentError("Source and builder must be non-null");
 
-        public function pack(builder:as3flatbuffers.Builder):uint
-        {
             builder.startTable(3);
-            builder.addFloat32(0, this.f32, NaN);
-            builder.addFloat64(1, this.f64, Number.POSITIVE_INFINITY);
-            builder.addFloat64(2, this.negative, Number.NEGATIVE_INFINITY);
+            builder.addFloat32(0, source.f32, NaN);
+            builder.addFloat64(1, source.f64, Number.POSITIVE_INFINITY);
+            builder.addFloat64(2, source.negative, Number.NEGATIVE_INFINITY);
             return builder.endTable();
         }
     }

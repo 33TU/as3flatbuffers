@@ -27,10 +27,10 @@ package
             {
                 const expected:Array = cases[i];
                 FixtureBuffer.bindRoot(view, read(directory.resolvePath("primitive-python-" + i + ".bin")));
-                check(view.unpack(value) === value, "Primitive unpack reuses destination");
+                check(PrimitivesView.unpack(view, value) === value, "Primitive unpack reuses destination");
                 check(value.i64 === signed && value.u64 === unsigned, "Unpack reuses 64-bit words");
                 verify(value, expected, check);
-                const copy:Primitives = value.clone();
+                const copy:Primitives = Primitives.clone(value);
                 check(copy.i64 !== value.i64 && copy.i64.eq(value.i64) &&
                     copy.u64 !== value.u64 && copy.u64.eq(value.u64), "Clone deeply owns 64-bit words");
                 const getter:Int64 = view.i64;
@@ -40,10 +40,10 @@ package
                 unsignedGetter.high ^= 1;
                 check(view.u64.eq(value.u64), "Unsigned getter returns independent words");
                 builder.reset();
-                const output:ByteArray = builder.finish(copy.pack(builder));
+                const output:ByteArray = builder.finish(Primitives.pack(copy, builder));
                 write(directory.resolvePath("primitive-as3-" + i + ".bin"), output);
                 FixtureBuffer.bindRoot(view, output);
-                verify(view.unpack(), expected, check);
+                verify(PrimitivesView.unpack(view), expected, check);
                 copy.i64.low ^= 1;
                 copy.u64.high ^= 1;
                 verify(value, expected, check);
@@ -51,7 +51,7 @@ package
                     retained = output;
             }
             FixtureBuffer.bindRoot(view, retained);
-            verify(view.unpack(), cases[3], check);
+            verify(PrimitivesView.unpack(view), cases[3], check);
             value.reset();
             check(value.i64 === signed && value.u64 === unsigned, "Reset reuses 64-bit words");
             verify(value, cases[0], check);
@@ -59,24 +59,22 @@ package
             FixtureBuffer.bindRoot(view, read(directory.resolvePath("primitive-python-0.bin")));
             value.i64.set(1, 2);
             value.u64.set(3, 4);
-            view.unpack(value);
+            PrimitivesView.unpack(view, value);
             verify(value, cases[0], check);
             value.i64 = null;
             value.u64 = null;
-            view.unpack(value);
+            PrimitivesView.unpack(view, value);
             verify(value, cases[0], check);
             value.i64 = null;
             value.u64 = null;
             value.reset();
             verify(value, cases[0], check);
-            value.i64 = null;
-            value.u64 = null;
-            value.copyFrom(view.unpack());
-            verify(value, cases[0], check);
+            const defaultClone:Primitives = Primitives.clone(PrimitivesView.unpack(view));
+            verify(defaultClone, cases[0], check);
 
             const special:SpecialFloats = new SpecialFloats();
             builder.reset();
-            const specialView:SpecialFloatsView = FixtureBuffer.bindRoot(new SpecialFloatsView(), builder.finish(special.pack(builder)));
+            const specialView:SpecialFloatsView = FixtureBuffer.bindRoot(new SpecialFloatsView(), builder.finish(SpecialFloats.pack(special, builder)));
             check(isNaN(specialView.f32) && specialView.f64 == Number.POSITIVE_INFINITY &&
                 specialView.negative == Number.NEGATIVE_INFINITY, "Nonfinite schema defaults");
 

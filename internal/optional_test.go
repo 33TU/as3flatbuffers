@@ -22,8 +22,8 @@ func TestOptionalScalars(t *testing.T) {
 		"public var f64:as3flatbuffers.types.OptionalNumber = null;",
 		"public var i64:as3flatbuffers.types.Int64 = null;",
 		"public var u64:as3flatbuffers.types.UInt64 = null;",
-		"builder.addBool(0, this.enabled.value, false, true);",
-		"builder.addInt64(7, this.i64, 0, 0, true);",
+		"builder.addBool(0, source.enabled.value, false, true);",
+		"builder.addInt64(7, source.i64, 0, 0, true);",
 	} {
 		if !strings.Contains(string(files[0].Data), want) {
 			t.Errorf("missing %q", want)

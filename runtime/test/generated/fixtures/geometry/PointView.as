@@ -42,10 +42,13 @@ package fixtures.geometry
             return bytes.readFloat();
         }
 
-        public function unpack(destination:Point = null):Point
+        public static function unpack(source:PointView, destination:Point = null):Point
         {
-            if (!bytes)
+            if (!source || !source.bytes)
                 throw new Error("View is not bound");
+
+            const bytes:flash.utils.ByteArray = source.bytes;
+            const base:uint = source.base;
             if (!destination)
                 destination = new Point();
 

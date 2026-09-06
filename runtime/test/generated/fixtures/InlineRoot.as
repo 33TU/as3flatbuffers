@@ -27,39 +27,38 @@ package fixtures
             this.pointView = 0;
         }
 
-        public function copyFrom(source:InlineRoot):InlineRoot
+        public static function clone(source:InlineRoot):InlineRoot
         {
-            if (!source.point) this.point = null;
-            else if (!this.point) this.point = source.point.clone();
-            else this.point.copyFrom(source.point);
-            if (!source.frame) this.frame = null;
-            else if (!this.frame) this.frame = source.frame.clone();
-            else this.frame.copyFrom(source.frame);
-            if (!source.envelope) this.envelope = null;
-            else if (!this.envelope) this.envelope = source.envelope.clone();
-            else this.envelope.copyFrom(source.envelope);
-            if (!source.aligned) this.aligned = null;
-            else if (!this.aligned) this.aligned = source.aligned.clone();
-            else this.aligned.copyFrom(source.aligned);
-            this.label_ = source.label_;
-            this.pointView = source.pointView;
-            return this;
+            if (!source)
+                return null;
+
+            const destination:InlineRoot = new InlineRoot();
+            destination.point = fixtures.geometry.Point.clone(source.point);
+            destination.frame = fixtures.geometry.Frame.clone(source.frame);
+            destination.envelope = fixtures.geometry.Envelope.clone(source.envelope);
+            destination.aligned = fixtures.geometry.Aligned.clone(source.aligned);
+            destination.label_ = source.label_;
+            destination.pointView = source.pointView;
+
+            return destination;
         }
 
-        public function clone():InlineRoot
+        public static function pack(source:InlineRoot, builder:as3flatbuffers.Builder):uint
         {
-            return new InlineRoot().copyFrom(this);
-        }
+            if (!source || !builder)
+                throw new ArgumentError("Source and builder must be non-null");
 
-        public function pack(builder:as3flatbuffers.Builder):uint
-        {
             builder.startTable(6);
-            if (this.point) builder.addStruct(0, this.point.pack(builder));
-            if (this.frame) builder.addStruct(1, this.frame.pack(builder));
-            if (this.envelope) builder.addStruct(2, this.envelope.pack(builder));
-            if (this.aligned) builder.addStruct(3, this.aligned.pack(builder));
-            builder.addInt32(4, this.label_, 0);
-            builder.addInt32(5, this.pointView, 0);
+            if (source.point)
+                builder.addStruct(0, fixtures.geometry.Point.pack(source.point, builder));
+            if (source.frame)
+                builder.addStruct(1, fixtures.geometry.Frame.pack(source.frame, builder));
+            if (source.envelope)
+                builder.addStruct(2, fixtures.geometry.Envelope.pack(source.envelope, builder));
+            if (source.aligned)
+                builder.addStruct(3, fixtures.geometry.Aligned.pack(source.aligned, builder));
+            builder.addInt32(4, source.label_, 0);
+            builder.addInt32(5, source.pointView, 0);
             return builder.endTable();
         }
     }

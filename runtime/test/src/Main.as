@@ -42,6 +42,7 @@ package
                 const builder:Builder = new Builder(16);
                 const view:PointView = new PointView();
                 const owned:Point = new Point();
+                check(Point.clone(null) == null, "Static table clone preserves null");
                 var retained:ByteArray;
                 for (var i:int = 0; i < manifest.length; i++)
                 {
@@ -49,13 +50,13 @@ package
                     const input:ByteArray = read(directory.resolvePath(item.file));
                     FixtureBuffer.bindRoot(view, input);
                     check(view.x == item.x && view.y == item.y, "Official builder -> AS3 view");
-                    check(view.unpack(owned) === owned && owned.x == item.x && owned.y == item.y,
+                    check(PointView.unpack(view, owned) === owned && owned.x == item.x && owned.y == item.y,
                         "Unpack reuses and overwrites destination");
-                    const cloned:Point = owned.clone();
+                    const cloned:Point = Point.clone(owned);
                     check(cloned !== owned && cloned.x == owned.x && cloned.y == owned.y, "Owned clone");
-                    check(view.unpack() !== owned, "Fresh unpack");
+                    check(PointView.unpack(view) !== owned, "Fresh unpack");
                     builder.reset();
-                    const output:ByteArray = builder.finish(owned.pack(builder));
+                    const output:ByteArray = builder.finish(Point.pack(owned, builder));
                     write(directory.resolvePath("as3-" + i + ".bin"), output);
                     FixtureBuffer.bindRoot(view, output);
                     check(view.x == item.x && view.y == item.y, "AS3 builder round trip");
@@ -80,7 +81,7 @@ package
 
                 // Borrowing is observable; unpacked values remain independent.
                 const pointBytes:ByteArray = read(directory.resolvePath("as3-0.bin"));
-                FixtureBuffer.bindRoot(view, pointBytes).unpack(owned);
+                PointView.unpack(FixtureBuffer.bindRoot(view, pointBytes), owned);
                 pointBytes.position = 0;
                 const table:uint = pointBytes.readUnsignedInt();
                 pointBytes.position = table;
@@ -97,6 +98,12 @@ package
                 caught = false;
                 try { owned.x = view.x; } catch (unbound:Error) { caught = true; }
                 check(caught, "Failed bind invalidates old view");
+                caught = false;
+                try { PointView.unpack(view, owned); } catch (unboundSource:Error) { caught = true; }
+                check(caught, "Static unpack rejects an unbound source view");
+                caught = false;
+                try { PointView.unpack(null, owned); } catch (nullSource:Error) { caught = true; }
+                check(caught, "Static unpack rejects a null source view");
                 FixtureBuffer.bindRoot(view, retained);
                 caught = false;
                 try { view.bind(retained, uint.MAX_VALUE); } catch (directError:RangeError) { caught = true; }
@@ -147,7 +154,7 @@ package
                     "Generated owned defaults");
                 builder.reset();
                 const scalarView:ScalarDefaultsView = new ScalarDefaultsView();
-                FixtureBuffer.bindRoot(scalarView, builder.finish(scalar.pack(builder)));
+                FixtureBuffer.bindRoot(scalarView, builder.finish(ScalarDefaults.pack(scalar, builder)));
                 check(scalarView.xAxis == 1.25 && scalarView.signedValue == -7 &&
                     scalarView.unsignedValue == uint.MAX_VALUE && scalarView.reset_ == 9,
                     "Generated view omitted defaults");
@@ -156,14 +163,14 @@ package
                 scalar.unsignedValue = 0;
                 scalar.reset_ = 42;
                 builder.reset();
-                const scalarBytes:ByteArray = builder.finish(scalar.pack(builder));
+                const scalarBytes:ByteArray = builder.finish(ScalarDefaults.pack(scalar, builder));
                 write(directory.resolvePath("scalars.bin"), scalarBytes);
                 FixtureBuffer.bindRoot(scalarView, scalarBytes);
-                const scalarCopy:ScalarDefaults = scalarView.unpack();
+                const scalarCopy:ScalarDefaults = ScalarDefaultsView.unpack(scalarView);
                 check(scalarCopy.xAxis == -2.5 && scalarCopy.signedValue == int.MIN_VALUE &&
                     scalarCopy.unsignedValue == 0 && scalarCopy.reset_ == 42,
                     "Generated full scalar unpack");
-                check(scalarView.unpack(scalarCopy) === scalarCopy, "Generated scalar reuse");
+                check(ScalarDefaultsView.unpack(scalarView, scalarCopy) === scalarCopy, "Generated scalar reuse");
                 scalarCopy.reset();
                 check(scalarCopy.xAxis == 1.25 && scalarCopy.signedValue == -7 &&
                     scalarCopy.unsignedValue == uint.MAX_VALUE && scalarCopy.reset_ == 9,
@@ -181,7 +188,7 @@ package
                 naming.bytes_ = -9;
                 naming.class_ = 17;
                 builder.reset();
-                const namingBytes:ByteArray = builder.finish(naming.pack(builder));
+                const namingBytes:ByteArray = builder.finish(Naming.pack(naming, builder));
                 write(directory.resolvePath("naming.bin"), namingBytes);
                 const namingView:NamingView = FixtureBuffer.bindRoot(new NamingView(), namingBytes);
                 check(namingView.snakeCase == -1 && namingView.snakeCase_ == -2 &&
@@ -189,7 +196,7 @@ package
                     namingView.bytes_ == -9 && namingView.class_ == 17 &&
                     namingView.__leadingName == 88 && namingView.trailingName_ == 99 &&
                     namingView.value_Name == 111, "Generated view uses identical allocated names");
-                const namingCopy:Naming = namingView.unpack();
+                const namingCopy:Naming = NamingView.unpack(namingView);
                 check(namingCopy.snakeCase_ == -2 && namingCopy.bind_2 == 456, "Named unpack");
                 namingCopy.reset();
                 check(namingCopy.snakeCase_ == 22 && namingCopy.bind_2 == 77, "Named reset");

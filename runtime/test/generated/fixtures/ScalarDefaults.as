@@ -19,27 +19,30 @@ package fixtures
             this.reset_ = 9;
         }
 
-        public function copyFrom(source:ScalarDefaults):ScalarDefaults
+        public static function clone(source:ScalarDefaults):ScalarDefaults
         {
-            this.xAxis = source.xAxis;
-            this.signedValue = source.signedValue;
-            this.unsignedValue = source.unsignedValue;
-            this.reset_ = source.reset_;
-            return this;
+            if (!source)
+                return null;
+
+            const destination:ScalarDefaults = new ScalarDefaults();
+            destination.xAxis = source.xAxis;
+            destination.signedValue = source.signedValue;
+            destination.unsignedValue = source.unsignedValue;
+            destination.reset_ = source.reset_;
+
+            return destination;
         }
 
-        public function clone():ScalarDefaults
+        public static function pack(source:ScalarDefaults, builder:as3flatbuffers.Builder):uint
         {
-            return new ScalarDefaults().copyFrom(this);
-        }
+            if (!source || !builder)
+                throw new ArgumentError("Source and builder must be non-null");
 
-        public function pack(builder:as3flatbuffers.Builder):uint
-        {
             builder.startTable(5);
-            builder.addFloat32(0, this.xAxis, 1.25);
-            builder.addInt32(2, this.signedValue, -7);
-            builder.addUint32(3, this.unsignedValue, 4294967295);
-            builder.addInt32(4, this.reset_, 9);
+            builder.addFloat32(0, source.xAxis, 1.25);
+            builder.addInt32(2, source.signedValue, -7);
+            builder.addUint32(3, source.unsignedValue, 4294967295);
+            builder.addInt32(4, source.reset_, 9);
             return builder.endTable();
         }
     }

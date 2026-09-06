@@ -177,12 +177,16 @@ package fixtures
             return new as3flatbuffers.types.OptionalNumber(bytes.readDouble());
         }
 
-        public function unpack(destination:OptionalScalars = null):OptionalScalars
+        public static function unpack(source:OptionalScalarsView, destination:OptionalScalars = null):OptionalScalars
         {
+            if (!source || !source.bytes)
+                throw new Error("View is not bound");
+
+            const bytes:flash.utils.ByteArray = source.bytes;
             if (!destination)
                 destination = new OptionalScalars();
 
-            const position0:uint = fieldOffset(4, 1);
+            const position0:uint = source.fieldOffset(4, 1);
             if (!position0)
             {
                 destination.enabled = null;
@@ -196,7 +200,7 @@ package fixtures
                 destination.enabled.value = bytes.readBoolean();
             }
 
-            const position1:uint = fieldOffset(6, 1);
+            const position1:uint = source.fieldOffset(6, 1);
             if (!position1)
             {
                 destination.i8 = null;
@@ -210,7 +214,7 @@ package fixtures
                 destination.i8.value = bytes.readByte();
             }
 
-            const position2:uint = fieldOffset(8, 1);
+            const position2:uint = source.fieldOffset(8, 1);
             if (!position2)
             {
                 destination.u8 = null;
@@ -224,7 +228,7 @@ package fixtures
                 destination.u8.value = bytes.readUnsignedByte();
             }
 
-            const position3:uint = fieldOffset(10, 2);
+            const position3:uint = source.fieldOffset(10, 2);
             if (!position3)
             {
                 destination.i16 = null;
@@ -238,7 +242,7 @@ package fixtures
                 destination.i16.value = bytes.readShort();
             }
 
-            const position4:uint = fieldOffset(12, 2);
+            const position4:uint = source.fieldOffset(12, 2);
             if (!position4)
             {
                 destination.u16 = null;
@@ -252,7 +256,7 @@ package fixtures
                 destination.u16.value = bytes.readUnsignedShort();
             }
 
-            const position5:uint = fieldOffset(14, 4);
+            const position5:uint = source.fieldOffset(14, 4);
             if (!position5)
             {
                 destination.i32 = null;
@@ -266,7 +270,7 @@ package fixtures
                 destination.i32.value = bytes.readInt();
             }
 
-            const position6:uint = fieldOffset(16, 4);
+            const position6:uint = source.fieldOffset(16, 4);
             if (!position6)
             {
                 destination.u32 = null;
@@ -280,7 +284,7 @@ package fixtures
                 destination.u32.value = bytes.readUnsignedInt();
             }
 
-            const position7:uint = fieldOffset(18, 8);
+            const position7:uint = source.fieldOffset(18, 8);
             if (!position7)
             {
                 destination.i64 = null;
@@ -294,7 +298,7 @@ package fixtures
                 destination.i64.set(bytes.readUnsignedInt(), bytes.readInt());
             }
 
-            const position8:uint = fieldOffset(20, 8);
+            const position8:uint = source.fieldOffset(20, 8);
             if (!position8)
             {
                 destination.u64 = null;
@@ -308,7 +312,7 @@ package fixtures
                 destination.u64.set(bytes.readUnsignedInt(), bytes.readUnsignedInt());
             }
 
-            const position9:uint = fieldOffset(22, 4);
+            const position9:uint = source.fieldOffset(22, 4);
             if (!position9)
             {
                 destination.f32 = null;
@@ -322,7 +326,7 @@ package fixtures
                 destination.f32.value = bytes.readFloat();
             }
 
-            const position10:uint = fieldOffset(24, 8);
+            const position10:uint = source.fieldOffset(24, 8);
             if (!position10)
             {
                 destination.f64 = null;

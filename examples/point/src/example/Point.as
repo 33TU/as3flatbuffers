@@ -15,23 +15,26 @@ package example
             this.y = 0;
         }
 
-        public function copyFrom(source:Point):Point
+        public static function clone(source:Point):Point
         {
-            this.x = source.x;
-            this.y = source.y;
-            return this;
+            if (!source)
+                return null;
+
+            const destination:Point = new Point();
+            destination.x = source.x;
+            destination.y = source.y;
+
+            return destination;
         }
 
-        public function clone():Point
+        public static function pack(source:Point, builder:as3flatbuffers.Builder):uint
         {
-            return new Point().copyFrom(this);
-        }
+            if (!source || !builder)
+                throw new ArgumentError("Source and builder must be non-null");
 
-        public function pack(builder:as3flatbuffers.Builder):uint
-        {
             builder.startTable(2);
-            builder.addFloat32(0, this.x, 0);
-            builder.addFloat32(1, this.y, 0);
+            builder.addFloat32(0, source.x, 0);
+            builder.addFloat32(1, source.y, 0);
             return builder.endTable();
         }
     }

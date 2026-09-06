@@ -18,8 +18,6 @@ func generateMessage(w *IndentWriter, o object) {
 	w.BlankLine()
 	generateReset(w, o)
 	w.BlankLine()
-	generateCopyFrom(w, o)
-	w.BlankLine()
 	generateClone(w, o)
 	w.BlankLine()
 	generatePack(w, o)
@@ -59,34 +57,29 @@ func generateReset(w *IndentWriter, o object) {
 	w.Line("}")
 }
 
-func generateCopyFrom(w *IndentWriter, o object) {
-	w.Line("public function copyFrom(source:%s):%s", o.Name, o.Name)
+func generateClone(w *IndentWriter, o object) {
+	w.Line("public static function clone(source:%s):%s", o.Name, o.Name)
 	w.Line("{")
 	w.Indent()
+	w.Line("if (!source)")
+	w.Indent()
+	w.Line("return null;")
+	w.Dedent()
+	w.BlankLine()
+	w.Line("const destination:%s = new %s();", o.Name, o.Name)
 	for _, f := range o.Fields {
 		if f.Struct {
-			w.Line("if (!source.%s) this.%s = null;", f.Name, f.Name)
-			w.Line("else if (!this.%s) this.%s = source.%s.clone();", f.Name, f.Name, f.Name)
-			w.Line("else this.%s.copyFrom(source.%s);", f.Name, f.Name)
+			w.Line("destination.%s = %s.clone(source.%s);", f.Name, f.Type, f.Name)
 		} else if f.Optional {
-			generateOptionalCopy(w, f)
+			w.Line("destination.%s = source.%s ? source.%s.clone() : null;", f.Name, f.Name, f.Name)
 		} else if f.WordDefault != "" {
-			w.Line("if (!this.%s) this.%s = %s;", f.Name, f.Name, f.Default)
-			w.Line("this.%s.copyFrom(source.%s);", f.Name, f.Name)
+			w.Line("destination.%s.copyFrom(source.%s);", f.Name, f.Name)
 		} else {
-			w.Line("this.%s = source.%s;", f.Name, f.Name)
+			w.Line("destination.%s = source.%s;", f.Name, f.Name)
 		}
 	}
-	w.Line("return this;")
-	w.Dedent()
-	w.Line("}")
-}
-
-func generateClone(w *IndentWriter, o object) {
-	w.Line("public function clone():%s", o.Name)
-	w.Line("{")
-	w.Indent()
-	w.Line("return new %s().copyFrom(this);", o.Name)
+	w.BlankLine()
+	w.Line("return destination;")
 	w.Dedent()
 	w.Line("}")
 }

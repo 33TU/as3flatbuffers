@@ -19,29 +19,30 @@ package fixtures.geometry
             this.tail = 0;
         }
 
-        public function copyFrom(source:Envelope):Envelope
+        public static function clone(source:Envelope):Envelope
         {
-            this.lead = source.lead;
-            if (!source.frame) this.frame = null;
-            else if (!this.frame) this.frame = source.frame.clone();
-            else this.frame.copyFrom(source.frame);
-            this.tail = source.tail;
-            return this;
+            if (!source)
+                return null;
+
+            const destination:Envelope = new Envelope();
+            destination.lead = source.lead;
+            destination.frame = fixtures.geometry.Frame.clone(source.frame);
+            destination.tail = source.tail;
+
+            return destination;
         }
 
-        public function clone():Envelope
+        public static function pack(source:Envelope, builder:as3flatbuffers.Builder):uint
         {
-            return new Envelope().copyFrom(this);
-        }
+            if (!source || !builder)
+                throw new ArgumentError("Source and builder must be non-null");
 
-        public function pack(builder:as3flatbuffers.Builder):uint
-        {
             builder.prepareStruct(72, 8);
             builder.pad(6);
-            builder.putInt16(this.tail);
-            this.frame.pack(builder);
+            builder.putInt16(source.tail);
+            fixtures.geometry.Frame.pack(source.frame, builder);
             builder.pad(7);
-            builder.putInt8(this.lead);
+            builder.putInt8(source.lead);
             return builder.offset;
         }
     }

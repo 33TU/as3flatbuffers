@@ -181,12 +181,16 @@ package fixtures
             return bytes.readInt();
         }
 
-        public function unpack(destination:Naming = null):Naming
+        public static function unpack(source:NamingView, destination:Naming = null):Naming
         {
+            if (!source || !source.bytes)
+                throw new Error("View is not bound");
+
+            const bytes:flash.utils.ByteArray = source.bytes;
             if (!destination)
                 destination = new Naming();
 
-            const position0:uint = fieldOffset(4, 4);
+            const position0:uint = source.fieldOffset(4, 4);
             if (!position0)
             {
                 destination.snakeCase = 11;
@@ -197,7 +201,7 @@ package fixtures
                 destination.snakeCase = bytes.readInt();
             }
 
-            const position1:uint = fieldOffset(6, 4);
+            const position1:uint = source.fieldOffset(6, 4);
             if (!position1)
             {
                 destination.snakeCase_ = 22;
@@ -208,7 +212,7 @@ package fixtures
                 destination.snakeCase_ = bytes.readInt();
             }
 
-            const position2:uint = fieldOffset(8, 4);
+            const position2:uint = source.fieldOffset(8, 4);
             if (!position2)
             {
                 destination.reset_ = 33;
@@ -219,7 +223,7 @@ package fixtures
                 destination.reset_ = bytes.readInt();
             }
 
-            const position3:uint = fieldOffset(10, 4);
+            const position3:uint = source.fieldOffset(10, 4);
             if (!position3)
             {
                 destination.reset__ = 44;
@@ -230,7 +234,7 @@ package fixtures
                 destination.reset__ = bytes.readInt();
             }
 
-            const position4:uint = fieldOffset(12, 4);
+            const position4:uint = source.fieldOffset(12, 4);
             if (!position4)
             {
                 destination.reset___ = 55;
@@ -241,7 +245,7 @@ package fixtures
                 destination.reset___ = bytes.readInt();
             }
 
-            const position5:uint = fieldOffset(14, 4);
+            const position5:uint = source.fieldOffset(14, 4);
             if (!position5)
             {
                 destination.bind_ = 66;
@@ -252,7 +256,7 @@ package fixtures
                 destination.bind_ = bytes.readInt();
             }
 
-            const position6:uint = fieldOffset(16, 4);
+            const position6:uint = source.fieldOffset(16, 4);
             if (!position6)
             {
                 destination.bind_2 = 77;
@@ -263,7 +267,7 @@ package fixtures
                 destination.bind_2 = bytes.readInt();
             }
 
-            const position7:uint = fieldOffset(18, 4);
+            const position7:uint = source.fieldOffset(18, 4);
             if (!position7)
             {
                 destination.__leadingName = 88;
@@ -274,7 +278,7 @@ package fixtures
                 destination.__leadingName = bytes.readInt();
             }
 
-            const position8:uint = fieldOffset(20, 4);
+            const position8:uint = source.fieldOffset(20, 4);
             if (!position8)
             {
                 destination.trailingName_ = 99;
@@ -285,7 +289,7 @@ package fixtures
                 destination.trailingName_ = bytes.readInt();
             }
 
-            const position9:uint = fieldOffset(22, 4);
+            const position9:uint = source.fieldOffset(22, 4);
             if (!position9)
             {
                 destination.value_Name = 111;
@@ -296,7 +300,7 @@ package fixtures
                 destination.value_Name = bytes.readInt();
             }
 
-            const position10:uint = fieldOffset(24, 4);
+            const position10:uint = source.fieldOffset(24, 4);
             if (!position10)
             {
                 destination.bytes_ = 122;
@@ -307,7 +311,7 @@ package fixtures
                 destination.bytes_ = bytes.readInt();
             }
 
-            const position11:uint = fieldOffset(26, 4);
+            const position11:uint = source.fieldOffset(26, 4);
             if (!position11)
             {
                 destination.class_ = 133;

@@ -39,63 +39,44 @@ package fixtures
             this.f64 = null;
         }
 
-        public function copyFrom(source:OptionalScalars):OptionalScalars
+        public static function clone(source:OptionalScalars):OptionalScalars
         {
-            if (!source.enabled) this.enabled = null;
-            else if (!this.enabled) this.enabled = source.enabled.clone();
-            else this.enabled.value = source.enabled.value;
-            if (!source.i8) this.i8 = null;
-            else if (!this.i8) this.i8 = source.i8.clone();
-            else this.i8.value = source.i8.value;
-            if (!source.u8) this.u8 = null;
-            else if (!this.u8) this.u8 = source.u8.clone();
-            else this.u8.value = source.u8.value;
-            if (!source.i16) this.i16 = null;
-            else if (!this.i16) this.i16 = source.i16.clone();
-            else this.i16.value = source.i16.value;
-            if (!source.u16) this.u16 = null;
-            else if (!this.u16) this.u16 = source.u16.clone();
-            else this.u16.value = source.u16.value;
-            if (!source.i32) this.i32 = null;
-            else if (!this.i32) this.i32 = source.i32.clone();
-            else this.i32.value = source.i32.value;
-            if (!source.u32) this.u32 = null;
-            else if (!this.u32) this.u32 = source.u32.clone();
-            else this.u32.value = source.u32.value;
-            if (!source.i64) this.i64 = null;
-            else if (!this.i64) this.i64 = source.i64.clone();
-            else this.i64.copyFrom(source.i64);
-            if (!source.u64) this.u64 = null;
-            else if (!this.u64) this.u64 = source.u64.clone();
-            else this.u64.copyFrom(source.u64);
-            if (!source.f32) this.f32 = null;
-            else if (!this.f32) this.f32 = source.f32.clone();
-            else this.f32.value = source.f32.value;
-            if (!source.f64) this.f64 = null;
-            else if (!this.f64) this.f64 = source.f64.clone();
-            else this.f64.value = source.f64.value;
-            return this;
+            if (!source)
+                return null;
+
+            const destination:OptionalScalars = new OptionalScalars();
+            destination.enabled = source.enabled ? source.enabled.clone() : null;
+            destination.i8 = source.i8 ? source.i8.clone() : null;
+            destination.u8 = source.u8 ? source.u8.clone() : null;
+            destination.i16 = source.i16 ? source.i16.clone() : null;
+            destination.u16 = source.u16 ? source.u16.clone() : null;
+            destination.i32 = source.i32 ? source.i32.clone() : null;
+            destination.u32 = source.u32 ? source.u32.clone() : null;
+            destination.i64 = source.i64 ? source.i64.clone() : null;
+            destination.u64 = source.u64 ? source.u64.clone() : null;
+            destination.f32 = source.f32 ? source.f32.clone() : null;
+            destination.f64 = source.f64 ? source.f64.clone() : null;
+
+            return destination;
         }
 
-        public function clone():OptionalScalars
+        public static function pack(source:OptionalScalars, builder:as3flatbuffers.Builder):uint
         {
-            return new OptionalScalars().copyFrom(this);
-        }
+            if (!source || !builder)
+                throw new ArgumentError("Source and builder must be non-null");
 
-        public function pack(builder:as3flatbuffers.Builder):uint
-        {
             builder.startTable(11);
-            if (this.enabled) builder.addBool(0, this.enabled.value, false, true);
-            if (this.i8) builder.addInt8(1, this.i8.value, 0, true);
-            if (this.u8) builder.addUint8(2, this.u8.value, 0, true);
-            if (this.i16) builder.addInt16(3, this.i16.value, 0, true);
-            if (this.u16) builder.addUint16(4, this.u16.value, 0, true);
-            if (this.i32) builder.addInt32(5, this.i32.value, 0, true);
-            if (this.u32) builder.addUint32(6, this.u32.value, 0, true);
-            if (this.i64) builder.addInt64(7, this.i64, 0, 0, true);
-            if (this.u64) builder.addUint64(8, this.u64, 0, 0, true);
-            if (this.f32) builder.addFloat32(9, this.f32.value, 0, true);
-            if (this.f64) builder.addFloat64(10, this.f64.value, 0, true);
+            if (source.enabled) builder.addBool(0, source.enabled.value, false, true);
+            if (source.i8) builder.addInt8(1, source.i8.value, 0, true);
+            if (source.u8) builder.addUint8(2, source.u8.value, 0, true);
+            if (source.i16) builder.addInt16(3, source.i16.value, 0, true);
+            if (source.u16) builder.addUint16(4, source.u16.value, 0, true);
+            if (source.i32) builder.addInt32(5, source.i32.value, 0, true);
+            if (source.u32) builder.addUint32(6, source.u32.value, 0, true);
+            if (source.i64) builder.addInt64(7, source.i64, 0, 0, true);
+            if (source.u64) builder.addUint64(8, source.u64, 0, 0, true);
+            if (source.f32) builder.addFloat32(9, source.f32.value, 0, true);
+            if (source.f64) builder.addFloat64(10, source.f64.value, 0, true);
             return builder.endTable();
         }
     }

@@ -42,10 +42,13 @@ package fixtures.geometry
             return bytes.readDouble();
         }
 
-        public function unpack(destination:Aligned = null):Aligned
+        public static function unpack(source:AlignedView, destination:Aligned = null):Aligned
         {
-            if (!bytes)
+            if (!source || !source.bytes)
                 throw new Error("View is not bound");
+
+            const bytes:flash.utils.ByteArray = source.bytes;
+            const base:uint = source.base;
             if (!destination)
                 destination = new Aligned();
 

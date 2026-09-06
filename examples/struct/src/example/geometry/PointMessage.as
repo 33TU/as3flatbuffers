@@ -14,23 +14,25 @@ package example.geometry
             this.point = null;
         }
 
-        public function copyFrom(source:PointMessage):PointMessage
+        public static function clone(source:PointMessage):PointMessage
         {
-            if (!source.point) this.point = null;
-            else if (!this.point) this.point = source.point.clone();
-            else this.point.copyFrom(source.point);
-            return this;
+            if (!source)
+                return null;
+
+            const destination:PointMessage = new PointMessage();
+            destination.point = example.geometry.Point.clone(source.point);
+
+            return destination;
         }
 
-        public function clone():PointMessage
+        public static function pack(source:PointMessage, builder:as3flatbuffers.Builder):uint
         {
-            return new PointMessage().copyFrom(this);
-        }
+            if (!source || !builder)
+                throw new ArgumentError("Source and builder must be non-null");
 
-        public function pack(builder:as3flatbuffers.Builder):uint
-        {
             builder.startTable(1);
-            if (this.point) builder.addStruct(0, this.point.pack(builder));
+            if (source.point)
+                builder.addStruct(0, example.geometry.Point.pack(source.point, builder));
             return builder.endTable();
         }
     }

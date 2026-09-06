@@ -35,9 +35,10 @@ func generateViewCaches(w *IndentWriter, o object) {
 }
 
 func generateStructPack(w *IndentWriter, o object) {
-	w.Line("public function pack(builder:as3flatbuffers.Builder):uint")
+	w.Line("public static function pack(source:%s, builder:as3flatbuffers.Builder):uint", o.Name)
 	w.Line("{")
 	w.Indent()
+	generatePackCheck(w)
 	w.Line("builder.prepareStruct(%d, %d);", o.Size, o.Alignment)
 	cursor := o.Size
 	for i := len(o.Fields) - 1; i >= 0; i-- {
@@ -46,9 +47,9 @@ func generateStructPack(w *IndentWriter, o object) {
 			w.Line("builder.pad(%d);", padding)
 		}
 		if f.Struct {
-			w.Line("this.%s.pack(builder);", f.Name)
+			w.Line("%s.pack(source.%s, builder);", f.Type, f.Name)
 		} else {
-			w.Line("builder.put%s(this.%s);", strings.TrimPrefix(f.Writer, "add"), f.Name)
+			w.Line("builder.put%s(source.%s);", strings.TrimPrefix(f.Writer, "add"), f.Name)
 		}
 		cursor = f.Offset
 	}
@@ -101,10 +102,10 @@ func generateStructView(w *IndentWriter, o object) {
 		w.Line("}")
 	}
 	w.BlankLine()
-	w.Line("public function unpack(destination:%s = null):%s", o.Name, o.Name)
+	w.Line("public static function unpack(source:%sView, destination:%s = null):%s", o.Name, o.Name, o.Name)
 	w.Line("{")
 	w.Indent()
-	generateBoundCheck(w)
+	generateUnpackSource(w, true)
 	w.Line("if (!destination)")
 	w.Indent()
 	w.Line("destination = new %s();", o.Name)
@@ -140,7 +141,7 @@ func generateStructView(w *IndentWriter, o object) {
 func generateStructFieldUnpack(w *IndentWriter, f field, inline bool) {
 	if !inline {
 		// Block scope does not scope AS3 vars; derive a distinct local name.
-		w.Line("const %sPosition:uint = fieldOffset(%d, %d);", f.ViewCache, 4+uint32(f.ID)*2, f.Width)
+		w.Line("const %sPosition:uint = source.fieldOffset(%d, %d);", f.ViewCache, 4+uint32(f.ID)*2, f.Width)
 		w.Line("if (!%sPosition)", f.ViewCache)
 		w.Line("{")
 		w.Indent()
@@ -152,9 +153,9 @@ func generateStructFieldUnpack(w *IndentWriter, f field, inline bool) {
 		w.Indent()
 	}
 	if inline {
-		w.Line("destination.%s = this.%s.bind(bytes, base + %d).unpack(destination.%s);", f.Name, f.ViewCache, f.Offset, f.Name)
+		w.Line("destination.%s = %sView.unpack(source.%s.bind(bytes, base + %d), destination.%s);", f.Name, f.Type, f.ViewCache, f.Offset, f.Name)
 	} else {
-		w.Line("destination.%s = this.%s.bind(bytes, %sPosition).unpack(destination.%s);", f.Name, f.ViewCache, f.ViewCache, f.Name)
+		w.Line("destination.%s = %sView.unpack(source.%s.bind(bytes, %sPosition), destination.%s);", f.Name, f.Type, f.ViewCache, f.ViewCache, f.Name)
 		w.Dedent()
 		w.Line("}")
 	}

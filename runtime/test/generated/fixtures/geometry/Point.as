@@ -15,23 +15,26 @@ package fixtures.geometry
             this.y = 0;
         }
 
-        public function copyFrom(source:Point):Point
+        public static function clone(source:Point):Point
         {
-            this.x = source.x;
-            this.y = source.y;
-            return this;
+            if (!source)
+                return null;
+
+            const destination:Point = new Point();
+            destination.x = source.x;
+            destination.y = source.y;
+
+            return destination;
         }
 
-        public function clone():Point
+        public static function pack(source:Point, builder:as3flatbuffers.Builder):uint
         {
-            return new Point().copyFrom(this);
-        }
+            if (!source || !builder)
+                throw new ArgumentError("Source and builder must be non-null");
 
-        public function pack(builder:as3flatbuffers.Builder):uint
-        {
             builder.prepareStruct(8, 4);
-            builder.putFloat32(this.y);
-            builder.putFloat32(this.x);
+            builder.putFloat32(source.y);
+            builder.putFloat32(source.x);
             return builder.offset;
         }
     }

@@ -37,43 +37,44 @@ package fixtures
             this.f64 = 1.2345678901234567;
         }
 
-        public function copyFrom(source:Primitives):Primitives
+        public static function clone(source:Primitives):Primitives
         {
-            this.enabled = source.enabled;
-            this.i8 = source.i8;
-            this.u8 = source.u8;
-            this.i16 = source.i16;
-            this.u16 = source.u16;
-            this.i32 = source.i32;
-            this.u32 = source.u32;
-            if (!this.i64) this.i64 = new as3flatbuffers.types.Int64(0, -2147483648);
-            this.i64.copyFrom(source.i64);
-            if (!this.u64) this.u64 = new as3flatbuffers.types.UInt64(4294967295, 2147483647);
-            this.u64.copyFrom(source.u64);
-            this.f32 = source.f32;
-            this.f64 = source.f64;
-            return this;
+            if (!source)
+                return null;
+
+            const destination:Primitives = new Primitives();
+            destination.enabled = source.enabled;
+            destination.i8 = source.i8;
+            destination.u8 = source.u8;
+            destination.i16 = source.i16;
+            destination.u16 = source.u16;
+            destination.i32 = source.i32;
+            destination.u32 = source.u32;
+            destination.i64.copyFrom(source.i64);
+            destination.u64.copyFrom(source.u64);
+            destination.f32 = source.f32;
+            destination.f64 = source.f64;
+
+            return destination;
         }
 
-        public function clone():Primitives
+        public static function pack(source:Primitives, builder:as3flatbuffers.Builder):uint
         {
-            return new Primitives().copyFrom(this);
-        }
+            if (!source || !builder)
+                throw new ArgumentError("Source and builder must be non-null");
 
-        public function pack(builder:as3flatbuffers.Builder):uint
-        {
             builder.startTable(11);
-            builder.addBool(0, this.enabled, true);
-            builder.addInt8(1, this.i8, -7);
-            builder.addUint8(2, this.u8, 255);
-            builder.addInt16(3, this.i16, -1234);
-            builder.addUint16(4, this.u16, 65535);
-            builder.addInt32(5, this.i32, -1234567);
-            builder.addUint32(6, this.u32, 4294967295);
-            builder.addInt64(7, this.i64, 0, -2147483648);
-            builder.addUint64(8, this.u64, 4294967295, 2147483647);
-            builder.addFloat32(9, this.f32, 0.5);
-            builder.addFloat64(10, this.f64, 1.2345678901234567);
+            builder.addBool(0, source.enabled, true);
+            builder.addInt8(1, source.i8, -7);
+            builder.addUint8(2, source.u8, 255);
+            builder.addInt16(3, source.i16, -1234);
+            builder.addUint16(4, source.u16, 65535);
+            builder.addInt32(5, source.i32, -1234567);
+            builder.addUint32(6, source.u32, 4294967295);
+            builder.addInt64(7, source.i64, 0, -2147483648);
+            builder.addUint64(8, source.u64, 4294967295, 2147483647);
+            builder.addFloat32(9, source.f32, 0.5);
+            builder.addFloat64(10, source.f64, 1.2345678901234567);
             return builder.endTable();
         }
     }

@@ -15,24 +15,27 @@ package fixtures.geometry
             this.value = 0;
         }
 
-        public function copyFrom(source:Aligned):Aligned
+        public static function clone(source:Aligned):Aligned
         {
-            this.id = source.id;
-            this.value = source.value;
-            return this;
+            if (!source)
+                return null;
+
+            const destination:Aligned = new Aligned();
+            destination.id = source.id;
+            destination.value = source.value;
+
+            return destination;
         }
 
-        public function clone():Aligned
+        public static function pack(source:Aligned, builder:as3flatbuffers.Builder):uint
         {
-            return new Aligned().copyFrom(this);
-        }
+            if (!source || !builder)
+                throw new ArgumentError("Source and builder must be non-null");
 
-        public function pack(builder:as3flatbuffers.Builder):uint
-        {
             builder.prepareStruct(16, 16);
-            builder.putFloat64(this.value);
+            builder.putFloat64(source.value);
             builder.pad(4);
-            builder.putInt32(this.id);
+            builder.putInt32(source.id);
             return builder.offset;
         }
     }

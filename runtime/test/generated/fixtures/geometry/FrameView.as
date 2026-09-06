@@ -137,17 +137,20 @@ package fixtures.geometry
             return bytes.readFloat();
         }
 
-        public function unpack(destination:Frame = null):Frame
+        public static function unpack(source:FrameView, destination:Frame = null):Frame
         {
-            if (!bytes)
+            if (!source || !source.bytes)
                 throw new Error("View is not bound");
+
+            const bytes:flash.utils.ByteArray = source.bytes;
+            const base:uint = source.base;
             if (!destination)
                 destination = new Frame();
 
             bytes.position = base + 0;
             destination.tag = bytes.readUnsignedByte();
 
-            destination.point = this.pointView.bind(bytes, base + 4).unpack(destination.point);
+            destination.point = fixtures.geometry.PointView.unpack(source.pointView.bind(bytes, base + 4), destination.point);
 
             bytes.position = base + 12;
             destination.count = bytes.readShort();

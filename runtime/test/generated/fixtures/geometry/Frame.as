@@ -41,49 +41,48 @@ package fixtures.geometry
             this.fraction = 0;
         }
 
-        public function copyFrom(source:Frame):Frame
+        public static function clone(source:Frame):Frame
         {
-            this.tag = source.tag;
-            if (!source.point) this.point = null;
-            else if (!this.point) this.point = source.point.clone();
-            else this.point.copyFrom(source.point);
-            this.count = source.count;
-            if (!this.signedValue) this.signedValue = new as3flatbuffers.types.Int64(0, 0);
-            this.signedValue.copyFrom(source.signedValue);
-            if (!this.unsignedValue) this.unsignedValue = new as3flatbuffers.types.UInt64(0, 0);
-            this.unsignedValue.copyFrom(source.unsignedValue);
-            this.weight = source.weight;
-            this.enabled = source.enabled;
-            this.tiny = source.tiny;
-            this.small = source.small;
-            this.number = source.number;
-            this.unsignedNumber = source.unsignedNumber;
-            this.fraction = source.fraction;
-            return this;
+            if (!source)
+                return null;
+
+            const destination:Frame = new Frame();
+            destination.tag = source.tag;
+            destination.point = fixtures.geometry.Point.clone(source.point);
+            destination.count = source.count;
+            destination.signedValue.copyFrom(source.signedValue);
+            destination.unsignedValue.copyFrom(source.unsignedValue);
+            destination.weight = source.weight;
+            destination.enabled = source.enabled;
+            destination.tiny = source.tiny;
+            destination.small = source.small;
+            destination.number = source.number;
+            destination.unsignedNumber = source.unsignedNumber;
+            destination.fraction = source.fraction;
+
+            return destination;
         }
 
-        public function clone():Frame
+        public static function pack(source:Frame, builder:as3flatbuffers.Builder):uint
         {
-            return new Frame().copyFrom(this);
-        }
+            if (!source || !builder)
+                throw new ArgumentError("Source and builder must be non-null");
 
-        public function pack(builder:as3flatbuffers.Builder):uint
-        {
             builder.prepareStruct(56, 8);
-            builder.putFloat32(this.fraction);
-            builder.putUint32(this.unsignedNumber);
-            builder.putInt32(this.number);
-            builder.putUint16(this.small);
-            builder.putInt8(this.tiny);
-            builder.putBool(this.enabled);
-            builder.putFloat64(this.weight);
-            builder.putUint64(this.unsignedValue);
-            builder.putInt64(this.signedValue);
+            builder.putFloat32(source.fraction);
+            builder.putUint32(source.unsignedNumber);
+            builder.putInt32(source.number);
+            builder.putUint16(source.small);
+            builder.putInt8(source.tiny);
+            builder.putBool(source.enabled);
+            builder.putFloat64(source.weight);
+            builder.putUint64(source.unsignedValue);
+            builder.putInt64(source.signedValue);
             builder.pad(2);
-            builder.putInt16(this.count);
-            this.point.pack(builder);
+            builder.putInt16(source.count);
+            fixtures.geometry.Point.pack(source.point, builder);
             builder.pad(3);
-            builder.putUint8(this.tag);
+            builder.putUint8(source.tag);
             return builder.offset;
         }
     }

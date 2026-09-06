@@ -24,7 +24,7 @@ package
                 for each (var name:String in FIELDS)
                     previous.push(value[name]);
                 FixtureBuffer.bindRoot(view, read(directory.resolvePath("optional-python-" + i + ".bin")));
-                check(view.unpack(value) === value, "Optional unpack reuses destination");
+                check(OptionalScalarsView.unpack(view, value) === value, "Optional unpack reuses destination");
                 verify(value, cases[i], check);
                 verify(view, cases[i], check);
                 for (var slot:int = 0; slot < FIELDS.length; slot++)
@@ -35,36 +35,35 @@ package
                     if (value[name])
                         check(view[name] !== view[name], "Optional getter returns independently owned wrapper: " + name);
                 }
-                const copy:OptionalScalars = value.clone();
+                const copy:OptionalScalars = OptionalScalars.clone(value);
                 verify(copy, cases[i], check);
                 for each (name in FIELDS)
                     check(!value[name] || copy[name] !== value[name], "Optional clone has independent wrappers");
-                value.copyFrom(copy);
+                OptionalScalarsView.unpack(view, value);
                 for (slot = 0; slot < FIELDS.length; slot++)
                 {
                     name = FIELDS[slot];
                     if (previous[slot] && value[name])
-                        check(previous[slot] === value[name], "Optional copyFrom reuses present wrapper: " + name);
+                        check(previous[slot] === value[name], "Repeated optional unpack reuses present wrapper: " + name);
                 }
-                value.copyFrom(value);
                 verify(value, cases[i], check);
                 builder.reset();
-                const output:ByteArray = builder.finish(copy.pack(builder));
+                const output:ByteArray = builder.finish(OptionalScalars.pack(copy, builder));
                 write(directory.resolvePath("optional-as3-" + i + ".bin"), output);
                 FixtureBuffer.bindRoot(view, output);
-                verify(view.unpack(), cases[i], check);
+                verify(OptionalScalarsView.unpack(view), cases[i], check);
                 if (copy.i64) copy.i64.low ^= 1;
                 if (copy.u64) copy.u64.high ^= 1;
                 if (copy.i32) copy.i32.value ^= 1;
                 verify(value, cases[i], check);
                 copy.reset();
                 verify(copy, cases[0], check);
-                copy.copyFrom(value);
+                OptionalScalarsView.unpack(view, copy);
                 verify(copy, cases[i], check);
-                value.copyFrom(new OptionalScalars());
+                value.reset();
                 verify(value, cases[0], check);
                 // Leave populated wrappers for the next iteration's reuse check.
-                value.copyFrom(copy);
+                OptionalScalarsView.unpack(view, value);
             }
             value.reset();
             verify(value, cases[0], check);

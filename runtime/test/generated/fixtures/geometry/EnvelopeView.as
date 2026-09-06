@@ -54,17 +54,20 @@ package fixtures.geometry
             return bytes.readShort();
         }
 
-        public function unpack(destination:Envelope = null):Envelope
+        public static function unpack(source:EnvelopeView, destination:Envelope = null):Envelope
         {
-            if (!bytes)
+            if (!source || !source.bytes)
                 throw new Error("View is not bound");
+
+            const bytes:flash.utils.ByteArray = source.bytes;
+            const base:uint = source.base;
             if (!destination)
                 destination = new Envelope();
 
             bytes.position = base + 0;
             destination.lead = bytes.readByte();
 
-            destination.frame = this.frameView.bind(bytes, base + 8).unpack(destination.frame);
+            destination.frame = fixtures.geometry.FrameView.unpack(source.frameView.bind(bytes, base + 8), destination.frame);
 
             bytes.position = base + 64;
             destination.tail = bytes.readShort();

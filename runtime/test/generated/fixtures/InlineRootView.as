@@ -121,52 +121,56 @@ package fixtures
             return bytes.readInt();
         }
 
-        public function unpack(destination:InlineRoot = null):InlineRoot
+        public static function unpack(source:InlineRootView, destination:InlineRoot = null):InlineRoot
         {
+            if (!source || !source.bytes)
+                throw new Error("View is not bound");
+
+            const bytes:flash.utils.ByteArray = source.bytes;
             if (!destination)
                 destination = new InlineRoot();
 
-            const pointView_Position:uint = fieldOffset(4, 8);
+            const pointView_Position:uint = source.fieldOffset(4, 8);
             if (!pointView_Position)
             {
                 destination.point = null;
             }
             else
             {
-                destination.point = this.pointView_.bind(bytes, pointView_Position).unpack(destination.point);
+                destination.point = fixtures.geometry.PointView.unpack(source.pointView_.bind(bytes, pointView_Position), destination.point);
             }
 
-            const frameViewPosition:uint = fieldOffset(6, 56);
+            const frameViewPosition:uint = source.fieldOffset(6, 56);
             if (!frameViewPosition)
             {
                 destination.frame = null;
             }
             else
             {
-                destination.frame = this.frameView.bind(bytes, frameViewPosition).unpack(destination.frame);
+                destination.frame = fixtures.geometry.FrameView.unpack(source.frameView.bind(bytes, frameViewPosition), destination.frame);
             }
 
-            const envelopeViewPosition:uint = fieldOffset(8, 72);
+            const envelopeViewPosition:uint = source.fieldOffset(8, 72);
             if (!envelopeViewPosition)
             {
                 destination.envelope = null;
             }
             else
             {
-                destination.envelope = this.envelopeView.bind(bytes, envelopeViewPosition).unpack(destination.envelope);
+                destination.envelope = fixtures.geometry.EnvelopeView.unpack(source.envelopeView.bind(bytes, envelopeViewPosition), destination.envelope);
             }
 
-            const alignedViewPosition:uint = fieldOffset(10, 16);
+            const alignedViewPosition:uint = source.fieldOffset(10, 16);
             if (!alignedViewPosition)
             {
                 destination.aligned = null;
             }
             else
             {
-                destination.aligned = this.alignedView.bind(bytes, alignedViewPosition).unpack(destination.aligned);
+                destination.aligned = fixtures.geometry.AlignedView.unpack(source.alignedView.bind(bytes, alignedViewPosition), destination.aligned);
             }
 
-            const position4:uint = fieldOffset(12, 4);
+            const position4:uint = source.fieldOffset(12, 4);
             if (!position4)
             {
                 destination.label_ = 0;
@@ -177,7 +181,7 @@ package fixtures
                 destination.label_ = bytes.readInt();
             }
 
-            const position5:uint = fieldOffset(14, 4);
+            const position5:uint = source.fieldOffset(14, 4);
             if (!position5)
             {
                 destination.pointView = 0;

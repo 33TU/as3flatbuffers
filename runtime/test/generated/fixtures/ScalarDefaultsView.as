@@ -101,12 +101,16 @@ package fixtures
             return bytes.readInt();
         }
 
-        public function unpack(destination:ScalarDefaults = null):ScalarDefaults
+        public static function unpack(source:ScalarDefaultsView, destination:ScalarDefaults = null):ScalarDefaults
         {
+            if (!source || !source.bytes)
+                throw new Error("View is not bound");
+
+            const bytes:flash.utils.ByteArray = source.bytes;
             if (!destination)
                 destination = new ScalarDefaults();
 
-            const position0:uint = fieldOffset(4, 4);
+            const position0:uint = source.fieldOffset(4, 4);
             if (!position0)
             {
                 destination.xAxis = 1.25;
@@ -117,7 +121,7 @@ package fixtures
                 destination.xAxis = bytes.readFloat();
             }
 
-            const position2:uint = fieldOffset(8, 4);
+            const position2:uint = source.fieldOffset(8, 4);
             if (!position2)
             {
                 destination.signedValue = -7;
@@ -128,7 +132,7 @@ package fixtures
                 destination.signedValue = bytes.readInt();
             }
 
-            const position3:uint = fieldOffset(10, 4);
+            const position3:uint = source.fieldOffset(10, 4);
             if (!position3)
             {
                 destination.unsignedValue = 4294967295;
@@ -139,7 +143,7 @@ package fixtures
                 destination.unsignedValue = bytes.readUnsignedInt();
             }
 
-            const position4:uint = fieldOffset(12, 4);
+            const position4:uint = source.fieldOffset(12, 4);
             if (!position4)
             {
                 destination.reset_ = 9;
