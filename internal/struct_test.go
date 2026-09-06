@@ -20,7 +20,7 @@ func TestStructGeneration(t *testing.T) {
 	for _, f := range files {
 		if f.Name == "fixtures/geometry/PointView.as" {
 			text := string(f.Data)
-			if !strings.Contains(text, "bytes.position = base + 4;") || strings.Contains(text, "field(") {
+			if !strings.Contains(text, "bytes.position = base + 4;") || strings.Contains(text, "fieldOffset(") {
 				t.Error("struct getter must use fixed offsets")
 			}
 		}

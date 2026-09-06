@@ -59,6 +59,10 @@ package
                     write(directory.resolvePath("as3-" + i + ".bin"), output);
                     view.bind(output);
                     check(view.x == item.x && view.y == item.y, "AS3 builder round trip");
+                    output.position = 0;
+                    const absoluteTable:uint = output.readUnsignedInt();
+                    check(view.bindAt(output, absoluteTable) === view && view.x == item.x && view.y == item.y,
+                        "Direct binding uses the absolute table position");
                     check(owned.x == cloned.x && owned.y == cloned.y, "Pack leaves owned values unchanged");
                     const prefixed:ByteArray = new ByteArray();
                     prefixed.writeUnsignedInt(0);
@@ -93,6 +97,13 @@ package
                 caught = false;
                 try { owned.x = view.x; } catch (unbound:Error) { caught = true; }
                 check(caught, "Failed bind invalidates old view");
+                view.bind(retained);
+                caught = false;
+                try { view.bindAt(retained, uint.MAX_VALUE); } catch (directError:RangeError) { caught = true; }
+                check(caught, "Direct binding rejects an invalid table position");
+                caught = false;
+                try { owned.x = view.x; } catch (directUnbound:Error) { caught = true; }
+                check(caught, "Failed direct bind invalidates old view");
 
                 const broken:ByteArray = read(directory.resolvePath("as3-0.bin"));
                 broken.position = 0; broken.writeUnsignedInt(0xffffffff);

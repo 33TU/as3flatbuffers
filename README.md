@@ -42,6 +42,13 @@ values into an owned object. Accessors move the input ByteArray's cursor, and bi
 sets its endianness to little-endian. Keep the input's length and structure stable
 while using a bound view.
 
+Views are self-contained generated classes: they own their buffer/offset state
+and read directly from ByteArray, with no runtime view base class. Table views
+contain a private `[Inline] fieldOffset()` helper and validate field ranges.
+`bind(bytes, rootOffset)` follows the root-offset word; `bindAt(bytes, tablePosition)`
+binds directly to an absolute table position. Both validate the table and invalidate
+the old binding on failure. Struct views bind directly to their inline position.
+
 `Builder.finish()` currently copies its finished region into an independent
 ByteArray. Resetting or growing the builder cannot invalidate previously returned
 buffers. `Point.pack()` returns a builder offset, not a complete buffer.
@@ -95,10 +102,13 @@ view.unpack(point);    // Reuse an owned destination.
 Struct fields inside a table default to null and may be omitted. Struct fields
 inside another struct are always inline and start with owned child instances;
 keep them non-null when packing. `reset()` reuses those children and their 64-bit
-word objects. `clone()` copies deeply. Struct-valued view getters return fresh
-borrowed child views, while `unpack(existing)` caches private child readers and
-reuses owned destinations. Returned child views keep their own binding when the
-parent view is rebound.
+word objects. `clone()` copies deeply. Struct-valued getters and `unpack(existing)`
+reuse the same private child views, initialized with their parent and held in const
+fields. Repeated getter calls return the same child instance. After the parent is
+rebound, a subsequent getter or unpack call rebinds that child, affecting any
+retained references to it. Use `unpack()` for independent owned values, or create
+and bind a separate view when you need an independent binding. An absent table
+field returns null; it does not invalidate an earlier returned child view.
 
 The generator uses reflected field offsets, sizes, and alignment, including
 padding and `force_align`. A struct's `pack(builder)` writes inline at the current
@@ -156,7 +166,9 @@ have schema defaults, `reset()`, `copyFrom()`, `clone()`, and `pack(builder)`.
 Views expose lazy field getters and `unpack(destination = null)`.
 
 Source generation uses AS3PB's `IndentWriter` approach: focused Go emitters for
-owned fields and methods, packing, unpacking, and view accessors under `internal/`.
+owned fields and methods, packing, unpacking, binding, and direct view reads under
+`internal/`. Shared Go emitters keep the generator logic in one place while each
+generated view contains its own implementation.
 
 Field IDs and deprecated slot gaps come from the binary schema. Case conversion
 uses AS3PB's naming helpers: field names become lower camel case while leading,
@@ -183,7 +195,7 @@ using the pinned compiler version.
 cmd/as3flatc/               .bfbs -> AS3 command
 internal/                  Schema validation, naming, and source generation
 internal/reflection/       Official binary-schema bindings and source schema
-runtime/src/as3flatbuffers/  Builder, TableView, StructView, and scalar helpers
+runtime/src/as3flatbuffers/  Builder and scalar helpers
 runtime/test/               AIR tests
 examples/point/schema/      Reference .fbs schema
 examples/point/src/         Generated owned object and view

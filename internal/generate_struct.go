@@ -28,7 +28,7 @@ func generateStructImports(w *IndentWriter, o object, view bool) {
 func generateViewCaches(w *IndentWriter, o object) {
 	for _, f := range o.Fields {
 		if f.Struct {
-			w.Line("private var %s:%sView;", f.ViewCache, f.Type)
+			w.Line("private const %s:%sView = new %sView();", f.ViewCache, f.Type, f.Type)
 			w.BlankLine()
 		}
 	}
@@ -62,23 +62,20 @@ func generateStructPack(w *IndentWriter, o object) {
 
 func generateStructView(w *IndentWriter, o object) {
 	generatePackage(w, o)
-	w.Line("import as3flatbuffers.StructView;")
+	w.Line("import flash.utils.Endian;")
 	w.Line("import flash.utils.ByteArray;")
 	generateScalarImports(w, o)
 	generateStructImports(w, o, true)
 	w.BlankLine()
 	w.Line("/** Borrowed inline struct. bind() takes the struct's absolute byte offset. */")
-	w.Line("public final class %sView extends as3flatbuffers.StructView", o.Name)
+	w.Line("public final class %sView", o.Name)
 	w.Line("{")
 	w.Indent()
+	w.Line("private var bytes:flash.utils.ByteArray;")
+	w.Line("private var base:uint;")
+	w.BlankLine()
 	generateViewCaches(w, o)
-	w.Line("public function bind(input:flash.utils.ByteArray, offset:uint = 0):%sView", o.Name)
-	w.Line("{")
-	w.Indent()
-	w.Line("bindStruct(input, offset, %d);", o.Size)
-	w.Line("return this;")
-	w.Dedent()
-	w.Line("}")
+	generateStructBind(w, o)
 	for _, f := range o.Fields {
 		w.BlankLine()
 		typ := f.Type
@@ -88,9 +85,9 @@ func generateStructView(w *IndentWriter, o object) {
 		w.Line("public function get %s():%s", f.Name, typ)
 		w.Line("{")
 		w.Indent()
-		w.Line("requireBound();")
+		generateBoundCheck(w)
 		if f.Struct {
-			w.Line("return new %sView().bind(bytes, base + %d);", f.Type, f.Offset)
+			w.Line("return this.%s.bind(bytes, base + %d);", f.ViewCache, f.Offset)
 		} else {
 			w.Line("bytes.position = base + %d;", f.Offset)
 			if f.WordDefault != "" {
@@ -106,13 +103,24 @@ func generateStructView(w *IndentWriter, o object) {
 	w.Line("public function unpack(destination:%s = null):%s", o.Name, o.Name)
 	w.Line("{")
 	w.Indent()
-	w.Line("requireBound();")
-	w.Line("if (!destination) destination = new %s();", o.Name)
-	for _, f := range o.Fields {
+	generateBoundCheck(w)
+	w.Line("if (!destination)")
+	w.Indent()
+	w.Line("destination = new %s();", o.Name)
+	w.Dedent()
+	w.BlankLine()
+	for i, f := range o.Fields {
+		if i > 0 && (unpackBlock(f) || unpackBlock(o.Fields[i-1])) {
+			w.BlankLine()
+		}
 		if f.Struct {
 			generateStructFieldUnpack(w, f, true)
 		} else if f.WordDefault != "" {
-			w.Line("if (!destination.%s) destination.%s = new %s();", f.Name, f.Name, f.Type)
+			w.Line("if (!destination.%s)", f.Name)
+			w.Indent()
+			w.Line("destination.%s = new %s();", f.Name, f.Type)
+			w.Dedent()
+			w.BlankLine()
 			w.Line("bytes.position = base + %d;", f.Offset)
 			w.Line("destination.%s.set(bytes.readUnsignedInt(), bytes.%s());", f.Name, highReader(f))
 		} else {
@@ -130,13 +138,17 @@ func generateStructView(w *IndentWriter, o object) {
 func generateStructFieldUnpack(w *IndentWriter, f field, inline bool) {
 	if !inline {
 		// Block scope does not scope AS3 vars; derive a distinct local name.
-		w.Line("const %sPosition:uint = field(%d, %d);", f.ViewCache, f.ID, f.Width)
-		w.Line("if (!%sPosition) destination.%s = null;", f.ViewCache, f.Name)
+		w.Line("const %sPosition:uint = fieldOffset(%d, %d);", f.ViewCache, 4+uint32(f.ID)*2, f.Width)
+		w.Line("if (!%sPosition)", f.ViewCache)
+		w.Line("{")
+		w.Indent()
+		w.Line("destination.%s = null;", f.Name)
+		w.Dedent()
+		w.Line("}")
 		w.Line("else")
 		w.Line("{")
 		w.Indent()
 	}
-	w.Line("if (!this.%s) this.%s = new %sView();", f.ViewCache, f.ViewCache, f.Type)
 	if inline {
 		w.Line("destination.%s = this.%s.bind(bytes, base + %d).unpack(destination.%s);", f.Name, f.ViewCache, f.Offset, f.Name)
 	} else {

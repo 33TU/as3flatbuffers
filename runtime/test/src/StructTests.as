@@ -38,7 +38,9 @@ package
                     check(value.aligned.id == i && value.aligned.value == 1.25, "Forced-alignment struct");
                     if (oldFrame) check(value.frame === oldFrame, "Nested unpack reuses owned struct");
                     const child:PointView = view.point;
-                    check(child !== view.point, "Struct getters return independent borrowed views");
+                    check(child === view.point, "Struct getters reuse cached borrowed views");
+                    check(view.frame.point === view.frame.point, "Nested struct getters reuse cached views");
+                    check(view.envelope.frame === view.envelope.frame, "Deep struct getters reuse cached views");
                     const point:Point = value.frame.point;
                     const signed:Object = value.frame.signedValue;
                     view.unpack(value);
@@ -57,6 +59,18 @@ package
                 const roundTrip:InlineRoot = new InlineRootView().bind(output).unpack();
                 if (item.present) verifyFrame(roundTrip.frame, primitives[item["case"]], item, check);
             }
+            view.bind(read(directory.resolvePath("struct-python-1.bin")));
+            const retainedChild:PointView = view.point;
+            const snapshot:Point = retainedChild.unpack();
+            view.bind(read(directory.resolvePath("struct-python-2.bin")));
+            check(view.point === retainedChild && retainedChild.x == cases[2].x && snapshot.x == cases[1].x,
+                "Getter rebinds the cached child; owned snapshots remain independent");
+            view.bind(read(directory.resolvePath("struct-python-3.bin"))).unpack(value);
+            check(retainedChild.x == cases[3].x, "Unpack and getters share the cached child");
+            view.bind(read(directory.resolvePath("struct-python-0.bin")));
+            check(view.point == null && retainedChild.x == cases[3].x,
+                "Absent field returns null without rebinding a retained child");
+
             const frame:Frame = new Frame();
             const retainedPoint:Point = frame.point;
             const retainedWords:Object = frame.signedValue;

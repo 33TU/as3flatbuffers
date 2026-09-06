@@ -73,6 +73,7 @@ func IsAS3ReservedWord(word string) bool {
 }
 
 var typeNames = map[string]struct{}{
+	"Endian":          {},
 	"StructView":      {},
 	"OptionalInt":     {},
 	"OptionalUint":    {},

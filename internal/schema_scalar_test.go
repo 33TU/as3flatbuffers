@@ -30,7 +30,8 @@ func TestPrimitiveGeneration(t *testing.T) {
 			t.Errorf("missing %q", want)
 		}
 	}
-	if !strings.Contains(view, "destination.i64 = int64(7, 0, -2147483648, destination.i64);") {
+	if !strings.Contains(view, "if (!destination.i64)\n                destination.i64 = new as3flatbuffers.types.Int64();") ||
+		!strings.Contains(view, "destination.i64.set(bytes.readUnsignedInt(), bytes.readInt());") {
 		t.Error("unpack must preserve word-object reuse")
 	}
 }
@@ -68,7 +69,7 @@ func TestUnsignedDefaultWords(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !strings.Contains(string(files[0].Data), "new as3flatbuffers.types.UInt64(4294967295, 4294967295)") {
-		 t.Error("unsigned high bits lost")
+		t.Error("unsigned high bits lost")
 	}
 }
 

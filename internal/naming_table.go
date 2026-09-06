@@ -10,6 +10,8 @@ type TableNames struct {
 }
 
 var tableMembers = map[string]struct{}{
+	"bindAt":       {},
+	"fieldOffset":  {},
 	"base":         {},
 	"bindStruct":   {},
 	"requireBound": {},
