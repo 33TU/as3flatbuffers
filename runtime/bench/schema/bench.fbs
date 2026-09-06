@@ -1,0 +1,36 @@
+namespace bench.data;
+
+table Scalars {
+    sequence:uint;
+    delta:int;
+    checksum:uint;
+    x:float;
+    y:float;
+    z:float;
+    vx:float;
+    vy:float;
+    vz:float;
+    precision:double;
+    active:bool;
+    kind:uint;
+}
+
+struct Vec3 { x:float; y:float; z:float; }
+struct State {
+    position:Vec3;
+    velocity:Vec3;
+    facing:Vec3;
+    delta:int;
+    checksum:uint;
+    precision:double;
+    active:bool;
+    kind:uint;
+}
+table Inline { sequence:uint; state:State; }
+
+table Node {
+    sequence:uint;
+    x:float;
+    y:float;
+    next:Node;
+}

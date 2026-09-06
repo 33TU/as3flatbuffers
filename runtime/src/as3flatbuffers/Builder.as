@@ -269,7 +269,17 @@ package as3flatbuffers
         public function pad(count:uint):void
         {
             prepare(1, count);
-            for (var i:uint = 0; i < count; i++)
+            // Buffer growth can expose old bytes after reuse, so write zeros explicitly.
+            while (count >= 8)
+            {
+                bytes.writeDouble(0);
+                count -= 8;
+            }
+            if (count & 4)
+                bytes.writeUnsignedInt(0);
+            if (count & 2)
+                bytes.writeShort(0);
+            if (count & 1)
                 bytes.writeByte(0);
         }
 
@@ -429,7 +439,8 @@ package as3flatbuffers
             if (tableOpen && alignment > tableAlignment)
                 throw new RangeError("Field alignment exceeds the table alignment");
 
-            const padding:uint = (alignment - (bytes.position % alignment)) % alignment;
+            // All accepted alignments are powers of two.
+            const padding:uint = (0 - bytes.position) & (alignment - 1);
             if (Number(bytes.position) + padding + alignment + additionalBytes > 0x40000000)
                 throw new RangeError("Buffer is too large");
 

@@ -1,6 +1,6 @@
 AMXMLC := env("AMXMLC", "amxmlc")
 COMPC := env("COMPC", "compc")
-FLATC := env("FLATC", "flatc")
+FLATC := env("FLATC", if path_exists("bin/flatc") == "true" { "bin/flatc" } else { "flatc" })
 
 default:
     @just --list
@@ -52,3 +52,21 @@ build-test: generate
 
 test: test-go build-test
     .venv/bin/python tools/test_interop.py
+
+# Generate the benchmark owned classes and views.
+generate-bench: build-generator
+    {{ FLATC }} -b --schema -o bin runtime/bench/schema/bench.fbs
+    bin/as3flatc -o runtime/bench/generated bin/bench.bfbs
+
+# Compile the optimized Flash/AIR benchmark.
+build-bench: generate-bench
+    mkdir -p runtime/bin/bench
+    {{ AMXMLC }} -source-path runtime/src -source-path runtime/bench/src -source-path runtime/bench/default -source-path runtime/bench/generated -output runtime/bin/bench/bench.swf -optimize=true -compiler.strict=true -compiler.inline=true -debug=false runtime/bench/src/Main.as
+
+# Run the benchmark; pass options such as --samples 7 --sample-ms 300.
+bench *ARGS: build-bench
+    python3 tools/bench.py {{ ARGS }}
+
+# Compare matching AS3PB schemas using AS3PB_ROOT and PROTOC.
+bench-as3pb *ARGS: generate-bench
+    python3 tools/bench_as3pb.py {{ ARGS }}

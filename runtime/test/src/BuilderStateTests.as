@@ -2,6 +2,7 @@ package
 {
     import as3flatbuffers.Builder;
     import example.PointView;
+    import flash.utils.ByteArray;
 
     public final class BuilderStateTests
     {
@@ -49,6 +50,41 @@ package
             builder.addFloat32(1, 3);
             FixtureBuffer.bindRoot(view, builder.finish(builder.endTable()));
             check(view.x == 0 && view.y == 3, "Reset clears offsets before reuse");
+
+            const bytes:ByteArray = FixtureBuffer.create();
+            for each (var count:uint in [0, 1, 3, 4, 7, 28, 62])
+            {
+                bytes.length = 128;
+                bytes.position = 0;
+                for (var i:uint = 0; i < 128; i++) bytes.writeByte(255);
+                builder.reset(bytes, false);
+                builder.putUint8(42);
+                builder.pad(count);
+                check(bytes.length == count + 1 && bytes.position == count + 1 && bytes[0] == 42,
+                    "Padding preserves the prefix and advances by its exact size");
+                for (i = 1; i < bytes.length; i++)
+                    check(bytes[i] == 0, "Padding after buffer reuse contains only zero bytes");
+            }
+            builder.reset(bytes, false);
+            for (i = 0; i < 16; i++) bytes.writeByte(255);
+            bytes.position = 4;
+            builder.pad(7);
+            check(bytes.length == 16 && bytes.position == 11, "Padding over existing bytes preserves the tail");
+            for (i = 0; i < 16; i++)
+                check(bytes[i] == (i >= 4 && i < 11 ? 0 : 255), "Padding clears exactly the requested region");
+            for each (var alignment:uint in [4, 8, 16, 32, 64, 128, 256])
+                for each (var prefix:uint in [0, 1, 7])
+                {
+                    builder.reset(bytes);
+                    builder.pad(prefix);
+                    builder.startTable(1, alignment);
+                    builder.addFloat32(0, 42);
+                    const alignedTable:uint = builder.endTable();
+                    builder.finish(alignedTable);
+                    check(alignedTable % alignment == 0 && FixtureBuffer.bindRoot(view, bytes).x == 42,
+                        "Forced table alignment works at different starting positions");
+                }
+            builder.reset();
         }
 
         private static function rejects(action:Function, check:Function, message:String):void

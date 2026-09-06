@@ -268,6 +268,22 @@ SDK or `flatc`. Run `just generate-test-schemas` to regenerate those fixtures an
 `just generate-reflection` to regenerate the vendored Go reflection bindings,
 using the pinned compiler version.
 
+## Benchmark
+
+```sh
+just bench
+just bench --samples 7 --sample-ms 300
+```
+
+The [AIR benchmark](runtime/bench/README.md) measures packing into reused bytes,
+fresh/reused unpacking, and one-field/all-field view reads for scalars, inline
+structs, and linked lists. AMF3 and JSON baselines use the same logical values.
+It validates round trips, warms each operation, and reports median operations/sec,
+MB/sec, encoded sizes, and sample variation. Raw results are saved under
+`runtime/bin/bench-<id>/`. `just bench-as3pb` adds matching AS3PB workloads when an
+AS3PB checkout and protoc are available. See the benchmark README for comparison limits and SDK
+configuration.
+
 ## Layout
 
 ```text
@@ -276,6 +292,7 @@ internal/                  Schema validation, naming, and source generation
 internal/reflection/       Official binary-schema bindings and source schema
 runtime/src/as3flatbuffers/  Builder and scalar helpers
 runtime/test/               AIR tests
+runtime/bench/              AIR benchmark schemas, generated classes, and harness
 examples/point/schema/      Reference .fbs schema
 examples/point/src/         Generated owned object and view
 examples/struct/            Inline Point schema, generated classes, and usage
