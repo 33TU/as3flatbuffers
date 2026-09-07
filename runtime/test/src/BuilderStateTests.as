@@ -58,7 +58,7 @@ package
                 bytes.position = 0;
                 for (var i:uint = 0; i < 128; i++) bytes.writeByte(255);
                 builder.reset(bytes, false);
-                builder.putUint8(42);
+                builder.prepareStruct(1, 1).writeByte(42);
                 builder.pad(count);
                 check(bytes.length == count + 1 && bytes.position == count + 1 && bytes[0] == 42,
                     "Padding preserves the prefix and advances by its exact size");

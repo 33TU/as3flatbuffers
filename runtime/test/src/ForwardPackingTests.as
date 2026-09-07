@@ -51,7 +51,7 @@ package
             const length:uint = dst.length;
             builder.reset();
             check(dst.length == length && dst.position == 0, "Detaching leaves finished bytes untouched");
-            rejects(function():void { builder.putInt32(7); }, check, "Detached builder cannot write");
+            rejects(function():void { builder.prepareStruct(4, 4).writeInt(7); }, check, "Detached builder cannot write");
 
             const other:ByteArray = FixtureBuffer.create();
             builder.reset(other);
@@ -88,7 +88,7 @@ package
             for (var i:uint = 4; i < 8; i++)
                 check(dst[i] == 0, "Forward struct padding is zero");
 
-            // Direct struct writes preserve validation previously provided by put*().
+            // Direct struct writes validate narrow integers and required child values.
             const frame:Frame = new Frame();
             const invalidFields:Array = ["tag", "tag", "tiny", "tiny", "count", "count", "small", "small"];
             const invalidValues:Array = [256, uint.MAX_VALUE, -129, 128, -32769, 32768, 65536, uint.MAX_VALUE];
