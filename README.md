@@ -6,8 +6,8 @@ around owned objects and reusable views into binary data.
 This initial branch includes a Go code generator and a working runtime for
 tables and inline structs with scalar fields (`bool`, `byte`, `ubyte`, `short`,
 `ushort`, `int`, `uint`, `long`, `ulong`, `float`, and `double` in `.fbs` schemas).
-Tables and structs can also contain inline structs. Tables may reference other
-tables, including recursive and mutually recursive types. The runtime provides
+Tables support UTF-8 strings. Tables and structs can also contain inline structs.
+Tables may reference other tables, including recursive and mutually recursive types. The runtime provides
 a reusable forward builder, borrowed views, and 64-bit word helpers.
 `Point` / `PointView` are generated from the example schema. This is not yet a
 general FlatBuffers implementation; unsupported schema features produce errors.
@@ -104,6 +104,26 @@ defaults also preserve the full range.
 
 The Point example above uses a FlatBuffers **table**, so fields can be omitted
 and defaults read correctly.
+
+## Strings
+
+String fields use AS3 `String`, defaulting to `null` (absent). An empty string is
+present and is encoded separately from null. Packing writes UTF-8 bytes directly
+to the destination after the table body, with a 32-bit byte length and a zero
+terminator. No temporary ByteArray or string deduplication is used.
+
+Getters decode a new string value on each access. Static `unpack()` reads strings
+directly through the shared runtime helper, reusing the destination message;
+`clone()` assigns immutable string values, and `reset()` clears them to null.
+Strings use native `ByteArray.writeUTFBytes()` and `readUTFBytes()`, including their
+handling of embedded NULs, BOM characters, and malformed Unicode. There is no
+extra UTF-8 validation. Reads check offsets, lengths, and terminators; string
+lengths are 32-bit and can exceed 65,535 bytes. See the
+[chat example](examples/string/README.md).
+
+For manual construction, reserve a field with `builder.reserveOffset(slot)`,
+close its table, then call `builder.patchOffset(field, builder.createString(value))`.
+String and child-table references may share the same builder.
 
 ## Inline structs
 
@@ -267,7 +287,7 @@ still rejected.
 Schema validation completes before any output files are written. The CLI overwrites
 matching generated files, but does not remove stale files after schema renames.
 
-Strings, vectors, fixed-size arrays, enums/unions, required/key
+Vectors, fixed-size arrays, enums/unions, required/key
 fields, services, and file identifiers are currently unsupported.
 The CLI reports an error for unsupported features instead of emitting partial APIs.
 
@@ -304,10 +324,11 @@ runtime/bench/              AIR benchmark schemas, generated classes, and harnes
 examples/point/schema/      Reference .fbs schema
 examples/point/src/         Generated owned object and view
 examples/struct/            Inline Point schema, generated classes, and usage
+examples/string/            UTF-8 chat schema, generated classes, and usage
 tools/                      Reference-runtime interoperability harness
 ```
 
-The next milestones are strings, vectors, fixed-size arrays, and enums/unions. Schema-specific verification, file identifiers,
+The next milestones are vectors, fixed-size arrays, and enums/unions. Schema-specific verification, file identifiers,
 size-prefixed roots, and vtable deduplication are also not implemented yet.
 No Royale compatibility layer is included.
 

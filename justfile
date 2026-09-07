@@ -18,6 +18,8 @@ generate: build-generator
     bin/as3flatc -o examples/point/src bin/point.bfbs
     {{ FLATC }} -b --schema -o bin examples/struct/schema/struct.fbs
     bin/as3flatc -o examples/struct/src bin/struct.bfbs
+    {{ FLATC }} -b --schema -o bin examples/string/schema/chat.fbs
+    bin/as3flatc -o examples/string/src bin/chat.bfbs
     {{ FLATC }} -b --schema -o bin internal/testdata/scalars.fbs
     bin/as3flatc -o runtime/test/generated bin/scalars.bfbs
     {{ FLATC }} -b --schema -o bin internal/testdata/naming.fbs
@@ -32,6 +34,9 @@ generate: build-generator
     {{ FLATC }} -b --schema -o bin internal/testdata/nested.fbs
     bin/as3flatc -o runtime/test/generated bin/nested.bfbs
     {{ FLATC }} --python -o runtime/bin/python internal/testdata/nested.fbs
+    {{ FLATC }} -b --schema -o bin internal/testdata/strings.fbs
+    bin/as3flatc -o runtime/test/generated bin/strings.bfbs
+    {{ FLATC }} --python -o runtime/bin/python internal/testdata/strings.fbs
 
 generate-reflection:
     {{ FLATC }} --go --gen-onefile --go-namespace reflection -o internal/reflection internal/reflection/upstream/reflection.fbs

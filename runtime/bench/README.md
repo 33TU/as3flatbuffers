@@ -32,7 +32,7 @@ Each workload contains 64 deterministic messages by default:
 
 `--count` accepts 16–256 messages. Strings, vectors, and 64-bit word helpers are not
 part of these workloads. AS3PB's original benchmark includes strings, bytes, and
-repeated fields that this runtime does not support yet, so these numbers are not
+repeated fields that these workloads do not include, so these numbers are not
 directly comparable to its existing benchmark. The sequence/delta/checksum/position
 value patterns follow that benchmark. Use the optional AS3PB comparison below for
 matching schemas and the same harness.

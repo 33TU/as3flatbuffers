@@ -59,6 +59,27 @@ package as3flatbuffers
             return table + relative;
         }
 
+        protected final function stringValue(slot:uint):String
+        {
+            const position:uint = fieldOffset(slot, 4);
+            if (!position)
+                return null;
+
+            bytes.position = position;
+            const relative:uint = bytes.readUnsignedInt();
+            if (relative < 4 || relative > bytes.length - position - 4)
+                throw new RangeError("Invalid string offset");
+
+            bytes.position = position + relative;
+            const length:uint = bytes.readUnsignedInt();
+            const start:uint = bytes.position;
+            if (length >= bytes.length - start)
+                throw new RangeError("Truncated string");
+            if (bytes[start + length] != 0)
+                throw new RangeError("String terminator must be zero");
+            return bytes.readUTFBytes(length);
+        }
+
         [Inline]
         protected final function tableOffset(slot:uint):uint
         {

@@ -14,6 +14,7 @@ var tableMembers = map[string]struct{}{
 	"bindAt":       {},
 	"fieldOffset":  {},
 	"tableOffset":  {},
+	"stringValue":  {},
 	"base":         {},
 	"bindStruct":   {},
 	"requireBound": {},

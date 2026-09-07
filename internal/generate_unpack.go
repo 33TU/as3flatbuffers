@@ -14,7 +14,9 @@ func generateUnpack(w *IndentWriter, o object) {
 		if i > 0 {
 			w.BlankLine()
 		}
-		if f.Table {
+		if f.String {
+			w.Line("destination.%s = source.stringValue(%d);", f.Name, 4+uint32(f.ID)*2)
+		} else if f.Table {
 			generateTableFieldUnpack(w, f)
 		} else if f.Struct {
 			generateStructFieldUnpack(w, f, false)

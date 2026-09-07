@@ -1,0 +1,11 @@
+namespace fixtures.text;
+
+table Text { value:string; }
+table Strings {
+  text:string;
+  label:string;
+  string_value:string;
+  child:Text;
+  next:Strings;
+}
+root_type Strings;

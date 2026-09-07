@@ -1,5 +1,14 @@
 package internal
 
+func hasOffsetFields(o object) bool {
+	for _, f := range o.Fields {
+		if f.Table || f.String {
+			return true
+		}
+	}
+	return false
+}
+
 func hasTableFields(o object) bool {
 	for _, f := range o.Fields {
 		if f.Table {

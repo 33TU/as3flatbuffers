@@ -51,6 +51,10 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 	}
 	w.Line("builder.startTable(%d, %d);", o.Count, alignment)
 	for _, f := range o.Fields {
+		if f.String {
+			w.Line("const offset%d:uint = source.%s != null ? builder.reserveOffset(%d) : 0;", f.ID, f.Name, f.ID)
+			continue
+		}
 		if f.Table {
 			w.Line("const offset%d:uint = source.%s ? builder.reserveOffset(%d) : 0;", f.ID, f.Name, f.ID)
 			continue
@@ -72,16 +76,22 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 		}
 		w.Line("builder.%s(%d, source.%s, %s);", f.Writer, f.ID, f.Name, defaults)
 	}
-	if hasTableFields(o) {
+	if hasOffsetFields(o) {
 		w.Line("const table:uint = builder.endTable();")
 		for _, f := range o.Fields {
-			if f.Table {
+			if f.Table || f.String {
 				w.Line("if (offset%d)", f.ID)
 				w.Indent()
-				w.Line("builder.patchOffset(offset%d, %s.packInto(source.%s, builder));", f.ID, f.Type, f.Name)
+				if f.String {
+					w.Line("builder.patchOffset(offset%d, builder.createString(source.%s));", f.ID, f.Name)
+				} else {
+					w.Line("builder.patchOffset(offset%d, %s.packInto(source.%s, builder));", f.ID, f.Type, f.Name)
+				}
 				w.Dedent()
 			}
 		}
+	}
+	if hasTableFields(o) {
 		w.Dedent()
 		w.Line("}")
 		w.Line("finally")
@@ -90,6 +100,8 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 		w.Line("builder.leave();")
 		w.Dedent()
 		w.Line("}")
+	}
+	if hasOffsetFields(o) {
 		w.Line("return table;")
 	} else {
 		w.Line("return builder.endTable();")

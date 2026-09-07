@@ -1,0 +1,7 @@
+namespace example.chat;
+
+table Chat {
+  sender:string;
+  message:string;
+}
+root_type Chat;

@@ -203,6 +203,7 @@ package
                 ForwardPackingTests.run(check);
                 StructTests.run(directory, check, read, write);
                 NestedTests.run(directory, check, read, write);
+                StringTests.run(directory, check, read, write);
                 result.ok = true;
                 result.checks = checks;
                 status = 0;

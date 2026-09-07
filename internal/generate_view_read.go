@@ -1,6 +1,10 @@
 package internal
 
 func generateTableGetter(w *IndentWriter, f field) {
+	if f.String {
+		w.Line("return stringValue(%d);", 4+uint32(f.ID)*2)
+		return
+	}
 	if f.Table {
 		w.Line("const position:uint = tableOffset(%d);", 4+uint32(f.ID)*2)
 		w.Line("if (!position)")

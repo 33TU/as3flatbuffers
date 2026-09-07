@@ -18,7 +18,7 @@ type field struct {
 	Optional                            bool
 	Width, Alignment                    uint32
 	Offset                              uint32
-	Struct, Table                       bool
+	Struct, Table, String               bool
 	ViewCache                           string
 }
 

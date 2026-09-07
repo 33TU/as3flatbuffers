@@ -128,6 +128,11 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, dataLengt
 			if o.Struct {
 				out.Default = "new " + out.Type + "()"
 			}
+		} else if fType.BaseType() == reflection.BaseTypeString {
+			if o.Struct || fType.Index() != -1 {
+				return o, fmt.Errorf("%s.%s: strings are supported only as table fields", fullName, name)
+			}
+			out = field{Name: name, ID: f.Id(), Type: "String", String: true, Width: 4, Alignment: 4, Default: "null"}
 		} else {
 			if fType.Index() != -1 {
 				return o, fmt.Errorf("%s.%s: referenced types are not supported yet", fullName, name)

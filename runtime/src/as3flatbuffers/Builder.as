@@ -15,6 +15,7 @@ package as3flatbuffers
         private var tableAlignment:uint;
         private var finished:Boolean;
         private const tables:Vector.<uint> = new Vector.<uint>();
+        private const strings:Vector.<uint> = new Vector.<uint>();
         private const pending:Vector.<uint> = new Vector.<uint>();
         private const ancestors:Vector.<Object> = new Vector.<Object>();
         private var rootReserved:Boolean;
@@ -29,6 +30,7 @@ package as3flatbuffers
             vtableStart = 0;
             tableAlignment = 0;
             tables.length = 0;
+            strings.length = 0;
             pending.length = 0;
             ancestors.length = 0;
             finished = false;
@@ -198,7 +200,7 @@ package as3flatbuffers
             fields[slot] = offset - 4;
         }
 
-        /** Reserve a present table-reference field for a later forward-offset patch. */
+        /** Reserve a present table or string reference for a later forward-offset patch. */
         public function reserveOffset(slot:uint):uint
         {
             checkSlot(slot);
@@ -215,8 +217,8 @@ package as3flatbuffers
             if (!bytes || finished || tableOpen)
                 throw new Error("Patch references after closing the table");
             const index:int = pending.indexOf(position);
-            if (index < 0 || target <= position || tables.indexOf(target) < 0)
-                throw new RangeError("Expected a reserved reference to a completed table ahead of it");
+            if (index < 0 || target <= position || (tables.indexOf(target) < 0 && strings.indexOf(target) < 0))
+                throw new RangeError("Expected a reserved reference to a completed table or string ahead of it");
 
             const end:uint = offset;
             bytes.position = position;
@@ -224,6 +226,29 @@ package as3flatbuffers
             bytes.position = end;
             pending[index] = pending[pending.length - 1];
             pending.pop();
+        }
+
+        /** Write a length-prefixed, zero-terminated UTF-8 string after closing its table. */
+        public function createString(value:String):uint
+        {
+            if (!bytes || finished || tableOpen)
+                throw new Error("Write strings after closing the table");
+            if (value == null)
+                throw new ArgumentError("String must be non-null");
+
+            prepare(4, 4);
+            const start:uint = offset;
+            bytes.writeUnsignedInt(0);
+            bytes.writeUTFBytes(value);
+            const length:uint = offset - start - 4;
+            prepare(1, 0);
+            bytes.writeByte(0);
+            const end:uint = offset;
+            bytes.position = start;
+            bytes.writeUnsignedInt(length);
+            bytes.position = end;
+            strings.push(start);
+            return start;
         }
 
         /** Track the current source path; repeated siblings may still be packed independently. */
@@ -317,7 +342,7 @@ package as3flatbuffers
                 throw new Error("Finish requires all child offsets and recursive writes to be completed");
             if (rootReserved && tables.indexOf(root) < 0)
                 throw new Error("Finish requires a completed table");
-            if (!rootReserved && (root != 0 || tables.length))
+            if (!rootReserved && (root != 0 || tables.length || strings.length))
                 throw new Error("A raw struct must begin at zero and contain no tables");
 
             bytes.position = 0;
