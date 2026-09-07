@@ -28,13 +28,10 @@ package fixtures.geometry
         public static function reset(msg:Frame):void
         {
             msg.tag = 0;
-            if (!msg.point) msg.point = new fixtures.geometry.Point();
-            else fixtures.geometry.Point.reset(msg.point);
+            fixtures.geometry.Point.reset(msg.point);
             msg.count = 0;
-            if (!msg.signedValue) msg.signedValue = new as3flatbuffers.types.Int64(0, 0);
-            else msg.signedValue.reset();
-            if (!msg.unsignedValue) msg.unsignedValue = new as3flatbuffers.types.UInt64(0, 0);
-            else msg.unsignedValue.reset();
+            msg.signedValue.reset();
+            msg.unsignedValue.reset();
             msg.weight = 0;
             msg.enabled = false;
             msg.tiny = 0;

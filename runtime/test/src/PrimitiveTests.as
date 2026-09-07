@@ -65,8 +65,8 @@ package
             value.u64 = null;
             PrimitivesView.unpack(view, value);
             verify(value, cases[0], check);
-            value.i64 = null;
-            value.u64 = null;
+            value.i64.set(1, 2);
+            value.u64.set(3, 4);
             Primitives.reset(value);
             verify(value, cases[0], check);
             const defaultClone:Primitives = Primitives.clone(PrimitivesView.unpack(view));

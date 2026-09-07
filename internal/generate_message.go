@@ -41,16 +41,14 @@ func generateReset(w *IndentWriter, o object) {
 	w.Indent()
 	for _, f := range o.Fields {
 		if f.Struct && o.Struct {
-			w.Line("if (!msg.%s) msg.%s = %s;", f.Name, f.Name, f.Default)
-			w.Line("else %s.reset(msg.%s);", f.Type, f.Name)
+			w.Line("%s.reset(msg.%s);", f.Type, f.Name)
 		} else if f.Optional {
 			w.Line("msg.%s = null;", f.Name)
 		} else if f.WordDefault != "" {
-			w.Line("if (!msg.%s) msg.%s = %s;", f.Name, f.Name, f.Default)
 			if f.WordDefault == "0, 0" {
-				w.Line("else msg.%s.reset();", f.Name)
+				w.Line("msg.%s.reset();", f.Name)
 			} else {
-				w.Line("else msg.%s.set(%s);", f.Name, f.WordDefault)
+				w.Line("msg.%s.set(%s);", f.Name, f.WordDefault)
 			}
 		} else {
 			w.Line("msg.%s = %s;", f.Name, f.Default)

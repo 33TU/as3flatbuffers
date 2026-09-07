@@ -73,8 +73,9 @@ The output remains compatible with standard FlatBuffers readers.
 
 `long` and `ulong` fields use `as3flatbuffers.types.Int64` and `UInt64`, with
 separate low/high words to preserve all 64 bits. Non-nullable owned fields start with non-null
-word objects; `reset(msg)` and `unpack(view, existing)` reuse them, allocating
-replacements if the destination fields were set to null. `clone(source)` copies the
+word objects; `reset(msg)` reuses them and requires them to remain non-null.
+`unpack(view, existing)` reuses them or allocates replacements for null destination
+fields. `clone(source)` copies the
 words independently. A view's 64-bit getter returns a fresh word object;
 `unpack(view, existing)` avoids those getter allocations. Keep source word fields
 non-null when packing or cloning. Narrow integer writes reject out-of-range values.
@@ -120,7 +121,7 @@ PointView.unpack(view, point);    // Reuse an owned destination.
 
 Struct fields inside a table default to null and may be omitted. Struct fields
 inside another struct are always inline and start with owned child instances;
-keep them non-null when packing. `reset(msg)` reuses those children and their 64-bit
+keep them non-null when packing or resetting. `reset(msg)` reuses those children and their 64-bit
 word objects. `clone(source)` copies deeply. Struct-valued getters and `unpack(view, existing)`
 reuse the same private child views, initialized with their parent and held in const
 fields. Repeated getter calls return the same child instance. After the parent is

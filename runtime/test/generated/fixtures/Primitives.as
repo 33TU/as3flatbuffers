@@ -32,10 +32,8 @@ package fixtures
             msg.u16 = 65535;
             msg.i32 = -1234567;
             msg.u32 = 4294967295;
-            if (!msg.i64) msg.i64 = new as3flatbuffers.types.Int64(0, -2147483648);
-            else msg.i64.set(0, -2147483648);
-            if (!msg.u64) msg.u64 = new as3flatbuffers.types.UInt64(4294967295, 2147483647);
-            else msg.u64.set(4294967295, 2147483647);
+            msg.i64.set(0, -2147483648);
+            msg.u64.set(4294967295, 2147483647);
             msg.f32 = 0.5;
             msg.f64 = 1.2345678901234567;
         }

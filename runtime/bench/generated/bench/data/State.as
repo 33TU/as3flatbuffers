@@ -21,12 +21,9 @@ package bench.data
 
         public static function reset(msg:State):void
         {
-            if (!msg.position) msg.position = new bench.data.Vec3();
-            else bench.data.Vec3.reset(msg.position);
-            if (!msg.velocity) msg.velocity = new bench.data.Vec3();
-            else bench.data.Vec3.reset(msg.velocity);
-            if (!msg.facing) msg.facing = new bench.data.Vec3();
-            else bench.data.Vec3.reset(msg.facing);
+            bench.data.Vec3.reset(msg.position);
+            bench.data.Vec3.reset(msg.velocity);
+            bench.data.Vec3.reset(msg.facing);
             msg.delta = 0;
             msg.checksum = 0;
             msg.precision = 0;

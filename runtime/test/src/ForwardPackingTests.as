@@ -1,6 +1,8 @@
 package
 {
     import as3flatbuffers.Builder;
+    import as3flatbuffers.types.Int64;
+    import as3flatbuffers.types.UInt64;
     import example.Point;
     import example.PointView;
     import fixtures.Primitives;
@@ -99,12 +101,15 @@ package
             Frame.reset(frame);
             frame.signedValue = null;
             rejects(function():void { Frame.pack(frame, dst); }, check, "Struct rejects null signed words");
+            frame.signedValue = new as3flatbuffers.types.Int64();
             Frame.reset(frame);
             frame.unsignedValue = null;
             rejects(function():void { Frame.pack(frame, dst); }, check, "Struct rejects null unsigned words");
+            frame.unsignedValue = new as3flatbuffers.types.UInt64();
             Frame.reset(frame);
             frame.point = null;
             rejects(function():void { Frame.pack(frame, dst); }, check, "Struct rejects null nested struct");
+            frame.point = new Frame().point;
             Frame.reset(frame);
             frame.tag = 255;
             frame.tiny = -128;
@@ -127,12 +132,15 @@ package
             const envelope:Envelope = new Envelope();
             envelope.frame = null;
             rejects(function():void { Envelope.pack(envelope, dst); }, check, "Flattened struct rejects null child");
+            envelope.frame = new Frame();
             Envelope.reset(envelope);
             envelope.frame.point = null;
             rejects(function():void { Envelope.pack(envelope, dst); }, check, "Flattened struct rejects null grandchild");
+            envelope.frame.point = new Frame().point;
             Envelope.reset(envelope);
             envelope.frame.signedValue = null;
             rejects(function():void { Envelope.pack(envelope, dst); }, check, "Flattened struct rejects nested null words");
+            envelope.frame.signedValue = new as3flatbuffers.types.Int64();
             Envelope.reset(envelope);
             envelope.frame.tiny = 128;
             rejects(function():void { Envelope.pack(envelope, dst); }, check, "Flattened struct validates nested integer range");

@@ -17,8 +17,7 @@ package fixtures.geometry
         public static function reset(msg:Envelope):void
         {
             msg.lead = 0;
-            if (!msg.frame) msg.frame = new fixtures.geometry.Frame();
-            else fixtures.geometry.Frame.reset(msg.frame);
+            fixtures.geometry.Frame.reset(msg.frame);
             msg.tail = 0;
         }
 
