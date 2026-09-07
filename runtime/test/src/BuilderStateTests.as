@@ -95,7 +95,7 @@ package
                     check(bytes.readUnsignedShort() == (i < present ? 4 + i * 4 : 0),
                         "Every reserved vtable entry overwrites dirty storage");
             }
-            // Data-dependent wire limits remain enforced by the internal builder.
+            // The table body size must still fit its 16-bit wire field.
             builder.reset(bytes);
             builder.startTable(0, 4);
             builder.pad(65531);
@@ -107,10 +107,6 @@ package
             var rejected:Boolean = false;
             try { builder.endTable(); } catch (largeTable:RangeError) { rejected = true; }
             check(rejected, "Oversized table body rejected before truncating its size");
-            builder.reset(bytes, false);
-            rejected = false;
-            try { builder.pad(0x40000000); } catch (largeBuffer:RangeError) { rejected = true; }
-            check(rejected && bytes.length == 0, "Buffer limit checked before allocating padding");
             builder.reset();
         }
     }

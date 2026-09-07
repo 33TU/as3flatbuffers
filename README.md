@@ -87,7 +87,7 @@ Generated table packers omit scalar schema defaults before calling the builder.
 Optional scalars are written whenever present, including zero and false.
 `Builder` is internal support for generated packers, not a manual construction API.
 Generated code guarantees valid slots, alignment, call order, and reference patches.
-The builder retains runtime buffer/table size limits and object-cycle detection;
+The builder retains the table body size limit and object-cycle detection;
 it does not validate those generator-controlled operations.
 
 Nullable scalar fields (`score:int = null` in a schema) use AS3PB's `OptionalInt`,

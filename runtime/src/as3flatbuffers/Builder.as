@@ -190,15 +190,18 @@ package as3flatbuffers
             return bytes;
         }
 
-        public function pad(count:uint):void
+        [Inline]
+        public final function pad(count:uint):void
         {
-            prepare(1, count);
             // Buffer growth can expose old bytes after reuse, so write zeros explicitly.
-            while (count >= 8)
+            while (count >= 16)
             {
                 bytes.writeDouble(0);
-                count -= 8;
+                bytes.writeDouble(0);
+                count -= 16;
             }
+            if (count & 8)
+                bytes.writeDouble(0);
             if (count & 4)
                 bytes.writeUnsignedInt(0);
             if (count & 2)
@@ -242,14 +245,14 @@ package as3flatbuffers
         {
             // All accepted alignments are powers of two.
             var padding:uint = (0 - bytes.position) & (alignment - 1);
-            if (Number(bytes.position) + padding + alignment + additionalBytes > 0x40000000)
-                throw new RangeError("Buffer is too large");
-
-            while (padding >= 8)
+            while (padding >= 16)
             {
                 bytes.writeDouble(0);
-                padding -= 8;
+                bytes.writeDouble(0);
+                padding -= 16;
             }
+            if (padding & 8)
+                bytes.writeDouble(0);
             if (padding & 4)
                 bytes.writeUnsignedInt(0);
             if (padding & 2)
