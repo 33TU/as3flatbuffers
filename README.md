@@ -26,7 +26,8 @@ point.y = -2.5;
 const bytes:ByteArray = new ByteArray();
 bytes.endian = Endian.LITTLE_ENDIAN;
 Point.pack(point, bytes);
-const view:PointView = new PointView().bind(bytes, bytes.readUnsignedInt());
+const view:PointView = new PointView();
+view.bind(bytes, bytes.readUnsignedInt());
 trace(view.x, view.y);              // Reads the input directly.
 const owned:Point = PointView.unpack(view);  // Independent mutable value.
 PointView.unpack(view, owned);     // Overwrites a reusable destination.
@@ -42,9 +43,10 @@ values into an owned object. Accessors move the input ByteArray's cursor, and bi
 sets its endianness to little-endian. Keep the input's length and structure stable
 while using a bound view.
 
-Views are self-contained generated classes: they own their buffer/offset state
-and read directly from ByteArray, with no runtime view base class. Table views
-contain a private `[Inline] fieldOffset()` helper and validate field ranges.
+Generated table views extend `as3flatbuffers.TableView`, which holds their
+buffer/offset state and shares binding and field-range validation. Its
+`bind(bytes, offset):void` updates the view without returning it. Struct views
+remain self-contained and use fixed offsets.
 Both table and struct views use `bind(bytes, offset)`, with a required absolute
 byte position. Binding validates the object and invalidates the old binding on
 failure. Resolve a table's root-offset word explicitly before binding, as above;
@@ -168,7 +170,8 @@ first.next.value = 2;
 const bytes:ByteArray = new ByteArray();
 bytes.endian = Endian.LITTLE_ENDIAN;
 Node.pack(first, bytes);
-const view:NodeView = new NodeView().bind(bytes, bytes.readUnsignedInt());
+const view:NodeView = new NodeView();
+view.bind(bytes, bytes.readUnsignedInt());
 trace(view.next.value); // 2
 NodeView.unpack(view, first); // Reuses the existing nodes.
 Node.reset(first);            // Clears next to null and value to zero.
@@ -295,7 +298,7 @@ configuration.
 cmd/as3flatc/               .bfbs -> AS3 command
 internal/                  Schema validation, naming, and source generation
 internal/reflection/       Official binary-schema bindings and source schema
-runtime/src/as3flatbuffers/  Builder and scalar helpers
+runtime/src/as3flatbuffers/  Builder, TableView, and scalar helpers
 runtime/test/               AIR tests
 runtime/bench/              AIR benchmark schemas, generated classes, and harness
 examples/point/schema/      Reference .fbs schema

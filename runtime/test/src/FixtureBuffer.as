@@ -24,7 +24,8 @@ package
             if (relative < 4 || relative > bytes.length - rootOffset - 4)
                 throw new RangeError("Invalid fixture root offset");
 
-            return view.bind(bytes, rootOffset + relative);
+            view.bind(bytes, rootOffset + relative);
+            return view;
         }
     }
 }

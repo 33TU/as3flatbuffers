@@ -9,7 +9,8 @@ func generateTableGetter(w *IndentWriter, f field) {
 		w.Dedent()
 		w.BlankLine()
 		generateLazyTableView(w, f, "this")
-		w.Line("return this.%s.bind(bytes, position);", f.ViewCache)
+		w.Line("this.%s.bind(bytes, position);", f.ViewCache)
+		w.Line("return this.%s;", f.ViewCache)
 		return
 	}
 	w.Line("const position:uint = fieldOffset(%d, %d);", 4+uint32(f.ID)*2, f.Width)

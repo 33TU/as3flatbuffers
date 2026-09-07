@@ -23,7 +23,8 @@ message.point.y = -2.5;
 const bytes:ByteArray = new ByteArray();
 bytes.endian = Endian.LITTLE_ENDIAN;
 PointMessage.pack(message, bytes);
-const messageView:PointMessageView = new PointMessageView().bind(bytes, bytes.readUnsignedInt());
+const messageView:PointMessageView = new PointMessageView();
+messageView.bind(bytes, bytes.readUnsignedInt());
 const pointView:PointView = messageView.point;
 trace(pointView.x, pointView.y);
 

@@ -62,7 +62,8 @@ package
                     check(view.x == item.x && view.y == item.y, "AS3 builder round trip");
                     output.position = 0;
                     const absoluteTable:uint = output.readUnsignedInt();
-                    check(view.bind(output, absoluteTable) === view && view.x == item.x && view.y == item.y,
+                    view.bind(output, absoluteTable);
+                    check(view.x == item.x && view.y == item.y,
                         "Direct binding uses the absolute table position");
                     check(owned.x == cloned.x && owned.y == cloned.y, "Pack leaves owned values unchanged");
                     const prefixed:ByteArray = new ByteArray();
