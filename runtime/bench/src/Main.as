@@ -4,6 +4,7 @@ package
     import bench.NestedWorkload;
     import bench.Runner;
     import bench.ScalarWorkload;
+    import bench.StringWorkload;
     import bench.Workload;
     import flash.desktop.NativeApplication;
     import flash.display.Sprite;
@@ -36,7 +37,8 @@ package
                     throw new ArgumentError("Invalid benchmark configuration");
                 const runner:Runner = new Runner(count, samples, targetMs);
                 const workloads:Vector.<Workload> = new <Workload>[
-                    new ScalarWorkload(count), new InlineWorkload(count), new NestedWorkload(count)];
+                    new ScalarWorkload(count), new InlineWorkload(count), new NestedWorkload(count),
+                    new StringWorkload(count, false), new StringWorkload(count, true)];
                 for each (var workload:Workload in workloads)
                 {
                     result.results = result.results.concat(runner.run(workload));

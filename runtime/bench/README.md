@@ -29,10 +29,15 @@ Each workload contains 64 deterministic messages by default:
   velocity, and facing structs, plus scalar state fields.
 - **nested-8-nodes:** an eight-node linked list with a sequence and two floats per
   node. One operation processes one complete root message, not one node.
+- **strings-short:** a sequence and three strings: an ASCII player name, a short
+  message rotating between ASCII, Finnish, Japanese, and emoji, and a short zone
+  label (empty in one quarter of messages).
+- **strings-long:** the same fields, with the details string containing 8–32
+  repeated mixed-language phrases plus a message-specific suffix.
 
-`--count` accepts 16–256 messages. Strings, vectors, and 64-bit word helpers are not
-part of these workloads. AS3PB's original benchmark includes strings, bytes, and
-repeated fields that these workloads do not include, so these numbers are not
+`--count` accepts 16–256 messages. Vectors and 64-bit word helpers are not
+part of these workloads. AS3PB's original benchmark includes bytes and repeated
+fields that these workloads do not include, so these numbers are not
 directly comparable to its existing benchmark. The sequence/delta/checksum/position
 value patterns follow that benchmark. Use the optional AS3PB comparison below for
 matching schemas and the same harness.
@@ -106,3 +111,13 @@ that distinction. Neither benchmark disables resets to retain stale field values
 The result JSON records the AS3PB revision, dirty-tree status, and protoc version
 alongside the main benchmark metadata. This is a comparison of these particular
 runtime implementations and schemas, not an inherent ranking of the wire formats.
+
+String workloads use the exact same non-null values in both libraries. FlatBuffers
+stores present empty strings; protobuf omits its empty-string defaults. Encoded
+sizes therefore differ even for identical logical values. Both libraries use
+native Flash/AIR UTF-8 conversion here; NUL/BOM edge cases are covered by runtime
+tests, not timed in these workloads. Strings are decoded on fresh and reused
+unpack alike; reuse retains the destination message, not mutable string storage.
+The one-field view measurement reads only the sequence and skips string decoding;
+all-field view reads decode every string. Full string equality is checked outside
+timing before any measurements.

@@ -72,7 +72,7 @@ def main():
     prefix = air_prefix(command)
     command += ["-nodebug", str(app.relative_to(root)), str(build.relative_to(root)), "--",
                 prefix + work.as_posix(), str(args.count), str(args.samples), str(args.sample_ms)]
-    timeout = 120 + 36 * args.samples * args.sample_ms / 1000 * 3
+    timeout = 120 + 60 * args.samples * args.sample_ms / 1000 * 3
     print(f"Running AIR benchmark; artifacts: {work.relative_to(root)}", flush=True)
     with (work / "adl.log").open("w") as log:
         process = subprocess.Popen(command, cwd=root, stdout=log, stderr=subprocess.STDOUT)
@@ -102,7 +102,7 @@ def main():
     result = json.loads(result_file.read_text())
     if process.returncode or not result.get("ok"):
         raise RuntimeError(f"AIR benchmark failed: {result}; logs: {work}")
-    if len(result["results"]) not in (27, 36):
+    if len(result["results"]) not in (45, 60):
         raise RuntimeError("Incomplete benchmark results")
     metadata = build / "metadata.json"
     if metadata.exists():

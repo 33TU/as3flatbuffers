@@ -2,6 +2,13 @@ syntax = "proto3";
 package bench.protobuf;
 option go_package = "example.com/bench/protobuf";
 
+message StringMessage {
+  uint32 sequence = 1;
+  string name = 2;
+  string text = 3;
+  string details = 4;
+}
+
 message Scalars {
   uint32 sequence = 1;
   sint32 delta = 2;

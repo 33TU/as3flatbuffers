@@ -1,5 +1,12 @@
 namespace bench.data;
 
+table StringMessage {
+    sequence:uint;
+    name:string;
+    text:string;
+    details:string;
+}
+
 table Scalars {
     sequence:uint;
     delta:int;

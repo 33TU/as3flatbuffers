@@ -9,6 +9,8 @@ package bench
                 case "scalars": return new PBScalarWorkload(source.objects);
                 case "inline-structs": return new PBInlineWorkload(source.objects);
                 case "nested-8-nodes": return new PBNestedWorkload(source.objects);
+                case "strings-short":
+                case "strings-long": return new PBStringWorkload(source.objects);
                 default: throw new ArgumentError("Unknown AS3PB workload");
             }
         }
