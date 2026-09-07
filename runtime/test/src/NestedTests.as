@@ -118,13 +118,9 @@ package
             builder.startTable(1, 4);
             const slot:uint = builder.reserveOffset(0);
             const parent:uint = builder.endTable();
-            rejects(function():void { builder.finish(parent); }, check, "Unpatched reference prevents finish");
-            rejects(function():void { builder.patchOffset(slot, parent); }, check, "Backward table reference rejected");
             builder.startTable(0, 4);
             const childTable:uint = builder.endTable();
             builder.patchOffset(slot, childTable);
-            rejects(function():void { builder.patchOffset(slot, childTable); }, check, "Duplicate patch rejected");
-            rejects(function():void { builder.finish(parent + 4); }, check, "Non-table root rejected");
             check(builder.finish(parent) === dst, "Root may precede the last completed child table");
         }
 

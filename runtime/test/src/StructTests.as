@@ -105,13 +105,6 @@ package
             caught = false;
             try { direct.bind(raw, uint.MAX_VALUE); } catch (overflow:RangeError) { caught = true; }
             check(caught, "Struct offset overflow rejected");
-
-            builder.reset(FixtureBuffer.create());
-            const tooEarly:uint = Point.packInto(new Point(), builder);
-            builder.startTable(1, 8);
-            caught = false;
-            try { builder.addStruct(0, tooEarly); } catch (inlineError:Error) { caught = true; }
-            check(caught, "Struct must be written inside its containing table");
         }
 
         private static function verifyFrame(value:Frame, expected:Array, item:Object, check:Function):void

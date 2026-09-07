@@ -134,15 +134,6 @@ package
                 const unsignedVector:UInt64Vector = new UInt64Vector();
                 unsignedVector.push(unsigned.low, unsigned.high);
                 check(unsignedVector.clone().getValue(0, new UInt64()).eq(unsigned), "Unsigned word vector");
-                builder.reset(FixtureBuffer.create());
-                caught = false;
-                try { builder.finish(1); } catch (stateError:Error) { caught = true; }
-                check(caught, "Finish without a table rejected");
-                builder.startTable(1, 8); builder.addInt32(0, 1);
-                caught = false;
-                try { builder.addInt32(0, 2); } catch (duplicate:Error) { caught = true; }
-                check(caught, "Duplicate field rejected");
-
                 // Generated defaults, deprecated field holes, reserved names and
                 // integer fields all pass through the same public object API.
                 const scalar:ScalarDefaults = new ScalarDefaults();

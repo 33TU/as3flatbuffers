@@ -1,6 +1,5 @@
 package
 {
-    import as3flatbuffers.Builder;
     import fixtures.OptionalScalars;
     import fixtures.OptionalScalarsView;
     import flash.filesystem.File;
@@ -16,7 +15,6 @@ package
             const cases:Array = JSON.parse(manifest.readUTFBytes(manifest.length)) as Array;
             const value:OptionalScalars = new OptionalScalars();
             const view:OptionalScalarsView = new OptionalScalarsView();
-            const builder:Builder = new Builder();
             verify(value, cases[0], check);
             for (var i:int = 0; i < cases.length; i++)
             {
@@ -47,7 +45,6 @@ package
                         check(previous[slot] === value[name], "Repeated optional unpack reuses present wrapper: " + name);
                 }
                 verify(value, cases[i], check);
-                builder.reset(FixtureBuffer.create());
                 const output:ByteArray = OptionalScalars.pack(copy, FixtureBuffer.create());
                 write(directory.resolvePath("optional-as3-" + i + ".bin"), output);
                 FixtureBuffer.bindRoot(view, output);
@@ -67,12 +64,6 @@ package
             }
             OptionalScalars.reset(value);
             verify(value, cases[0], check);
-            builder.reset(FixtureBuffer.create());
-            builder.startTable(1, 8);
-            builder.addInt32(0, 0);
-            var rejected:Boolean = false;
-            try { builder.addInt32(0, 1); } catch (duplicate:Error) { rejected = true; }
-            check(rejected, "Forced zero occupies its slot");
         }
 
         private static function verify(value:Object, expected:Array, check:Function):void

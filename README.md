@@ -85,8 +85,10 @@ Schema defaults are still range-checked by the generator.
 
 Generated table packers omit scalar schema defaults before calling the builder.
 Optional scalars are written whenever present, including zero and false.
-Manual `builder.addXXX(slot, value)` calls always write a field; callers handle
-default omission themselves.
+`Builder` is internal support for generated packers, not a manual construction API.
+Generated code guarantees valid slots, alignment, call order, and reference patches.
+The builder retains runtime buffer/table size limits and object-cycle detection;
+it does not validate those generator-controlled operations.
 
 Nullable scalar fields (`score:int = null` in a schema) use AS3PB's `OptionalInt`,
 `OptionalUint`, `OptionalNumber`, or `OptionalBoolean` wrappers. A null wrapper
@@ -98,8 +100,6 @@ Nullable fields initialize and reset to null. `unpack(view, existing)` reuses
 present destination wrappers, allocates missing ones, and clears absent fields.
 `clone(source)` deeply copies wrappers, and a view getter returns an independent wrapper
 or null. Packing preserves present zero/false values instead of omitting them.
-For manual construction, the builder's scalar `add*` methods accept a final
-`force` argument that writes a value even when it equals the supplied default.
 
 **Compiler limitation:** `flatc` 25.12.19 exports `ulong` schema defaults above
 `9223372036854775807` as zero in BFBS. This loses information before our generator
@@ -127,9 +127,8 @@ extra UTF-8 validation. Reads check offsets, lengths, and terminators; string
 lengths are 32-bit and can exceed 65,535 bytes. See the
 [chat example](examples/string/README.md).
 
-For manual construction, reserve a field with `builder.reserveOffset(slot)`,
-close its table, then call `builder.patchOffset(field, builder.createString(value))`.
-String and child-table references may share the same builder.
+Generated packers reserve each string field, close its table, then write the string
+and patch its reference. Strings and child tables share the same builder.
 
 ## Inline structs
 
@@ -167,12 +166,10 @@ Struct packers prepare their size and alignment once, then write scalar fields
 and zero padding directly into the destination ByteArray. Nested struct writes
 are expanded into the containing struct's packer, sharing that preparation.
 Null checks for nested structs and 64-bit values remain.
-For manual construction, call `builder.startTable(fieldCount, alignment)` with the
-maximum field alignment (at least 4), then use
-`builder.addStruct(slot, Point.packInto(value, builder))` inside the open table.
-Struct offsets cannot be reused elsewhere. `builder.reset(dst, false)` selects
-raw-struct output; `builder.reset(dst)` reserves a root-offset word for a table.
-`builder.finish(root)` patches that word and returns the destination without a copy.
+Generated table packers select the maximum field alignment and record each struct
+inside its containing table. Struct offsets cannot be reused elsewhere. Root struct
+packing omits the root-offset word; root table packing reserves and patches that
+word before returning the destination without a copy.
 Fixed-size arrays inside structs are not supported yet.
 
 ## Nested and recursive tables
@@ -213,9 +210,8 @@ existing child objects and clears children that are absent in the input.
 Packing reserves each present reference inside the parent, closes that table,
 then writes children and patches the reserved offsets. `packInto()` always returns
 the parent's absolute offset even when descendants were written afterward.
-`finish(root)` accepts any completed table and requires all reserved references
-to be patched. Manual writers use `reserveOffset(slot)` and
-`patchOffset(position, childTableOffset)` for the same sequence.
+Generated code patches every reserved reference before calling `finish(root)`,
+which writes the root offset without tracking or validating completed objects.
 
 Owned input must be acyclic. Packing detects cycles and throws, then detaches the
 static builder so it can be used again. Repeated references to the same child

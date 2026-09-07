@@ -126,7 +126,7 @@ package
             builder.reset(FixtureBuffer.create());
             builder.startTable(1, 8);
             var rejected:Boolean = false;
-            try { builder.addInt64(0, null); } catch (missing:ArgumentError) { rejected = true; }
+            try { builder.addInt64(0, null); } catch (missing:Error) { rejected = true; }
             check(rejected, "Reject missing 64-bit value");
         }
 

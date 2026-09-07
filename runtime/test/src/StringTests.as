@@ -112,24 +112,14 @@ package
             check(textView.value == "recovered", "String builder reuse after native encoding cases");
 
             const builder:Builder = new Builder();
-            rejects(function():void { builder.createString("x"); }, check, "Detached builder rejects strings");
             builder.reset(dst);
             builder.startTable(1, 4);
             const reference:uint = builder.reserveOffset(0);
-            rejects(function():void { builder.createString("x"); }, check, "Strings cannot be written inside table bodies");
             const table:uint = builder.endTable();
-            rejects(function():void { builder.createString(null); }, check, "Null strings must be omitted");
-            rejects(function():void { builder.finish(table); }, check, "Unpatched string reference prevents finish");
             const target:uint = builder.createString("");
             builder.patchOffset(reference, target);
-            rejects(function():void { builder.patchOffset(reference, target); }, check, "String reference cannot be patched twice");
-            rejects(function():void { builder.finish(target); }, check, "String cannot be a table root");
             FixtureBuffer.bindRoot(textView, builder.finish(table));
-            check(textView.value === "", "Manual builder preserves present empty string");
-            rejects(function():void { builder.createString("x"); }, check, "Finished builder rejects strings");
-            builder.reset(dst, false);
-            builder.createString("");
-            rejects(function():void { builder.finish(0); }, check, "String cannot be finished as a raw struct");
+            check(textView.value === "", "Forward string patch preserves present empty string");
 
             text.value = null;
             Text.pack(text, dst);

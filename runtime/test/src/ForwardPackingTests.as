@@ -160,16 +160,6 @@ package
                 envelopeView.frame.point.y == -2.5 && envelopeView.tail == -123,
                 "Flattened nested writes preserve offsets and recover after failure");
 
-            builder.reset();
-            rejects(function():void { Aligned.packInto(aligned, builder); }, check, "Direct struct cannot use a detached builder");
-            builder.reset(dst, false);
-            builder.finish(Aligned.packInto(aligned, builder));
-            rejects(function():void { Aligned.packInto(aligned, builder); }, check, "Direct struct cannot use a finished builder");
-            builder.reset(dst);
-            builder.startTable(1, 4);
-            rejects(function():void { Aligned.packInto(aligned, builder); }, check, "Direct struct respects containing table alignment");
-            builder.reset();
-
             // Endian selection belongs to the caller, including on builder reuse.
             dst.endian = Endian.BIG_ENDIAN;
             Point.pack(point, dst);
