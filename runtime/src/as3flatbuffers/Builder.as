@@ -379,11 +379,20 @@ package as3flatbuffers
                 throw new RangeError("Field alignment exceeds the table alignment");
 
             // All accepted alignments are powers of two.
-            const padding:uint = (0 - bytes.position) & (alignment - 1);
+            var padding:uint = (0 - bytes.position) & (alignment - 1);
             if (Number(bytes.position) + padding + alignment + additionalBytes > 0x40000000)
                 throw new RangeError("Buffer is too large");
 
-            for (var i:uint = 0; i < padding; i++)
+            while (padding >= 8)
+            {
+                bytes.writeDouble(0);
+                padding -= 8;
+            }
+            if (padding & 4)
+                bytes.writeUnsignedInt(0);
+            if (padding & 2)
+                bytes.writeShort(0);
+            if (padding & 1)
                 bytes.writeByte(0);
         }
     }
