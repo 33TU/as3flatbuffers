@@ -56,10 +56,10 @@ package as3flatbuffers
 
             fields.length = fieldCount;
             prepare(2, 0);
-            vtableStart = offset;
+            vtableStart = bytes.position;
             pad((fieldCount + 2) * 2);
             prepare(alignment, 4);
-            tableStart = offset;
+            tableStart = bytes.position;
             bytes.writeInt(int(tableStart - vtableStart));
             tableAlignment = alignment;
             tableOpen = true;
@@ -71,7 +71,7 @@ package as3flatbuffers
 
             prepare(1, 0);
             bytes.writeBoolean(value);
-            fields[slot] = offset - 1;
+            fields[slot] = bytes.position - 1;
         }
 
         public function addInt8(slot:uint, value:int):void
@@ -80,7 +80,7 @@ package as3flatbuffers
 
             prepare(1, 0);
             bytes.writeByte(value);
-            fields[slot] = offset - 1;
+            fields[slot] = bytes.position - 1;
         }
 
         public function addUint8(slot:uint, value:uint):void
@@ -89,7 +89,7 @@ package as3flatbuffers
 
             prepare(1, 0);
             bytes.writeByte(value);
-            fields[slot] = offset - 1;
+            fields[slot] = bytes.position - 1;
         }
 
         public function addInt16(slot:uint, value:int):void
@@ -98,7 +98,7 @@ package as3flatbuffers
 
             prepare(2, 0);
             bytes.writeShort(value);
-            fields[slot] = offset - 2;
+            fields[slot] = bytes.position - 2;
         }
 
         public function addUint16(slot:uint, value:uint):void
@@ -107,7 +107,7 @@ package as3flatbuffers
 
             prepare(2, 0);
             bytes.writeShort(value);
-            fields[slot] = offset - 2;
+            fields[slot] = bytes.position - 2;
         }
 
         public function addFloat64(slot:uint, value:Number):void
@@ -116,7 +116,7 @@ package as3flatbuffers
 
             prepare(8, 0);
             bytes.writeDouble(value);
-            fields[slot] = offset - 8;
+            fields[slot] = bytes.position - 8;
         }
 
         public function addInt64(slot:uint, value:Int64):void
@@ -128,7 +128,7 @@ package as3flatbuffers
             prepare(8, 0);
             bytes.writeUnsignedInt(value.low);
             bytes.writeUnsignedInt(uint(value.high));
-            fields[slot] = offset - 8;
+            fields[slot] = bytes.position - 8;
         }
 
         public function addUint64(slot:uint, value:UInt64):void
@@ -140,7 +140,7 @@ package as3flatbuffers
             prepare(8, 0);
             bytes.writeUnsignedInt(value.low);
             bytes.writeUnsignedInt(uint(value.high));
-            fields[slot] = offset - 8;
+            fields[slot] = bytes.position - 8;
         }
 
         public function addFloat32(slot:uint, value:Number):void
@@ -149,7 +149,7 @@ package as3flatbuffers
 
             prepare(4, 0);
             bytes.writeFloat(value);
-            fields[slot] = offset - 4;
+            fields[slot] = bytes.position - 4;
         }
 
         public function addInt32(slot:uint, value:int):void
@@ -158,7 +158,7 @@ package as3flatbuffers
 
             prepare(4, 0);
             bytes.writeInt(value);
-            fields[slot] = offset - 4;
+            fields[slot] = bytes.position - 4;
         }
 
         public function addUint32(slot:uint, value:uint):void
@@ -167,7 +167,7 @@ package as3flatbuffers
 
             prepare(4, 0);
             bytes.writeUnsignedInt(value);
-            fields[slot] = offset - 4;
+            fields[slot] = bytes.position - 4;
         }
 
         /** Reserve a present table or string reference for a later forward-offset patch. */
@@ -175,7 +175,7 @@ package as3flatbuffers
         {
             checkSlot(slot);
             prepare(4, 4);
-            const position:uint = offset;
+            const position:uint = bytes.position;
             bytes.writeUnsignedInt(0);
             fields[slot] = position;
             pending.push(position);
@@ -190,7 +190,7 @@ package as3flatbuffers
             if (index < 0 || target <= position || (tables.indexOf(target) < 0 && strings.indexOf(target) < 0))
                 throw new RangeError("Expected a reserved reference to a completed table or string ahead of it");
 
-            const end:uint = offset;
+            const end:uint = bytes.position;
             bytes.position = position;
             bytes.writeUnsignedInt(target - position);
             bytes.position = end;
@@ -207,13 +207,13 @@ package as3flatbuffers
                 throw new ArgumentError("String must be non-null");
 
             prepare(4, 4);
-            const start:uint = offset;
+            const start:uint = bytes.position;
             bytes.writeUnsignedInt(0);
             bytes.writeUTFBytes(value);
-            const length:uint = offset - start - 4;
+            const length:uint = bytes.position - start - 4;
             prepare(1, 0);
             bytes.writeByte(0);
-            const end:uint = offset;
+            const end:uint = bytes.position;
             bytes.position = start;
             bytes.writeUnsignedInt(length);
             bytes.position = end;
@@ -240,7 +240,7 @@ package as3flatbuffers
         public function addStruct(slot:uint, structOffset:uint):void
         {
             checkSlot(slot);
-            if (structOffset < tableStart + 4 || structOffset >= offset)
+            if (structOffset < tableStart + 4 || structOffset >= bytes.position)
                 throw new Error("Struct must be written inline in the open table");
             fields[slot] = structOffset;
         }
@@ -281,7 +281,7 @@ package as3flatbuffers
             if (!tableOpen)
                 throw new Error("No table is open");
 
-            const end:uint = offset;
+            const end:uint = bytes.position;
             const objectSize:uint = end - tableStart;
             if (objectSize > 65535)
                 throw new RangeError("Table is too large");
@@ -321,14 +321,6 @@ package as3flatbuffers
             bytes.position = 0;
             finished = true;
             return bytes;
-        }
-
-        /** Absolute write position in the destination. */
-        public function get offset():uint
-        {
-            if (!bytes)
-                throw new Error("Builder has no destination");
-            return bytes.position;
         }
 
         [Inline]
