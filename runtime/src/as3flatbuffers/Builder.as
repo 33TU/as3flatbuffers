@@ -223,7 +223,10 @@ package as3flatbuffers
             bytes.writeShort((count + 2) * 2);
             bytes.writeShort(objectSize);
             for (var i:uint = 0; i < count; i++)
-                bytes.writeShort(fields[i] ? fields[i] - tableStart : 0);
+            {
+                const field:uint = fields[i];
+                bytes.writeShort(field ? field - tableStart : 0);
+            }
 
             bytes.position = end;
             fields.length = 0;
