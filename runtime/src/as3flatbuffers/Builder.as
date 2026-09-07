@@ -250,14 +250,18 @@ package as3flatbuffers
             fields[slot] = structOffset;
         }
 
-        /** Align the destination before generated forward struct writes. */
-        public function prepareStruct(size:uint, alignment:uint):void
+        /**
+         * Validate and align a complete struct, then lend the destination for direct writes.
+         * Generated code must write exactly size bytes, including zero padding.
+         */
+        public function prepareStruct(size:uint, alignment:uint):ByteArray
         {
             if (finished) throw new Error("Reset a finished builder");
             if (!size || size > 65535 || !alignment || alignment > 256 ||
                 (alignment & (alignment - 1)) || size % alignment)
                 throw new RangeError("Invalid struct size or alignment");
             prepare(alignment, size);
+            return bytes;
         }
 
         public function pad(count:uint):void

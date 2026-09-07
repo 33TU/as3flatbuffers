@@ -55,11 +55,12 @@ package fixtures.geometry
             if (!source || !builder)
                 throw new ArgumentError("Source and builder must be non-null");
 
-            builder.prepareStruct(16, 16);
-            const start:uint = builder.offset;
-            builder.putInt32(source.id);
-            builder.pad(4);
-            builder.putFloat64(source.value);
+            const bytes:flash.utils.ByteArray = builder.prepareStruct(16, 16);
+            const start:uint = bytes.position;
+
+            bytes.writeInt(source.id);
+            bytes.writeUnsignedInt(0);
+            bytes.writeDouble(source.value);
             return start;
         }
     }

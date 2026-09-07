@@ -37,33 +37,6 @@ func generateViewCaches(w *IndentWriter, o object) {
 	}
 }
 
-func generateStructPack(w *IndentWriter, o object) {
-	w.Line("public static function packInto(source:%s, builder:as3flatbuffers.Builder):uint", o.Name)
-	w.Line("{")
-	w.Indent()
-	generatePackCheck(w)
-	w.Line("builder.prepareStruct(%d, %d);", o.Size, o.Alignment)
-	w.Line("const start:uint = builder.offset;")
-	var cursor uint32
-	for _, f := range o.Fields {
-		if padding := f.Offset - cursor; padding != 0 {
-			w.Line("builder.pad(%d);", padding)
-		}
-		if f.Struct {
-			w.Line("%s.packInto(source.%s, builder);", f.Type, f.Name)
-		} else {
-			w.Line("builder.put%s(source.%s);", strings.TrimPrefix(f.Writer, "add"), f.Name)
-		}
-		cursor = f.Offset + f.Width
-	}
-	if cursor < o.Size {
-		w.Line("builder.pad(%d);", o.Size-cursor)
-	}
-	w.Line("return start;")
-	w.Dedent()
-	w.Line("}")
-}
-
 func generateStructView(w *IndentWriter, o object) {
 	generatePackage(w, o)
 	w.Line("import flash.utils.Endian;")

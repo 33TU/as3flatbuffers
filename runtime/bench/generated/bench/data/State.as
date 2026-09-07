@@ -77,18 +77,20 @@ package bench.data
             if (!source || !builder)
                 throw new ArgumentError("Source and builder must be non-null");
 
-            builder.prepareStruct(64, 8);
-            const start:uint = builder.offset;
+            const bytes:flash.utils.ByteArray = builder.prepareStruct(64, 8);
+            const start:uint = bytes.position;
+
             bench.data.Vec3.packInto(source.position, builder);
             bench.data.Vec3.packInto(source.velocity, builder);
             bench.data.Vec3.packInto(source.facing, builder);
-            builder.putInt32(source.delta);
-            builder.putUint32(source.checksum);
-            builder.pad(4);
-            builder.putFloat64(source.precision);
-            builder.putBool(source.active);
-            builder.pad(3);
-            builder.putUint32(source.kind);
+            bytes.writeInt(source.delta);
+            bytes.writeUnsignedInt(source.checksum);
+            bytes.writeUnsignedInt(0);
+            bytes.writeDouble(source.precision);
+            bytes.writeBoolean(source.active);
+            bytes.writeShort(0);
+            bytes.writeByte(0);
+            bytes.writeUnsignedInt(source.kind);
             return start;
         }
     }

@@ -7,6 +7,9 @@ package
     import fixtures.PrimitivesView;
     import fixtures.geometry.Aligned;
     import fixtures.geometry.AlignedView;
+    import fixtures.geometry.Frame;
+    import fixtures.geometry.FrameView;
+    import fixtures.geometry.Envelope;
     import flash.utils.ByteArray;
     import flash.utils.Endian;
 
@@ -81,6 +84,54 @@ package
             check(alignedView.id == 123 && alignedView.value == Math.PI, "Raw aligned struct round trip");
             for (var i:uint = 4; i < 8; i++)
                 check(dst[i] == 0, "Forward struct padding is zero");
+
+            // Direct struct writes preserve validation previously provided by put*().
+            const frame:Frame = new Frame();
+            const invalidFields:Array = ["tag", "tag", "tiny", "tiny", "count", "count", "small", "small"];
+            const invalidValues:Array = [256, uint.MAX_VALUE, -129, 128, -32769, 32768, 65536, uint.MAX_VALUE];
+            for (i = 0; i < invalidFields.length; i++)
+            {
+                Frame.reset(frame);
+                frame[invalidFields[i]] = invalidValues[i];
+                rejects(function():void { Frame.pack(frame, dst); }, check, "Struct rejects out-of-range " + invalidFields[i]);
+            }
+            Frame.reset(frame);
+            frame.signedValue = null;
+            rejects(function():void { Frame.pack(frame, dst); }, check, "Struct rejects null signed words");
+            Frame.reset(frame);
+            frame.unsignedValue = null;
+            rejects(function():void { Frame.pack(frame, dst); }, check, "Struct rejects null unsigned words");
+            Frame.reset(frame);
+            frame.point = null;
+            rejects(function():void { Frame.pack(frame, dst); }, check, "Struct rejects null nested struct");
+            Frame.reset(frame);
+            frame.tag = 255;
+            frame.tiny = -128;
+            frame.count = -32768;
+            frame.small = 65535;
+            Frame.pack(frame, dst);
+            const frameView:FrameView = new FrameView().bind(dst, 0);
+            check(frameView.tag == 255 && frameView.tiny == -128 && frameView.count == -32768 &&
+                frameView.small == 65535, "Struct can pack boundary values after failure");
+
+            // All fields and padding of a default nested struct must overwrite dirty storage.
+            dst.position = 0;
+            for (i = 0; i < 256; i++)
+                dst.writeByte(255);
+            Envelope.pack(new Envelope(), dst);
+            check(dst.length == 72, "Nested struct has its exact reflected size");
+            for (i = 0; i < dst.length; i++)
+                check(dst[i] == 0, "Nested struct clears dirty fields and padding");
+
+            builder.reset();
+            rejects(function():void { Aligned.packInto(aligned, builder); }, check, "Direct struct cannot use a detached builder");
+            builder.reset(dst, false);
+            builder.finish(Aligned.packInto(aligned, builder));
+            rejects(function():void { Aligned.packInto(aligned, builder); }, check, "Direct struct cannot use a finished builder");
+            builder.reset(dst);
+            builder.startTable(1, 4);
+            rejects(function():void { Aligned.packInto(aligned, builder); }, check, "Direct struct respects containing table alignment");
+            builder.reset();
 
             // Endian selection belongs to the caller, including on builder reuse.
             dst.endian = Endian.BIG_ENDIAN;

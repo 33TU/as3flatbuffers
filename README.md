@@ -134,6 +134,9 @@ padding and `force_align`. A struct's static `pack(source, dst)` writes raw stru
 bytes starting at zero, without a root-offset word. Its `packInto(source, builder)`
 writes inline at the current aligned builder position and returns the absolute
 struct offset. Generated table packing records it immediately with `addStruct`.
+Struct packers prepare their size and alignment once, then write scalar fields
+and zero padding directly into the destination ByteArray. Nested structs call
+their own packers; narrow integer range checks and non-null 64-bit checks remain.
 For manual construction, call `builder.startTable(fieldCount, alignment)` with the
 maximum field alignment (at least 4), then use
 `builder.addStruct(slot, Point.packInto(value, builder))` inside the open table.

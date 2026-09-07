@@ -55,10 +55,11 @@ package fixtures.nested
             if (!source || !builder)
                 throw new ArgumentError("Source and builder must be non-null");
 
-            builder.prepareStruct(16, 16);
-            const start:uint = builder.offset;
-            builder.putFloat64(source.x);
-            builder.putFloat64(source.y);
+            const bytes:flash.utils.ByteArray = builder.prepareStruct(16, 16);
+            const start:uint = bytes.position;
+
+            bytes.writeDouble(source.x);
+            bytes.writeDouble(source.y);
             return start;
         }
     }

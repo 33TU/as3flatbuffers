@@ -91,22 +91,44 @@ package fixtures.geometry
             if (!source || !builder)
                 throw new ArgumentError("Source and builder must be non-null");
 
-            builder.prepareStruct(56, 8);
-            const start:uint = builder.offset;
-            builder.putUint8(source.tag);
-            builder.pad(3);
+            const bytes:flash.utils.ByteArray = builder.prepareStruct(56, 8);
+            const start:uint = bytes.position;
+
+            if (source.tag > 255)
+                throw new RangeError("tag is out of range");
+
+            bytes.writeByte(source.tag);
+            bytes.writeShort(0);
+            bytes.writeByte(0);
             fixtures.geometry.Point.packInto(source.point, builder);
-            builder.putInt16(source.count);
-            builder.pad(2);
-            builder.putInt64(source.signedValue);
-            builder.putUint64(source.unsignedValue);
-            builder.putFloat64(source.weight);
-            builder.putBool(source.enabled);
-            builder.putInt8(source.tiny);
-            builder.putUint16(source.small);
-            builder.putInt32(source.number);
-            builder.putUint32(source.unsignedNumber);
-            builder.putFloat32(source.fraction);
+            if (source.count < -32768 || source.count > 32767)
+                throw new RangeError("count is out of range");
+
+            bytes.writeShort(source.count);
+            bytes.writeShort(0);
+            if (!source.signedValue)
+                throw new ArgumentError("signedValue must be non-null");
+
+            bytes.writeUnsignedInt(source.signedValue.low);
+            bytes.writeUnsignedInt(uint(source.signedValue.high));
+            if (!source.unsignedValue)
+                throw new ArgumentError("unsignedValue must be non-null");
+
+            bytes.writeUnsignedInt(source.unsignedValue.low);
+            bytes.writeUnsignedInt(uint(source.unsignedValue.high));
+            bytes.writeDouble(source.weight);
+            bytes.writeBoolean(source.enabled);
+            if (source.tiny < -128 || source.tiny > 127)
+                throw new RangeError("tiny is out of range");
+
+            bytes.writeByte(source.tiny);
+            if (source.small > 65535)
+                throw new RangeError("small is out of range");
+
+            bytes.writeShort(source.small);
+            bytes.writeInt(source.number);
+            bytes.writeUnsignedInt(source.unsignedNumber);
+            bytes.writeFloat(source.fraction);
             return start;
         }
     }

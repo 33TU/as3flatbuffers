@@ -60,13 +60,23 @@ package fixtures.geometry
             if (!source || !builder)
                 throw new ArgumentError("Source and builder must be non-null");
 
-            builder.prepareStruct(72, 8);
-            const start:uint = builder.offset;
-            builder.putInt8(source.lead);
-            builder.pad(7);
+            const bytes:flash.utils.ByteArray = builder.prepareStruct(72, 8);
+            const start:uint = bytes.position;
+
+            if (source.lead < -128 || source.lead > 127)
+                throw new RangeError("lead is out of range");
+
+            bytes.writeByte(source.lead);
+            bytes.writeUnsignedInt(0);
+            bytes.writeShort(0);
+            bytes.writeByte(0);
             fixtures.geometry.Frame.packInto(source.frame, builder);
-            builder.putInt16(source.tail);
-            builder.pad(6);
+            if (source.tail < -32768 || source.tail > 32767)
+                throw new RangeError("tail is out of range");
+
+            bytes.writeShort(source.tail);
+            bytes.writeUnsignedInt(0);
+            bytes.writeShort(0);
             return start;
         }
     }

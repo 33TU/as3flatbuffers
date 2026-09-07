@@ -58,11 +58,12 @@ package bench.data
             if (!source || !builder)
                 throw new ArgumentError("Source and builder must be non-null");
 
-            builder.prepareStruct(12, 4);
-            const start:uint = builder.offset;
-            builder.putFloat32(source.x);
-            builder.putFloat32(source.y);
-            builder.putFloat32(source.z);
+            const bytes:flash.utils.ByteArray = builder.prepareStruct(12, 4);
+            const start:uint = bytes.position;
+
+            bytes.writeFloat(source.x);
+            bytes.writeFloat(source.y);
+            bytes.writeFloat(source.z);
             return start;
         }
     }
