@@ -44,8 +44,6 @@ package as3flatbuffers
         [Inline]
         protected final function fieldOffset(slot:uint, width:uint):uint
         {
-            if (!bytes)
-                throw new Error("View is not bound");
             if (slot >= vtableSize)
                 return 0;
 
@@ -62,8 +60,6 @@ package as3flatbuffers
         [Inline]
         protected final function stringValue(slot:uint):String
         {
-            if (!bytes)
-                throw new Error("View is not bound");
             if (slot >= vtableSize)
                 return null;
 
@@ -93,8 +89,6 @@ package as3flatbuffers
         [Inline]
         protected final function tableOffset(slot:uint):uint
         {
-            if (!bytes)
-                throw new Error("View is not bound");
             if (slot >= vtableSize)
                 return 0;
 
