@@ -96,22 +96,36 @@ package
                 check(field % 8 == 0 && aligned.readDouble() == Math.PI, "8-byte alignment with different vtable sizes");
             }
 
-            for each (var name:String in ["addInt8", "addUint8", "addInt16", "addUint16"])
+            for each (var test:Array in [
+                ["addInt8", -129, "readByte", 127], ["addInt8", 128, "readByte", -128],
+                ["addUint8", 256, "readUnsignedByte", 0],
+                ["addInt16", -32769, "readShort", 32767], ["addInt16", 32768, "readShort", -32768],
+                ["addUint16", 65536, "readUnsignedShort", 0]])
             {
-                const invalid:Array = name == "addInt8" ? [-129, 128] :
-                    name == "addUint8" ? [256] : name == "addInt16" ? [-32769, 32768] : [65536];
-                for each (var bad:int in invalid)
-                {
-                    builder.reset(FixtureBuffer.create());
-                    builder.startTable(1, 8);
-                    var rejected:Boolean = false;
-                    try { builder[name](0, bad); } catch (range:RangeError) { rejected = true; }
-                    check(rejected, "Reject out-of-range narrow integer");
-                }
+                builder.reset(FixtureBuffer.create());
+                builder.startTable(1, 8);
+                builder[test[0]](0, test[1]);
+                const truncated:ByteArray = builder.finish(builder.endTable());
+                truncated.position = 0;
+                const truncatedRoot:uint = truncated.readUnsignedInt();
+                truncated.position = truncatedRoot;
+                const truncatedVtable:uint = truncatedRoot - truncated.readInt();
+                truncated.position = truncatedVtable + 4;
+                const truncatedField:uint = truncated.readUnsignedShort();
+                check(truncatedField != 0, "Manual scalar writes retain present zero");
+                truncated.position = truncatedRoot + truncatedField;
+                check(truncated[test[2]]() == test[3], "Narrow builder writes truncate to field width");
             }
+            value.i8 = 128;
+            value.u8 = 256;
+            value.i16 = -32769;
+            value.u16 = 65536;
+            FixtureBuffer.bindRoot(view, Primitives.pack(value, FixtureBuffer.create()));
+            check(view.i8 == -128 && view.u8 == 0 && view.i16 == 32767 && view.u16 == 0,
+                "Generated table writes truncate narrow integers");
             builder.reset(FixtureBuffer.create());
             builder.startTable(1, 8);
-            rejected = false;
+            var rejected:Boolean = false;
             try { builder.addInt64(0, null); } catch (missing:ArgumentError) { rejected = true; }
             check(rejected, "Reject missing 64-bit value");
         }

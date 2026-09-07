@@ -65,87 +65,65 @@ package as3flatbuffers
             tableOpen = true;
         }
 
-        public function addBool(slot:uint, value:Boolean, defaultValue:Boolean = false, force:Boolean = false):void
+        public function addBool(slot:uint, value:Boolean):void
         {
             checkSlot(slot);
-            if (!force && value == defaultValue)
-                return;
 
             prepare(1, 0);
             bytes.writeBoolean(value);
             fields[slot] = offset - 1;
         }
 
-        public function addInt8(slot:uint, value:int, defaultValue:int = 0, force:Boolean = false):void
+        public function addInt8(slot:uint, value:int):void
         {
             checkSlot(slot);
-            if (value < -128 || value > 127)
-                throw new RangeError("Int8 value is out of range");
-            if (!force && value == defaultValue)
-                return;
 
             prepare(1, 0);
             bytes.writeByte(value);
             fields[slot] = offset - 1;
         }
 
-        public function addUint8(slot:uint, value:uint, defaultValue:uint = 0, force:Boolean = false):void
+        public function addUint8(slot:uint, value:uint):void
         {
             checkSlot(slot);
-            if (value > 255)
-                throw new RangeError("Uint8 value is out of range");
-            if (!force && value == defaultValue)
-                return;
 
             prepare(1, 0);
             bytes.writeByte(value);
             fields[slot] = offset - 1;
         }
 
-        public function addInt16(slot:uint, value:int, defaultValue:int = 0, force:Boolean = false):void
+        public function addInt16(slot:uint, value:int):void
         {
             checkSlot(slot);
-            if (value < -32768 || value > 32767)
-                throw new RangeError("Int16 value is out of range");
-            if (!force && value == defaultValue)
-                return;
 
             prepare(2, 0);
             bytes.writeShort(value);
             fields[slot] = offset - 2;
         }
 
-        public function addUint16(slot:uint, value:uint, defaultValue:uint = 0, force:Boolean = false):void
+        public function addUint16(slot:uint, value:uint):void
         {
             checkSlot(slot);
-            if (value > 65535)
-                throw new RangeError("Uint16 value is out of range");
-            if (!force && value == defaultValue)
-                return;
 
             prepare(2, 0);
             bytes.writeShort(value);
             fields[slot] = offset - 2;
         }
 
-        public function addFloat64(slot:uint, value:Number, defaultValue:Number = 0, force:Boolean = false):void
+        public function addFloat64(slot:uint, value:Number):void
         {
             checkSlot(slot);
-            if (!force && value == defaultValue)
-                return;
 
             prepare(8, 0);
             bytes.writeDouble(value);
             fields[slot] = offset - 8;
         }
 
-        public function addInt64(slot:uint, value:Int64, defaultLow:uint = 0, defaultHigh:int = 0, force:Boolean = false):void
+        public function addInt64(slot:uint, value:Int64):void
         {
             checkSlot(slot);
             if (!value)
                 throw new ArgumentError("Int64 value must be non-null");
-            if (!force && value.low == defaultLow && value.high == defaultHigh)
-                return;
 
             prepare(8, 0);
             bytes.writeUnsignedInt(value.low);
@@ -153,13 +131,11 @@ package as3flatbuffers
             fields[slot] = offset - 8;
         }
 
-        public function addUint64(slot:uint, value:UInt64, defaultLow:uint = 0, defaultHigh:uint = 0, force:Boolean = false):void
+        public function addUint64(slot:uint, value:UInt64):void
         {
             checkSlot(slot);
             if (!value)
                 throw new ArgumentError("UInt64 value must be non-null");
-            if (!force && value.low == defaultLow && value.high == defaultHigh)
-                return;
 
             prepare(8, 0);
             bytes.writeUnsignedInt(value.low);
@@ -167,33 +143,27 @@ package as3flatbuffers
             fields[slot] = offset - 8;
         }
 
-        public function addFloat32(slot:uint, value:Number, defaultValue:Number = 0, force:Boolean = false):void
+        public function addFloat32(slot:uint, value:Number):void
         {
             checkSlot(slot);
-            if (!force && value == defaultValue)
-                return;
 
             prepare(4, 0);
             bytes.writeFloat(value);
             fields[slot] = offset - 4;
         }
 
-        public function addInt32(slot:uint, value:int, defaultValue:int = 0, force:Boolean = false):void
+        public function addInt32(slot:uint, value:int):void
         {
             checkSlot(slot);
-            if (!force && value == defaultValue)
-                return;
 
             prepare(4, 0);
             bytes.writeInt(value);
             fields[slot] = offset - 4;
         }
 
-        public function addUint32(slot:uint, value:uint, defaultValue:uint = 0, force:Boolean = false):void
+        public function addUint32(slot:uint, value:uint):void
         {
             checkSlot(slot);
-            if (!force && value == defaultValue)
-                return;
 
             prepare(4, 0);
             bytes.writeUnsignedInt(value);

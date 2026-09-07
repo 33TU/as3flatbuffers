@@ -70,7 +70,8 @@ package fixtures.nested
                 const offset0:uint = source.head ? builder.reserveOffset(0) : 0;
                 const offset1:uint = source.alternate ? builder.reserveOffset(1) : 0;
                 const offset2:uint = source.pair ? builder.reserveOffset(2) : 0;
-                builder.addInt32(3, source.serial, 0);
+                if (source.serial != 0)
+                    builder.addInt32(3, source.serial);
                 const table:uint = builder.endTable();
                 if (offset0)
                     builder.patchOffset(offset0, fixtures.nested.Node.packInto(source.head, builder));

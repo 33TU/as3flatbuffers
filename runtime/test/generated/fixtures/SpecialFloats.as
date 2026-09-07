@@ -59,9 +59,11 @@ package fixtures
                 throw new ArgumentError("Source and builder must be non-null");
 
             builder.startTable(3, 8);
-            builder.addFloat32(0, source.f32, NaN);
-            builder.addFloat64(1, source.f64, Number.POSITIVE_INFINITY);
-            builder.addFloat64(2, source.negative, Number.NEGATIVE_INFINITY);
+            builder.addFloat32(0, source.f32);
+            if (source.f64 != Number.POSITIVE_INFINITY)
+                builder.addFloat64(1, source.f64);
+            if (source.negative != Number.NEGATIVE_INFINITY)
+                builder.addFloat64(2, source.negative);
             return builder.endTable();
         }
     }

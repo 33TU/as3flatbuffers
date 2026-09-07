@@ -69,7 +69,7 @@ package
             verify(value, cases[0], check);
             builder.reset(FixtureBuffer.create());
             builder.startTable(1, 8);
-            builder.addInt32(0, 0, 0, true);
+            builder.addInt32(0, 0);
             var rejected:Boolean = false;
             try { builder.addInt32(0, 1); } catch (duplicate:Error) { rejected = true; }
             check(rejected, "Forced zero occupies its slot");

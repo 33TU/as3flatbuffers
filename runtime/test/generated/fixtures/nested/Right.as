@@ -60,7 +60,8 @@ package fixtures.nested
             try
             {
                 builder.startTable(2, 8);
-                builder.addFloat64(0, source.weight, 0);
+                if (source.weight != 0)
+                    builder.addFloat64(0, source.weight);
                 const offset1:uint = source.left ? builder.reserveOffset(1) : 0;
                 const table:uint = builder.endTable();
                 if (offset1)

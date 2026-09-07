@@ -91,9 +91,6 @@ package fixtures.geometry
             const bytes:flash.utils.ByteArray = builder.prepareStruct(56, 8);
             const start:uint = bytes.position;
 
-            if (source.tag > 255)
-                throw new RangeError("tag is out of range");
-
             bytes.writeByte(source.tag);
             bytes.writeShort(0);
             bytes.writeByte(0);
@@ -102,9 +99,6 @@ package fixtures.geometry
 
             bytes.writeFloat(source.point.x);
             bytes.writeFloat(source.point.y);
-            if (source.count < -32768 || source.count > 32767)
-                throw new RangeError("count is out of range");
-
             bytes.writeShort(source.count);
             bytes.writeShort(0);
             if (!source.signedValue)
@@ -119,13 +113,7 @@ package fixtures.geometry
             bytes.writeUnsignedInt(uint(source.unsignedValue.high));
             bytes.writeDouble(source.weight);
             bytes.writeBoolean(source.enabled);
-            if (source.tiny < -128 || source.tiny > 127)
-                throw new RangeError("tiny is out of range");
-
             bytes.writeByte(source.tiny);
-            if (source.small > 65535)
-                throw new RangeError("small is out of range");
-
             bytes.writeShort(source.small);
             bytes.writeInt(source.number);
             bytes.writeUnsignedInt(source.unsignedNumber);

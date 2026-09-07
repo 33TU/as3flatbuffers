@@ -62,7 +62,8 @@ package bench.data
                 throw new ArgumentError("Source and builder must be non-null");
 
             builder.startTable(4, 4);
-            builder.addUint32(0, source.sequence, 0);
+            if (source.sequence != 0)
+                builder.addUint32(0, source.sequence);
             const offset1:uint = source.name != null ? builder.reserveOffset(1) : 0;
             const offset2:uint = source.text != null ? builder.reserveOffset(2) : 0;
             const offset3:uint = source.details != null ? builder.reserveOffset(3) : 0;

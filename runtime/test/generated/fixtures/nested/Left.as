@@ -60,7 +60,8 @@ package fixtures.nested
             try
             {
                 builder.startTable(2, 4);
-                builder.addInt32(0, source.code, 0);
+                if (source.code != 0)
+                    builder.addInt32(0, source.code);
                 const offset1:uint = source.right ? builder.reserveOffset(1) : 0;
                 const table:uint = builder.endTable();
                 if (offset1)

@@ -86,18 +86,30 @@ package bench.data
                 throw new ArgumentError("Source and builder must be non-null");
 
             builder.startTable(12, 8);
-            builder.addUint32(0, source.sequence, 0);
-            builder.addInt32(1, source.delta, 0);
-            builder.addUint32(2, source.checksum, 0);
-            builder.addFloat32(3, source.x, 0);
-            builder.addFloat32(4, source.y, 0);
-            builder.addFloat32(5, source.z, 0);
-            builder.addFloat32(6, source.vx, 0);
-            builder.addFloat32(7, source.vy, 0);
-            builder.addFloat32(8, source.vz, 0);
-            builder.addFloat64(9, source.precision, 0);
-            builder.addBool(10, source.active, false);
-            builder.addUint32(11, source.kind, 0);
+            if (source.sequence != 0)
+                builder.addUint32(0, source.sequence);
+            if (source.delta != 0)
+                builder.addInt32(1, source.delta);
+            if (source.checksum != 0)
+                builder.addUint32(2, source.checksum);
+            if (source.x != 0)
+                builder.addFloat32(3, source.x);
+            if (source.y != 0)
+                builder.addFloat32(4, source.y);
+            if (source.z != 0)
+                builder.addFloat32(5, source.z);
+            if (source.vx != 0)
+                builder.addFloat32(6, source.vx);
+            if (source.vy != 0)
+                builder.addFloat32(7, source.vy);
+            if (source.vz != 0)
+                builder.addFloat32(8, source.vz);
+            if (source.precision != 0)
+                builder.addFloat64(9, source.precision);
+            if (source.active != false)
+                builder.addBool(10, source.active);
+            if (source.kind != 0)
+                builder.addUint32(11, source.kind);
             return builder.endTable();
         }
     }

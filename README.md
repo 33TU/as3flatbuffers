@@ -80,7 +80,13 @@ word objects; `reset(msg)` reuses them and requires them to remain non-null.
 fields. `clone(source)` copies the
 words independently. A view's 64-bit getter returns a fresh word object;
 `unpack(view, existing)` avoids those getter allocations. Keep source word fields
-non-null when packing or cloning. Narrow integer writes reject out-of-range values.
+non-null when packing or cloning. Narrow integer writes truncate to the low 8 or 16 bits, matching ByteArray.
+Schema defaults are still range-checked by the generator.
+
+Generated table packers omit scalar schema defaults before calling the builder.
+Optional scalars are written whenever present, including zero and false.
+Manual `builder.addXXX(slot, value)` calls always write a field; callers handle
+default omission themselves.
 
 Nullable scalar fields (`score:int = null` in a schema) use AS3PB's `OptionalInt`,
 `OptionalUint`, `OptionalNumber`, or `OptionalBoolean` wrappers. A null wrapper
@@ -160,7 +166,7 @@ struct offset. Generated table packing records it immediately with `addStruct`.
 Struct packers prepare their size and alignment once, then write scalar fields
 and zero padding directly into the destination ByteArray. Nested struct writes
 are expanded into the containing struct's packer, sharing that preparation.
-Null checks for nested structs and 64-bit values and narrow integer range checks remain.
+Null checks for nested structs and 64-bit values remain.
 For manual construction, call `builder.startTable(fieldCount, alignment)` with the
 maximum field alignment (at least 4), then use
 `builder.addStruct(slot, Point.packInto(value, builder))` inside the open table.

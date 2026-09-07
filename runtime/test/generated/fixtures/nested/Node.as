@@ -67,7 +67,8 @@ package fixtures.nested
             try
             {
                 builder.startTable(4, 16);
-                builder.addInt32(0, source.value, 0);
+                if (source.value != 0)
+                    builder.addInt32(0, source.value);
                 const offset1:uint = source.next ? builder.reserveOffset(1) : 0;
                 if (source.position)
                     builder.addStruct(2, fixtures.nested.Position.packInto(source.position, builder));

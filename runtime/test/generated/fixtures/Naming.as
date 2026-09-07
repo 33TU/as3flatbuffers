@@ -86,18 +86,30 @@ package fixtures
                 throw new ArgumentError("Source and builder must be non-null");
 
             builder.startTable(12, 4);
-            builder.addInt32(0, source.snakeCase, 11);
-            builder.addInt32(1, source.snakeCase_, 22);
-            builder.addInt32(2, source.reset_, 33);
-            builder.addInt32(3, source.reset__, 44);
-            builder.addInt32(4, source.reset___, 55);
-            builder.addInt32(5, source.bind_, 66);
-            builder.addInt32(6, source.bind_2, 77);
-            builder.addInt32(7, source.__leadingName, 88);
-            builder.addInt32(8, source.trailingName_, 99);
-            builder.addInt32(9, source.value_Name, 111);
-            builder.addInt32(10, source.bytes_, 122);
-            builder.addInt32(11, source.class_, 133);
+            if (source.snakeCase != 11)
+                builder.addInt32(0, source.snakeCase);
+            if (source.snakeCase_ != 22)
+                builder.addInt32(1, source.snakeCase_);
+            if (source.reset_ != 33)
+                builder.addInt32(2, source.reset_);
+            if (source.reset__ != 44)
+                builder.addInt32(3, source.reset__);
+            if (source.reset___ != 55)
+                builder.addInt32(4, source.reset___);
+            if (source.bind_ != 66)
+                builder.addInt32(5, source.bind_);
+            if (source.bind_2 != 77)
+                builder.addInt32(6, source.bind_2);
+            if (source.__leadingName != 88)
+                builder.addInt32(7, source.__leadingName);
+            if (source.trailingName_ != 99)
+                builder.addInt32(8, source.trailingName_);
+            if (source.value_Name != 111)
+                builder.addInt32(9, source.value_Name);
+            if (source.bytes_ != 122)
+                builder.addInt32(10, source.bytes_);
+            if (source.class_ != 133)
+                builder.addInt32(11, source.class_);
             return builder.endTable();
         }
     }

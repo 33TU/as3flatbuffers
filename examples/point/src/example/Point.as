@@ -56,8 +56,10 @@ package example
                 throw new ArgumentError("Source and builder must be non-null");
 
             builder.startTable(2, 4);
-            builder.addFloat32(0, source.x, 0);
-            builder.addFloat32(1, source.y, 0);
+            if (source.x != 0)
+                builder.addFloat32(0, source.x);
+            if (source.y != 0)
+                builder.addFloat32(1, source.y);
             return builder.endTable();
         }
     }

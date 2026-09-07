@@ -89,17 +89,28 @@ package fixtures
                 throw new ArgumentError("Source and builder must be non-null");
 
             builder.startTable(11, 8);
-            if (source.enabled) builder.addBool(0, source.enabled.value, false, true);
-            if (source.i8) builder.addInt8(1, source.i8.value, 0, true);
-            if (source.u8) builder.addUint8(2, source.u8.value, 0, true);
-            if (source.i16) builder.addInt16(3, source.i16.value, 0, true);
-            if (source.u16) builder.addUint16(4, source.u16.value, 0, true);
-            if (source.i32) builder.addInt32(5, source.i32.value, 0, true);
-            if (source.u32) builder.addUint32(6, source.u32.value, 0, true);
-            if (source.i64) builder.addInt64(7, source.i64, 0, 0, true);
-            if (source.u64) builder.addUint64(8, source.u64, 0, 0, true);
-            if (source.f32) builder.addFloat32(9, source.f32.value, 0, true);
-            if (source.f64) builder.addFloat64(10, source.f64.value, 0, true);
+            if (source.enabled)
+                builder.addBool(0, source.enabled.value);
+            if (source.i8)
+                builder.addInt8(1, source.i8.value);
+            if (source.u8)
+                builder.addUint8(2, source.u8.value);
+            if (source.i16)
+                builder.addInt16(3, source.i16.value);
+            if (source.u16)
+                builder.addUint16(4, source.u16.value);
+            if (source.i32)
+                builder.addInt32(5, source.i32.value);
+            if (source.u32)
+                builder.addUint32(6, source.u32.value);
+            if (source.i64)
+                builder.addInt64(7, source.i64);
+            if (source.u64)
+                builder.addUint64(8, source.u64);
+            if (source.f32)
+                builder.addFloat32(9, source.f32.value);
+            if (source.f64)
+                builder.addFloat64(10, source.f64.value);
             return builder.endTable();
         }
     }

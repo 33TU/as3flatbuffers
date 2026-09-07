@@ -1,7 +1,5 @@
 package internal
 
-import "strings"
-
 func generateStructPack(w *IndentWriter, o object, objects map[string]object) {
 	w.Line("public static function packInto(source:%s, builder:as3flatbuffers.Builder):uint", o.Name)
 	w.Line("{")
@@ -60,28 +58,10 @@ func generateStructPadding(w *IndentWriter, count uint32) {
 }
 
 func generateStructScalarWrite(w *IndentWriter, f field) {
-	var check string
-	switch f.Reader {
-	case "int8":
-		check = "source.%s < -128 || source.%s > 127"
-	case "uint8":
-		check = "source.%s > 255"
-	case "int16":
-		check = "source.%s < -32768 || source.%s > 32767"
-	case "uint16":
-		check = "source.%s > 65535"
-	case "int64", "uint64":
-		check = "!source.%s"
-	}
-	if check != "" {
-		check = strings.ReplaceAll(check, "%s", f.Name)
-		w.Line("if (%s)", check)
+	if f.WordDefault != "" {
+		w.Line("if (!source.%s)", f.Name)
 		w.Indent()
-		if f.WordDefault != "" {
-			w.Line("throw new ArgumentError(\"%s must be non-null\");", f.Name)
-		} else {
-			w.Line("throw new RangeError(\"%s is out of range\");", f.Name)
-		}
+		w.Line("throw new ArgumentError(\"%s must be non-null\");", f.Name)
 		w.Dedent()
 		w.BlankLine()
 	}

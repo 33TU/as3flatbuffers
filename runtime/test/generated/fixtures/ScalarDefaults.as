@@ -62,10 +62,14 @@ package fixtures
                 throw new ArgumentError("Source and builder must be non-null");
 
             builder.startTable(5, 4);
-            builder.addFloat32(0, source.xAxis, 1.25);
-            builder.addInt32(2, source.signedValue, -7);
-            builder.addUint32(3, source.unsignedValue, 4294967295);
-            builder.addInt32(4, source.reset_, 9);
+            if (source.xAxis != 1.25)
+                builder.addFloat32(0, source.xAxis);
+            if (source.signedValue != -7)
+                builder.addInt32(2, source.signedValue);
+            if (source.unsignedValue != 4294967295)
+                builder.addUint32(3, source.unsignedValue);
+            if (source.reset_ != 9)
+                builder.addInt32(4, source.reset_);
             return builder.endTable();
         }
     }

@@ -85,17 +85,32 @@ package fixtures
                 throw new ArgumentError("Source and builder must be non-null");
 
             builder.startTable(11, 8);
-            builder.addBool(0, source.enabled, true);
-            builder.addInt8(1, source.i8, -7);
-            builder.addUint8(2, source.u8, 255);
-            builder.addInt16(3, source.i16, -1234);
-            builder.addUint16(4, source.u16, 65535);
-            builder.addInt32(5, source.i32, -1234567);
-            builder.addUint32(6, source.u32, 4294967295);
-            builder.addInt64(7, source.i64, 0, -2147483648);
-            builder.addUint64(8, source.u64, 4294967295, 2147483647);
-            builder.addFloat32(9, source.f32, 0.5);
-            builder.addFloat64(10, source.f64, 1.2345678901234567);
+            if (source.enabled != true)
+                builder.addBool(0, source.enabled);
+            if (source.i8 != -7)
+                builder.addInt8(1, source.i8);
+            if (source.u8 != 255)
+                builder.addUint8(2, source.u8);
+            if (source.i16 != -1234)
+                builder.addInt16(3, source.i16);
+            if (source.u16 != 65535)
+                builder.addUint16(4, source.u16);
+            if (source.i32 != -1234567)
+                builder.addInt32(5, source.i32);
+            if (source.u32 != 4294967295)
+                builder.addUint32(6, source.u32);
+            if (!source.i64)
+                throw new ArgumentError("i64 must be non-null");
+            if (source.i64.low != 0 || source.i64.high != -2147483648)
+                builder.addInt64(7, source.i64);
+            if (!source.u64)
+                throw new ArgumentError("u64 must be non-null");
+            if (source.u64.low != 4294967295 || source.u64.high != 2147483647)
+                builder.addUint64(8, source.u64);
+            if (source.f32 != 0.5)
+                builder.addFloat32(9, source.f32);
+            if (source.f64 != 1.2345678901234567)
+                builder.addFloat64(10, source.f64);
             return builder.endTable();
         }
     }

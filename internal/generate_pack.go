@@ -1,5 +1,7 @@
 package internal
 
+import "strings"
+
 func generatePack(w *IndentWriter, o object, objects map[string]object) {
 	w.Line("/** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */")
 	w.Line("public static function pack(source:%s, dst:flash.utils.ByteArray):flash.utils.ByteArray", o.Name)
@@ -70,11 +72,24 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 			generateOptionalPack(w, f)
 			continue
 		}
-		defaults := f.Default
-		if f.WordDefault != "" {
-			defaults = f.WordDefault
+		// NaN never compares equal, so preserve the existing always-write behavior.
+		if f.Default == "NaN" {
+			w.Line("builder.%s(%d, source.%s);", f.Writer, f.ID, f.Name)
+			continue
 		}
-		w.Line("builder.%s(%d, source.%s, %s);", f.Writer, f.ID, f.Name, defaults)
+		if f.WordDefault != "" {
+			words := strings.Split(f.WordDefault, ", ")
+			w.Line("if (!source.%s)", f.Name)
+			w.Indent()
+			w.Line("throw new ArgumentError(\"%s must be non-null\");", f.Name)
+			w.Dedent()
+			w.Line("if (source.%s.low != %s || source.%s.high != %s)", f.Name, words[0], f.Name, words[1])
+		} else {
+			w.Line("if (source.%s != %s)", f.Name, f.Default)
+		}
+		w.Indent()
+		w.Line("builder.%s(%d, source.%s);", f.Writer, f.ID, f.Name)
+		w.Dedent()
 	}
 	if hasOffsetFields(o) {
 		w.Line("const table:uint = builder.endTable();")

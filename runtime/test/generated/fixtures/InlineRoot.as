@@ -80,8 +80,10 @@ package fixtures
                 builder.addStruct(2, fixtures.geometry.Envelope.packInto(source.envelope, builder));
             if (source.aligned)
                 builder.addStruct(3, fixtures.geometry.Aligned.packInto(source.aligned, builder));
-            builder.addInt32(4, source.label_, 0);
-            builder.addInt32(5, source.pointView, 0);
+            if (source.label_ != 0)
+                builder.addInt32(4, source.label_);
+            if (source.pointView != 0)
+                builder.addInt32(5, source.pointView);
             return builder.endTable();
         }
     }

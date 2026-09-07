@@ -63,8 +63,9 @@ package
 
             // A packing exception must detach the class builder and discard open-table state.
             const invalid:Primitives = new Primitives();
-            invalid.i8 = 128;
-            rejects(function():void { Primitives.pack(invalid, other); }, check, "Packing rejects invalid scalar values");
+            invalid.i64 = null;
+            rejects(function():void { Primitives.pack(invalid, other); }, check, "Packing rejects missing 64-bit values");
+            invalid.i64 = new Int64();
             invalid.i8 = 7;
             Primitives.pack(invalid, other);
             const recovered:PrimitivesView = FixtureBuffer.bindRoot(new PrimitivesView(), other);
@@ -88,15 +89,18 @@ package
             for (var i:uint = 4; i < 8; i++)
                 check(dst[i] == 0, "Forward struct padding is zero");
 
-            // Direct struct writes validate narrow integers and required child values.
+            // Direct struct writes truncate narrow integers and validate required child values.
             const frame:Frame = new Frame();
             const invalidFields:Array = ["tag", "tag", "tiny", "tiny", "count", "count", "small", "small"];
             const invalidValues:Array = [256, uint.MAX_VALUE, -129, 128, -32769, 32768, 65536, uint.MAX_VALUE];
+            const truncatedValues:Array = [0, 255, 127, -128, 32767, -32768, 0, 65535];
             for (i = 0; i < invalidFields.length; i++)
             {
                 Frame.reset(frame);
                 frame[invalidFields[i]] = invalidValues[i];
-                rejects(function():void { Frame.pack(frame, dst); }, check, "Struct rejects out-of-range " + invalidFields[i]);
+                Frame.pack(frame, dst);
+                const truncatedView:FrameView = new FrameView().bind(dst, 0);
+                check(truncatedView[invalidFields[i]] == truncatedValues[i], "Struct truncates " + invalidFields[i]);
             }
             Frame.reset(frame);
             frame.signedValue = null;
@@ -143,7 +147,8 @@ package
             envelope.frame.signedValue = new as3flatbuffers.types.Int64();
             Envelope.reset(envelope);
             envelope.frame.tiny = 128;
-            rejects(function():void { Envelope.pack(envelope, dst); }, check, "Flattened struct validates nested integer range");
+            Envelope.pack(envelope, dst);
+            check(new EnvelopeView().bind(dst, 0).frame.tiny == -128, "Flattened struct truncates nested integers");
             Envelope.reset(envelope);
             envelope.lead = -7;
             envelope.frame.point.x = 1.25;

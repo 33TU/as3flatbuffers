@@ -23,7 +23,7 @@ func TestPrimitiveGeneration(t *testing.T) {
 		"public var f64:Number = 1.2345678901234567;",
 		"new as3flatbuffers.types.Int64(0, -2147483648)",
 		"new as3flatbuffers.types.UInt64(4294967295, 2147483647)",
-		"builder.addInt64(7, source.i64, 0, -2147483648);",
+		"if (source.i64.low != 0 || source.i64.high != -2147483648)\n                builder.addInt64(7, source.i64);",
 		"destination.i64.copyFrom(source.i64);",
 	} {
 		if !strings.Contains(owned, want) {

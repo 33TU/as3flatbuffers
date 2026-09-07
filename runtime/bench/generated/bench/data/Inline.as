@@ -57,7 +57,8 @@ package bench.data
                 throw new ArgumentError("Source and builder must be non-null");
 
             builder.startTable(2, 8);
-            builder.addUint32(0, source.sequence, 0);
+            if (source.sequence != 0)
+                builder.addUint32(0, source.sequence);
             if (source.state)
                 builder.addStruct(1, bench.data.State.packInto(source.state, builder));
             return builder.endTable();
