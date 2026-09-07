@@ -36,9 +36,11 @@ package as3flatbuffers
         public final function startTable(fieldCount:uint, alignment:uint):void
         {
             fields.length = fieldCount;
-            prepare(2, 0);
+            const vtableBytes:uint = (fieldCount + 2) * 2;
+            prepare(2, vtableBytes);
             vtableStart = bytes.position;
-            pad((fieldCount + 2) * 2);
+            // endTable writes every reserved byte, including absent field entries.
+            bytes.position += vtableBytes;
             prepare(alignment, 4);
             tableStart = bytes.position;
             bytes.writeInt(int(tableStart - vtableStart));
@@ -211,9 +213,7 @@ package as3flatbuffers
             if (objectSize > 65535)
                 throw new RangeError("Table is too large");
 
-            var count:uint = fields.length;
-            while (count && fields[count - 1] == 0)
-                count--;
+            const count:uint = fields.length;
 
             bytes.position = vtableStart;
             bytes.writeShort((count + 2) * 2);

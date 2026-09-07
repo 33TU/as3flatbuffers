@@ -76,6 +76,25 @@ package
                     check(alignedTable % alignment == 0 && FixtureBuffer.bindRoot(view, bytes).x == 42,
                         "Forced table alignment works at different starting positions");
                 }
+            // Reserving vtable space must never leak old entries from reused storage.
+            for each (var present:uint in [0, 1, 4, 8])
+            {
+                bytes.position = 0;
+                for (i = 0; i < 256; i++) bytes.writeByte(255);
+                builder.reset(bytes);
+                builder.startTable(8, 4);
+                for (i = 0; i < present; i++) builder.addInt32(i, i + 1);
+                const root:uint = builder.endTable();
+                builder.finish(root);
+                bytes.position = root;
+                const vtable:uint = root - bytes.readInt();
+                bytes.position = vtable;
+                check(bytes.readUnsignedShort() == 20, "Full vtable covers all declared fields");
+                check(bytes.readUnsignedShort() == 4 + present * 4, "Vtable records exact table body size");
+                for (i = 0; i < 8; i++)
+                    check(bytes.readUnsignedShort() == (i < present ? 4 + i * 4 : 0),
+                        "Every reserved vtable entry overwrites dirty storage");
+            }
             // Data-dependent wire limits remain enforced by the internal builder.
             builder.reset(bytes);
             builder.startTable(0, 4);
