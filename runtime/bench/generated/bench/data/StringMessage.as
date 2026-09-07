@@ -69,11 +69,11 @@ package bench.data
             const offset3:uint = source.details != null ? builder.reserveOffset(3) : 0;
             const table:uint = builder.endTable();
             if (offset1)
-                builder.patchOffset(offset1, builder.createString(source.name));
+                builder.writeString(offset1, source.name);
             if (offset2)
-                builder.patchOffset(offset2, builder.createString(source.text));
+                builder.writeString(offset2, source.text);
             if (offset3)
-                builder.patchOffset(offset3, builder.createString(source.details));
+                builder.writeString(offset3, source.details);
             return table;
         }
     }

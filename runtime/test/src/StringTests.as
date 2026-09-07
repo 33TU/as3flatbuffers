@@ -116,8 +116,7 @@ package
             builder.startTable(1, 4);
             const reference:uint = builder.reserveOffset(0);
             const table:uint = builder.endTable();
-            const target:uint = builder.createString("");
-            builder.patchOffset(reference, target);
+            builder.writeString(reference, "");
             FixtureBuffer.bindRoot(textView, builder.finish(table));
             check(textView.value === "", "Forward string patch preserves present empty string");
 

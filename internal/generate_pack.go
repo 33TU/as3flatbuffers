@@ -98,7 +98,7 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 				w.Line("if (offset%d)", f.ID)
 				w.Indent()
 				if f.String {
-					w.Line("builder.patchOffset(offset%d, builder.createString(source.%s));", f.ID, f.Name)
+					w.Line("builder.writeString(offset%d, source.%s);", f.ID, f.Name)
 				} else {
 					w.Line("builder.patchOffset(offset%d, %s.packInto(source.%s, builder));", f.ID, f.Type, f.Name)
 				}

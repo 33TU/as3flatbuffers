@@ -77,11 +77,11 @@ package fixtures.text
                 const offset4:uint = source.next ? builder.reserveOffset(4) : 0;
                 const table:uint = builder.endTable();
                 if (offset0)
-                    builder.patchOffset(offset0, builder.createString(source.text));
+                    builder.writeString(offset0, source.text);
                 if (offset1)
-                    builder.patchOffset(offset1, builder.createString(source.label_));
+                    builder.writeString(offset1, source.label_);
                 if (offset2)
-                    builder.patchOffset(offset2, builder.createString(source.stringValue_));
+                    builder.writeString(offset2, source.stringValue_);
                 if (offset3)
                     builder.patchOffset(offset3, fixtures.text.Text.packInto(source.child, builder));
                 if (offset4)

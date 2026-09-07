@@ -143,8 +143,8 @@ package as3flatbuffers
             bytes.position = end;
         }
 
-        /** Write a length-prefixed, zero-terminated UTF-8 string after closing its table. */
-        public function createString(value:String):uint
+        /** Write a UTF-8 string and patch its reserved reference after closing the table. */
+        public function writeString(position:uint, value:String):void
         {
             prepare(4, 4);
             const start:uint = bytes.position;
@@ -156,8 +156,9 @@ package as3flatbuffers
             const end:uint = bytes.position;
             bytes.position = start;
             bytes.writeUnsignedInt(length);
+            bytes.position = position;
+            bytes.writeUnsignedInt(start - position);
             bytes.position = end;
-            return start;
         }
 
         /** Track the current source path; repeated siblings may still be packed independently. */

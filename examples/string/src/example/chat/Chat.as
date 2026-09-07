@@ -60,9 +60,9 @@ package example.chat
             const offset1:uint = source.message != null ? builder.reserveOffset(1) : 0;
             const table:uint = builder.endTable();
             if (offset0)
-                builder.patchOffset(offset0, builder.createString(source.sender));
+                builder.writeString(offset0, source.sender);
             if (offset1)
-                builder.patchOffset(offset1, builder.createString(source.message));
+                builder.writeString(offset1, source.message);
             return table;
         }
     }

@@ -56,7 +56,7 @@ package fixtures.text
             const offset0:uint = source.value != null ? builder.reserveOffset(0) : 0;
             const table:uint = builder.endTable();
             if (offset0)
-                builder.patchOffset(offset0, builder.createString(source.value));
+                builder.writeString(offset0, source.value);
             return table;
         }
     }
