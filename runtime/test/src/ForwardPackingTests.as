@@ -10,6 +10,7 @@ package
     import fixtures.geometry.Frame;
     import fixtures.geometry.FrameView;
     import fixtures.geometry.Envelope;
+    import fixtures.geometry.EnvelopeView;
     import flash.utils.ByteArray;
     import flash.utils.Endian;
 
@@ -122,6 +123,29 @@ package
             check(dst.length == 72, "Nested struct has its exact reflected size");
             for (i = 0; i < dst.length; i++)
                 check(dst[i] == 0, "Nested struct clears dirty fields and padding");
+
+            const envelope:Envelope = new Envelope();
+            envelope.frame = null;
+            rejects(function():void { Envelope.pack(envelope, dst); }, check, "Flattened struct rejects null child");
+            Envelope.reset(envelope);
+            envelope.frame.point = null;
+            rejects(function():void { Envelope.pack(envelope, dst); }, check, "Flattened struct rejects null grandchild");
+            Envelope.reset(envelope);
+            envelope.frame.signedValue = null;
+            rejects(function():void { Envelope.pack(envelope, dst); }, check, "Flattened struct rejects nested null words");
+            Envelope.reset(envelope);
+            envelope.frame.tiny = 128;
+            rejects(function():void { Envelope.pack(envelope, dst); }, check, "Flattened struct validates nested integer range");
+            Envelope.reset(envelope);
+            envelope.lead = -7;
+            envelope.frame.point.x = 1.25;
+            envelope.frame.point.y = -2.5;
+            envelope.tail = -123;
+            Envelope.pack(envelope, dst);
+            const envelopeView:EnvelopeView = new EnvelopeView().bind(dst, 0);
+            check(envelopeView.lead == -7 && envelopeView.frame.point.x == 1.25 &&
+                envelopeView.frame.point.y == -2.5 && envelopeView.tail == -123,
+                "Flattened nested writes preserve offsets and recover after failure");
 
             builder.reset();
             rejects(function():void { Aligned.packInto(aligned, builder); }, check, "Direct struct cannot use a detached builder");

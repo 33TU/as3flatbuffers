@@ -8,12 +8,17 @@ import (
 )
 
 func generateFiles(objects []object) ([]File, error) {
+	byName := make(map[string]object, len(objects))
+	for _, o := range objects {
+		byName[objectType(o)] = o
+	}
+	emitMessage := func(w *IndentWriter, o object) { generateMessage(w, o, byName) }
 	var files []File
 	for _, o := range objects {
 		for _, spec := range []struct {
 			suffix string
 			emit   func(*IndentWriter, object)
-		}{{"", generateMessage}, {"View", generateView}} {
+		}{{"", emitMessage}, {"View", generateView}} {
 			var output bytes.Buffer
 			writer := NewIndentWriter(&output, DefaultIndent)
 			spec.emit(&writer, o)

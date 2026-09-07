@@ -1,6 +1,6 @@
 package internal
 
-func generateMessage(w *IndentWriter, o object) {
+func generateMessage(w *IndentWriter, o object, objects map[string]object) {
 	generatePackage(w, o)
 	w.Line("import as3flatbuffers.Builder;")
 	w.Line("import flash.utils.ByteArray;")
@@ -23,7 +23,7 @@ func generateMessage(w *IndentWriter, o object) {
 	w.BlankLine()
 	generateClone(w, o)
 	w.BlankLine()
-	generatePack(w, o)
+	generatePack(w, o, objects)
 	w.Dedent()
 	w.Line("}")
 	endPackage(w)

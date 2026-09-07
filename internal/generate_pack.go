@@ -1,6 +1,6 @@
 package internal
 
-func generatePack(w *IndentWriter, o object) {
+func generatePack(w *IndentWriter, o object, objects map[string]object) {
 	w.Line("/** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */")
 	w.Line("public static function pack(source:%s, dst:flash.utils.ByteArray):flash.utils.ByteArray", o.Name)
 	w.Line("{")
@@ -30,7 +30,7 @@ func generatePack(w *IndentWriter, o object) {
 	w.BlankLine()
 	w.Line("/** Write into an active builder and return the absolute object offset. */")
 	if o.Struct {
-		generateStructPack(w, o)
+		generateStructPack(w, o, objects)
 		return
 	}
 	w.Line("public static function packInto(source:%s, builder:as3flatbuffers.Builder):uint", o.Name)

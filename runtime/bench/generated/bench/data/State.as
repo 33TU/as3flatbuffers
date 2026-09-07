@@ -80,9 +80,24 @@ package bench.data
             const bytes:flash.utils.ByteArray = builder.prepareStruct(64, 8);
             const start:uint = bytes.position;
 
-            bench.data.Vec3.packInto(source.position, builder);
-            bench.data.Vec3.packInto(source.velocity, builder);
-            bench.data.Vec3.packInto(source.facing, builder);
+            if (!source.position)
+                throw new ArgumentError("position must be non-null");
+
+            bytes.writeFloat(source.position.x);
+            bytes.writeFloat(source.position.y);
+            bytes.writeFloat(source.position.z);
+            if (!source.velocity)
+                throw new ArgumentError("velocity must be non-null");
+
+            bytes.writeFloat(source.velocity.x);
+            bytes.writeFloat(source.velocity.y);
+            bytes.writeFloat(source.velocity.z);
+            if (!source.facing)
+                throw new ArgumentError("facing must be non-null");
+
+            bytes.writeFloat(source.facing.x);
+            bytes.writeFloat(source.facing.y);
+            bytes.writeFloat(source.facing.z);
             bytes.writeInt(source.delta);
             bytes.writeUnsignedInt(source.checksum);
             bytes.writeUnsignedInt(0);

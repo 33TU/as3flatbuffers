@@ -70,7 +70,48 @@ package fixtures.geometry
             bytes.writeUnsignedInt(0);
             bytes.writeShort(0);
             bytes.writeByte(0);
-            fixtures.geometry.Frame.packInto(source.frame, builder);
+            if (!source.frame)
+                throw new ArgumentError("frame must be non-null");
+
+            if (source.frame.tag > 255)
+                throw new RangeError("frame.tag is out of range");
+
+            bytes.writeByte(source.frame.tag);
+            bytes.writeShort(0);
+            bytes.writeByte(0);
+            if (!source.frame.point)
+                throw new ArgumentError("frame.point must be non-null");
+
+            bytes.writeFloat(source.frame.point.x);
+            bytes.writeFloat(source.frame.point.y);
+            if (source.frame.count < -32768 || source.frame.count > 32767)
+                throw new RangeError("frame.count is out of range");
+
+            bytes.writeShort(source.frame.count);
+            bytes.writeShort(0);
+            if (!source.frame.signedValue)
+                throw new ArgumentError("frame.signedValue must be non-null");
+
+            bytes.writeUnsignedInt(source.frame.signedValue.low);
+            bytes.writeUnsignedInt(uint(source.frame.signedValue.high));
+            if (!source.frame.unsignedValue)
+                throw new ArgumentError("frame.unsignedValue must be non-null");
+
+            bytes.writeUnsignedInt(source.frame.unsignedValue.low);
+            bytes.writeUnsignedInt(uint(source.frame.unsignedValue.high));
+            bytes.writeDouble(source.frame.weight);
+            bytes.writeBoolean(source.frame.enabled);
+            if (source.frame.tiny < -128 || source.frame.tiny > 127)
+                throw new RangeError("frame.tiny is out of range");
+
+            bytes.writeByte(source.frame.tiny);
+            if (source.frame.small > 65535)
+                throw new RangeError("frame.small is out of range");
+
+            bytes.writeShort(source.frame.small);
+            bytes.writeInt(source.frame.number);
+            bytes.writeUnsignedInt(source.frame.unsignedNumber);
+            bytes.writeFloat(source.frame.fraction);
             if (source.tail < -32768 || source.tail > 32767)
                 throw new RangeError("tail is out of range");
 

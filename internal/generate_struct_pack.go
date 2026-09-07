@@ -2,7 +2,7 @@ package internal
 
 import "strings"
 
-func generateStructPack(w *IndentWriter, o object) {
+func generateStructPack(w *IndentWriter, o object, objects map[string]object) {
 	w.Line("public static function packInto(source:%s, builder:as3flatbuffers.Builder):uint", o.Name)
 	w.Line("{")
 	w.Indent()
@@ -10,13 +10,28 @@ func generateStructPack(w *IndentWriter, o object) {
 	w.Line("const bytes:flash.utils.ByteArray = builder.prepareStruct(%d, %d);", o.Size, o.Alignment)
 	w.Line("const start:uint = bytes.position;")
 	w.BlankLine()
+	generateStructWrites(w, o, objects, "")
+	w.Line("return start;")
+	w.Dedent()
+	w.Line("}")
+}
+
+// Schema validation guarantees that nested layouts are aligned and acyclic.
+// Expand them here so only the outermost struct prepares the destination.
+func generateStructWrites(w *IndentWriter, o object, objects map[string]object, prefix string) {
 	var cursor uint32
 	for _, f := range o.Fields {
+		f.Name = prefix + f.Name
 		if padding := f.Offset - cursor; padding != 0 {
 			generateStructPadding(w, padding)
 		}
 		if f.Struct {
-			w.Line("%s.packInto(source.%s, builder);", f.Type, f.Name)
+			w.Line("if (!source.%s)", f.Name)
+			w.Indent()
+			w.Line("throw new ArgumentError(\"%s must be non-null\");", f.Name)
+			w.Dedent()
+			w.BlankLine()
+			generateStructWrites(w, objects[f.Type], objects, f.Name+".")
 		} else {
 			generateStructScalarWrite(w, f)
 		}
@@ -25,9 +40,6 @@ func generateStructPack(w *IndentWriter, o object) {
 	if cursor < o.Size {
 		generateStructPadding(w, o.Size-cursor)
 	}
-	w.Line("return start;")
-	w.Dedent()
-	w.Line("}")
 }
 
 // Struct layout is fixed: align once and emit explicit zeros for every gap.

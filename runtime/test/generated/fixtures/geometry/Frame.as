@@ -100,7 +100,11 @@ package fixtures.geometry
             bytes.writeByte(source.tag);
             bytes.writeShort(0);
             bytes.writeByte(0);
-            fixtures.geometry.Point.packInto(source.point, builder);
+            if (!source.point)
+                throw new ArgumentError("point must be non-null");
+
+            bytes.writeFloat(source.point.x);
+            bytes.writeFloat(source.point.y);
             if (source.count < -32768 || source.count > 32767)
                 throw new RangeError("count is out of range");
 
