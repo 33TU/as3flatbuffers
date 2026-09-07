@@ -59,12 +59,22 @@ package as3flatbuffers
             return table + relative;
         }
 
+        [Inline]
         protected final function stringValue(slot:uint):String
         {
-            const position:uint = fieldOffset(slot, 4);
-            if (!position)
+            if (!bytes)
+                throw new Error("View is not bound");
+            if (slot >= vtableSize)
                 return null;
 
+            bytes.position = vtable + slot;
+            const fieldRelative:uint = bytes.readUnsignedShort();
+            if (!fieldRelative)
+                return null;
+            if (fieldRelative < 4 || fieldRelative > objectSize || 4 > objectSize - fieldRelative)
+                throw new RangeError("Field lies outside its table");
+
+            const position:uint = table + fieldRelative;
             bytes.position = position;
             const relative:uint = bytes.readUnsignedInt();
             if (relative < 4 || relative > bytes.length - position - 4)
