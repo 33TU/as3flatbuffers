@@ -74,21 +74,6 @@ package
             NodeView.unpack(nodeView, snapshot);
             check(snapshot.next.value == 77, "Unpack and getters share the recursive child cache");
 
-            chain.next = chain;
-            rejects(function():void { Node.pack(chain, dst); }, check, "Direct object cycle rejected");
-            chain.next = new Node();
-            chain.next.next = chain;
-            rejects(function():void { Node.pack(chain, dst); }, check, "Indirect object cycle rejected");
-            chain.next.next = null;
-            Node.pack(chain, dst);
-            check(FixtureBuffer.bindRoot(nodeView, dst).next != null, "Static builder recovers after cyclic input");
-            const left:Left = new Left();
-            left.right = new Right();
-            left.right.left = left;
-            rejects(function():void { Left.pack(left, dst); }, check, "Mutually recursive object cycle rejected");
-            left.right.left = null;
-            Left.pack(left, dst);
-
             // References are checked before binding the borrowed child table.
             Node.pack(chain, dst);
             dst.position = 0;

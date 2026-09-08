@@ -9,15 +9,6 @@ func hasOffsetFields(o object) bool {
 	return false
 }
 
-func hasTableFields(o object) bool {
-	for _, f := range o.Fields {
-		if f.Table {
-			return true
-		}
-	}
-	return false
-}
-
 func generateLazyTableView(w *IndentWriter, f field, source string) {
 	w.Line("if (!%s.%s)", source, f.ViewCache)
 	w.Indent()

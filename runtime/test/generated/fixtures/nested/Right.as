@@ -56,21 +56,13 @@ package fixtures.nested
             if (!source || !builder)
                 throw new ArgumentError("Source and builder must be non-null");
 
-            builder.enter(source);
-            try
-            {
-                builder.startTable(2, 8);
-                if (source.weight != 0)
-                    builder.addFloat64(0, source.weight);
-                const offset1:uint = source.left ? builder.reserveOffset(1) : 0;
-                const table:uint = builder.endTable();
-                if (offset1)
-                    builder.patchOffset(offset1, fixtures.nested.Left.packInto(source.left, builder));
-            }
-            finally
-            {
-                builder.leave();
-            }
+            builder.startTable(2, 8);
+            if (source.weight != 0)
+                builder.addFloat64(0, source.weight);
+            const offset1:uint = source.left ? builder.reserveOffset(1) : 0;
+            const table:uint = builder.endTable();
+            if (offset1)
+                builder.patchOffset(offset1, fixtures.nested.Left.packInto(source.left, builder));
             return table;
         }
     }

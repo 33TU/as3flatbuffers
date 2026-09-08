@@ -66,31 +66,23 @@ package fixtures.text
             if (!source || !builder)
                 throw new ArgumentError("Source and builder must be non-null");
 
-            builder.enter(source);
-            try
-            {
-                builder.startTable(5, 4);
-                const offset0:uint = source.text != null ? builder.reserveOffset(0) : 0;
-                const offset1:uint = source.label_ != null ? builder.reserveOffset(1) : 0;
-                const offset2:uint = source.stringValue_ != null ? builder.reserveOffset(2) : 0;
-                const offset3:uint = source.child ? builder.reserveOffset(3) : 0;
-                const offset4:uint = source.next ? builder.reserveOffset(4) : 0;
-                const table:uint = builder.endTable();
-                if (offset0)
-                    builder.writeString(offset0, source.text);
-                if (offset1)
-                    builder.writeString(offset1, source.label_);
-                if (offset2)
-                    builder.writeString(offset2, source.stringValue_);
-                if (offset3)
-                    builder.patchOffset(offset3, fixtures.text.Text.packInto(source.child, builder));
-                if (offset4)
-                    builder.patchOffset(offset4, fixtures.text.Strings.packInto(source.next, builder));
-            }
-            finally
-            {
-                builder.leave();
-            }
+            builder.startTable(5, 4);
+            const offset0:uint = source.text != null ? builder.reserveOffset(0) : 0;
+            const offset1:uint = source.label_ != null ? builder.reserveOffset(1) : 0;
+            const offset2:uint = source.stringValue_ != null ? builder.reserveOffset(2) : 0;
+            const offset3:uint = source.child ? builder.reserveOffset(3) : 0;
+            const offset4:uint = source.next ? builder.reserveOffset(4) : 0;
+            const table:uint = builder.endTable();
+            if (offset0)
+                builder.writeString(offset0, source.text);
+            if (offset1)
+                builder.writeString(offset1, source.label_);
+            if (offset2)
+                builder.writeString(offset2, source.stringValue_);
+            if (offset3)
+                builder.patchOffset(offset3, fixtures.text.Text.packInto(source.child, builder));
+            if (offset4)
+                builder.patchOffset(offset4, fixtures.text.Strings.packInto(source.next, builder));
             return table;
         }
     }

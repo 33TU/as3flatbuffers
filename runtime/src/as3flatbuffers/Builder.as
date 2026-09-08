@@ -11,7 +11,6 @@ package as3flatbuffers
         private const fields:Vector.<uint> = new Vector.<uint>();
         private var tableStart:uint;
         private var vtableStart:uint;
-        private const ancestors:Vector.<Object> = new Vector.<Object>();
         private var rootReserved:Boolean;
 
         /** Replace dst's contents, or detach when dst is null. Endian is unchanged. */
@@ -21,7 +20,6 @@ package as3flatbuffers
             fields.length = 0;
             tableStart = 0;
             vtableStart = 0;
-            ancestors.length = 0;
             rootReserved = reserveRoot;
             if (bytes)
             {
@@ -159,19 +157,6 @@ package as3flatbuffers
             bytes.position = position;
             bytes.writeUnsignedInt(start - position);
             bytes.position = end;
-        }
-
-        /** Track the current source path; repeated siblings may still be packed independently. */
-        public function enter(source:Object):void
-        {
-            if (ancestors.indexOf(source) >= 0)
-                throw new ArgumentError("Cyclic table values cannot be packed");
-            ancestors.push(source);
-        }
-
-        public function leave():void
-        {
-            ancestors.pop();
         }
 
         /** Record an inline struct immediately after its packInto() call. */

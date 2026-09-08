@@ -87,7 +87,7 @@ Generated table packers omit scalar schema defaults before calling the builder.
 Optional scalars are written whenever present, including zero and false.
 `Builder` is internal support for generated packers, not a manual construction API.
 Generated code guarantees valid slots, alignment, call order, and reference patches.
-The builder retains the table body size limit and object-cycle detection;
+The builder retains the table body size limit;
 it does not validate those generator-controlled operations.
 
 Nullable scalar fields (`score:int = null` in a schema) use AS3PB's `OptionalInt`,
@@ -213,8 +213,9 @@ the parent's absolute offset even when descendants were written afterward.
 Generated code patches every reserved reference before calling `finish(root)`,
 which writes the root offset without tracking or validating completed objects.
 
-Owned input must be acyclic. Packing detects cycles and throws, then detaches the
-static builder so it can be used again. Repeated references to the same child
+Owned input must be acyclic; packing does not detect object cycles. The outer
+`pack()` detaches its static builder in `finally`, including on failure.
+Repeated references to the same child
 on separate branches are serialized independently; object identity is not preserved.
 `clone()` also expects acyclic input. Deep recursive operations are limited by
 AIR's call stack. Structs still cannot contain tables or recursively contain
@@ -254,7 +255,7 @@ Struct fixtures use `flatc`-generated Python builders/readers to check nested
 layouts, padding, all scalar types, omitted fields, and 16-byte alignment. AIR
 also checks direct binding at nonzero offsets, borrowed reads, and deep reuse.
 Nested-table fixtures additionally cover a 32-node list, sibling branches, mutual
-recursion, aligned structs, malformed references, cycle rejection, and recovery.
+recursion, aligned structs, malformed references, and builder reuse.
 
 ## Generate ActionScript
 

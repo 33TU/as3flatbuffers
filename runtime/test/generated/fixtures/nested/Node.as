@@ -63,26 +63,18 @@ package fixtures.nested
             if (!source || !builder)
                 throw new ArgumentError("Source and builder must be non-null");
 
-            builder.enter(source);
-            try
-            {
-                builder.startTable(4, 16);
-                if (source.value != 0)
-                    builder.addInt32(0, source.value);
-                const offset1:uint = source.next ? builder.reserveOffset(1) : 0;
-                if (source.position)
-                    builder.addStruct(2, fixtures.nested.Position.packInto(source.position, builder));
-                const offset3:uint = source.branch ? builder.reserveOffset(3) : 0;
-                const table:uint = builder.endTable();
-                if (offset1)
-                    builder.patchOffset(offset1, fixtures.nested.Node.packInto(source.next, builder));
-                if (offset3)
-                    builder.patchOffset(offset3, fixtures.nested.Node.packInto(source.branch, builder));
-            }
-            finally
-            {
-                builder.leave();
-            }
+            builder.startTable(4, 16);
+            if (source.value != 0)
+                builder.addInt32(0, source.value);
+            const offset1:uint = source.next ? builder.reserveOffset(1) : 0;
+            if (source.position)
+                builder.addStruct(2, fixtures.nested.Position.packInto(source.position, builder));
+            const offset3:uint = source.branch ? builder.reserveOffset(3) : 0;
+            const table:uint = builder.endTable();
+            if (offset1)
+                builder.patchOffset(offset1, fixtures.nested.Node.packInto(source.next, builder));
+            if (offset3)
+                builder.patchOffset(offset3, fixtures.nested.Node.packInto(source.branch, builder));
             return table;
         }
     }

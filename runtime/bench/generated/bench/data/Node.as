@@ -62,25 +62,17 @@ package bench.data
             if (!source || !builder)
                 throw new ArgumentError("Source and builder must be non-null");
 
-            builder.enter(source);
-            try
-            {
-                builder.startTable(4, 4);
-                if (source.sequence != 0)
-                    builder.addUint32(0, source.sequence);
-                if (source.x != 0)
-                    builder.addFloat32(1, source.x);
-                if (source.y != 0)
-                    builder.addFloat32(2, source.y);
-                const offset3:uint = source.next ? builder.reserveOffset(3) : 0;
-                const table:uint = builder.endTable();
-                if (offset3)
-                    builder.patchOffset(offset3, bench.data.Node.packInto(source.next, builder));
-            }
-            finally
-            {
-                builder.leave();
-            }
+            builder.startTable(4, 4);
+            if (source.sequence != 0)
+                builder.addUint32(0, source.sequence);
+            if (source.x != 0)
+                builder.addFloat32(1, source.x);
+            if (source.y != 0)
+                builder.addFloat32(2, source.y);
+            const offset3:uint = source.next ? builder.reserveOffset(3) : 0;
+            const table:uint = builder.endTable();
+            if (offset3)
+                builder.patchOffset(offset3, bench.data.Node.packInto(source.next, builder));
             return table;
         }
     }

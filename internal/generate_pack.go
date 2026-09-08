@@ -39,12 +39,7 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 	w.Line("{")
 	w.Indent()
 	generatePackCheck(w)
-	if hasTableFields(o) {
-		w.Line("builder.enter(source);")
-		w.Line("try")
-		w.Line("{")
-		w.Indent()
-	}
+
 	alignment := uint32(4)
 	for _, f := range o.Fields {
 		if f.Alignment > alignment {
@@ -106,16 +101,7 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 			}
 		}
 	}
-	if hasTableFields(o) {
-		w.Dedent()
-		w.Line("}")
-		w.Line("finally")
-		w.Line("{")
-		w.Indent()
-		w.Line("builder.leave();")
-		w.Dedent()
-		w.Line("}")
-	}
+
 	if hasOffsetFields(o) {
 		w.Line("return table;")
 	} else {

@@ -63,27 +63,19 @@ package fixtures.nested
             if (!source || !builder)
                 throw new ArgumentError("Source and builder must be non-null");
 
-            builder.enter(source);
-            try
-            {
-                builder.startTable(4, 4);
-                const offset0:uint = source.head ? builder.reserveOffset(0) : 0;
-                const offset1:uint = source.alternate ? builder.reserveOffset(1) : 0;
-                const offset2:uint = source.pair ? builder.reserveOffset(2) : 0;
-                if (source.serial != 0)
-                    builder.addInt32(3, source.serial);
-                const table:uint = builder.endTable();
-                if (offset0)
-                    builder.patchOffset(offset0, fixtures.nested.Node.packInto(source.head, builder));
-                if (offset1)
-                    builder.patchOffset(offset1, fixtures.nested.Node.packInto(source.alternate, builder));
-                if (offset2)
-                    builder.patchOffset(offset2, fixtures.nested.Left.packInto(source.pair, builder));
-            }
-            finally
-            {
-                builder.leave();
-            }
+            builder.startTable(4, 4);
+            const offset0:uint = source.head ? builder.reserveOffset(0) : 0;
+            const offset1:uint = source.alternate ? builder.reserveOffset(1) : 0;
+            const offset2:uint = source.pair ? builder.reserveOffset(2) : 0;
+            if (source.serial != 0)
+                builder.addInt32(3, source.serial);
+            const table:uint = builder.endTable();
+            if (offset0)
+                builder.patchOffset(offset0, fixtures.nested.Node.packInto(source.head, builder));
+            if (offset1)
+                builder.patchOffset(offset1, fixtures.nested.Node.packInto(source.alternate, builder));
+            if (offset2)
+                builder.patchOffset(offset2, fixtures.nested.Left.packInto(source.pair, builder));
             return table;
         }
     }
