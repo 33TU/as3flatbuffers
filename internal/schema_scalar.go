@@ -9,10 +9,15 @@ import (
 )
 
 func parseScalar(source *reflection.Field) (field, error) {
-	f := field{Name: string(source.Name()), ID: source.Id()}
-	value := source.DefaultInteger()
+	f, err := parseScalarType(source.Type(nil).BaseType(), source.DefaultInteger(), source.DefaultReal())
+	f.Name, f.ID = string(source.Name()), source.Id()
+	return f, err
+}
+
+func parseScalarType(base reflection.BaseType, value int64, real float64) (field, error) {
+	f := field{}
 	var min, max int64
-	switch source.Type(nil).BaseType() {
+	switch base {
 	case reflection.BaseTypeBool:
 		f.Type, f.Reader, f.Writer = "Boolean", "bool", "addBool"
 		if value != 0 && value != 1 {
@@ -41,7 +46,7 @@ func parseScalar(source *reflection.Field) (field, error) {
 	case reflection.BaseTypeLong, reflection.BaseTypeULong:
 		name, high := "Int64", strconv.FormatInt(int64(int32(value>>32)), 10)
 		f.Reader, f.Writer = "int64", "addInt64"
-		if source.Type(nil).BaseType() == reflection.BaseTypeULong {
+		if base == reflection.BaseTypeULong {
 			name, high = "UInt64", strconv.FormatUint(uint64(uint32(uint64(value)>>32)), 10)
 			f.Reader, f.Writer = "uint64", "addUint64"
 		}
@@ -51,17 +56,17 @@ func parseScalar(source *reflection.Field) (field, error) {
 		return f, nil
 	case reflection.BaseTypeFloat:
 		f.Type, f.Reader, f.Writer = "Number", "float32", "addFloat32"
-		f.Default = floatLiteral(source.DefaultReal())
+		f.Default = floatLiteral(real)
 		return f, nil
 	case reflection.BaseTypeDouble:
 		f.Type, f.Reader, f.Writer = "Number", "float64", "addFloat64"
-		f.Default = realLiteral(source.DefaultReal())
+		f.Default = realLiteral(real)
 		return f, nil
 	default:
-		return f, fmt.Errorf("%s is not supported yet (supported: scalar primitives)", source.Type(nil).BaseType())
+		return f, fmt.Errorf("%s is not supported yet (supported: scalar primitives)", base)
 	}
 	if value < min || value > max {
-		return f, fmt.Errorf("%s default out of range", source.Type(nil).BaseType())
+		return f, fmt.Errorf("%s default out of range", base)
 	}
 	f.Default = strconv.FormatInt(value, 10)
 	return f, nil

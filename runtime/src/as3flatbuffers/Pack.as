@@ -318,5 +318,40 @@ package as3flatbuffers
             bytes.writeUnsignedInt(start - position);
             bytes.position = end;
         }
+
+        /** Align the vector header to four bytes and its elements to their required alignment. */
+        [Inline]
+        public static function prepareVector(context:PackContext, alignment:uint):ByteArray
+        {
+            const bytes:ByteArray = context.bytes;
+            if (alignment < 4)
+                alignment = 4;
+            var padding:uint = (0 - bytes.position - 4) & (alignment - 1);
+            while (padding >= 16)
+            {
+                bytes.writeDouble(0);
+                bytes.writeDouble(0);
+                padding -= 16;
+            }
+            if (padding & 8)
+                bytes.writeDouble(0);
+            if (padding & 4)
+                bytes.writeUnsignedInt(0);
+            if (padding & 2)
+                bytes.writeShort(0);
+            if (padding & 1)
+                bytes.writeByte(0);
+            return bytes;
+        }
+
+        /** Write the count at a prepared vector position and return its header offset. */
+        [Inline]
+        public static function startVector(context:PackContext, count:uint):uint
+        {
+            const bytes:ByteArray = context.bytes;
+            const start:uint = bytes.position;
+            bytes.writeUnsignedInt(count);
+            return start;
+        }
     }
 }

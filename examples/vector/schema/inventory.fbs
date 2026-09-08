@@ -1,0 +1,20 @@
+namespace example.inventory;
+
+struct Position {
+    x:float;
+    y:float;
+}
+
+table Item {
+    id:uint;
+    quantity:uint = 1;
+}
+
+table Inventory {
+    items:[Item];
+    path:[Position];
+    tags:[string];
+    scores:[int];
+}
+
+root_type Inventory;

@@ -115,5 +115,21 @@ package as3flatbuffers
             bytes.position = start;
             return bytes.readUTFBytes(length);
         }
+
+        /** Validate the entire vector payload against the original input length. */
+        [Inline]
+        public static function vector(context:UnpackContext, position:uint, width:uint):uint
+        {
+            if (!position)
+                return 0;
+            const relative:uint = uint(li32(position));
+            if (relative < 4 || relative > context.length - position - 4)
+                throw new RangeError("Invalid vector offset");
+            const start:uint = position + relative;
+            const count:uint = uint(li32(start));
+            if (count > (context.length - start - 4) / width)
+                throw new RangeError("Truncated vector");
+            return start;
+        }
     }
 }

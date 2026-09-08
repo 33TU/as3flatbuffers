@@ -10,6 +10,9 @@ type TableNames struct {
 }
 
 var tableMembers = map[string]struct{}{
+	"vectorOffset": {},
+	"referenceAt":  {},
+	"stringAt":     {},
 	"UNPACK":       {},
 	"PACK":         {},
 	"unpackFrom":   {},

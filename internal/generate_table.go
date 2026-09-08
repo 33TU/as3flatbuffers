@@ -2,7 +2,7 @@ package internal
 
 func hasOffsetFields(o object) bool {
 	for _, f := range o.Fields {
-		if f.Table || f.String {
+		if f.Table || f.String || f.Element != nil {
 			return true
 		}
 	}
@@ -26,7 +26,9 @@ func generateTableFieldUnpack(w *IndentWriter, f field) {
 // Only align a present reference, preserving layouts when the field is omitted.
 func generateReserveOffset(w *IndentWriter, f field, alignment uint32) {
 	condition := "source." + f.Name
-	if f.String {
+	if f.Element != nil {
+		condition += ".length"
+	} else if f.String {
 		condition += " != null"
 	}
 	if alignment >= 4 {

@@ -110,5 +110,41 @@ package as3flatbuffers
                 throw new RangeError("Invalid child table offset");
             return position + relative;
         }
+
+        protected final function vectorOffset(slot:uint, width:uint):uint
+        {
+            const position:uint = fieldOffset(slot, 4);
+            if (!position)
+                return 0;
+            const start:uint = referenceAt(position);
+            bytes.position = start;
+            const count:uint = bytes.readUnsignedInt();
+            if (count > (bytes.length - start - 4) / width)
+                throw new RangeError("Truncated vector");
+            return start;
+        }
+
+        [Inline]
+        protected final function referenceAt(position:uint):uint
+        {
+            bytes.position = position;
+            const relative:uint = bytes.readUnsignedInt();
+            if (relative < 4 || relative > bytes.length - position - 4)
+                throw new RangeError("Invalid vector element offset");
+            return position + relative;
+        }
+
+        protected final function stringAt(position:uint):String
+        {
+            const start:uint = referenceAt(position);
+            bytes.position = start;
+            const length:uint = bytes.readUnsignedInt();
+            const data:uint = bytes.position;
+            if (length >= bytes.length - data)
+                throw new RangeError("Truncated string");
+            if (bytes[data + length] != 0)
+                throw new RangeError("String terminator must be zero");
+            return bytes.readUTFBytes(length);
+        }
     }
 }

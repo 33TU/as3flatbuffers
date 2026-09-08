@@ -27,6 +27,10 @@ func generateViewAccessors(w *IndentWriter, o object) {
 		if i > 0 {
 			w.BlankLine()
 		}
+		if f.Element != nil {
+			generateVectorView(w, f)
+			continue
+		}
 		viewType := f.Type
 		if f.Struct || f.Table {
 			viewType += "View"

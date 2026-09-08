@@ -113,7 +113,16 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, dataLengt
 			return o, fmt.Errorf("%s.%s: missing type", fullName, name)
 		}
 		var out field
-		if fType.BaseType() == reflection.BaseTypeObj {
+		if fType.BaseType() == reflection.BaseTypeVector {
+			if o.Struct {
+				return o, fmt.Errorf("%s.%s: structs cannot contain vectors", fullName, name)
+			}
+			var err error
+			out, err = parseVector(&f, schema)
+			if err != nil {
+				return o, fmt.Errorf("%s.%s: %w", fullName, name, err)
+			}
+		} else if fType.BaseType() == reflection.BaseTypeObj {
 			var target reflection.Object
 			if fType.Index() < 0 || int(fType.Index()) >= schema.ObjectsLength() || !schema.Objects(&target, int(fType.Index())) {
 				return o, fmt.Errorf("%s.%s: invalid object reference", fullName, name)
@@ -163,8 +172,13 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, dataLengt
 		o.Fields[i].Name = names.Field(o.Fields[i].ID, o.Fields[i].Name)
 	}
 	for i := range o.Fields {
-		if o.Fields[i].Struct || o.Fields[i].Table {
+		if o.Fields[i].Struct || o.Fields[i].Table || (o.Fields[i].Element != nil && (o.Fields[i].Element.Struct || o.Fields[i].Element.Table)) {
 			o.Fields[i].ViewCache = uniqueName(o.Fields[i].Name+"View", names.used)
+		}
+	}
+	for i := range o.Fields {
+		if o.Fields[i].Element != nil {
+			o.Fields[i].LengthName = uniqueName(o.Fields[i].Name+"Length", names.used)
 		}
 	}
 	return o, nil

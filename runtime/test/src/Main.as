@@ -263,6 +263,7 @@ package
                 StructTests.run(directory, check, read, write);
                 NestedTests.run(directory, check, read, write);
                 StringTests.run(directory, check, read, write);
+                VectorTests.run(directory, check, read, write);
                 UnpackTests.run(check);
                 result.ok = true;
                 result.checks = checks;

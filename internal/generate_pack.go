@@ -56,7 +56,7 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 		before := guaranteedAlignment
 		// A conditional field may be absent, so retain only alignment shared by both paths.
 		guaranteedAlignment = min(guaranteedAlignment, f.Alignment)
-		if f.String || f.Table {
+		if f.String || f.Table || f.Element != nil {
 			generateReserveOffset(w, f, before)
 			continue
 		}
@@ -96,6 +96,10 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 	if hasOffsetFields(o) {
 		w.Line("const table:uint = as3flatbuffers.Pack.endTable(context);")
 		for _, f := range o.Fields {
+			if f.Element != nil {
+				generateVectorPack(w, f)
+				continue
+			}
 			if f.Table || f.String {
 				w.Line("if (offset%d)", f.ID)
 				if f.String {

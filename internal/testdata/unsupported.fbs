@@ -1,3 +1,4 @@
 namespace fixtures;
-table Unsupported { values:[int]; }
+struct FixedArray { values:[int:3]; }
+table Unsupported { values:FixedArray; }
 root_type Unsupported;

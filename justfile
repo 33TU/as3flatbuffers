@@ -20,6 +20,8 @@ generate: build-generator
     bin/as3flatc -o examples/struct/src bin/struct.bfbs
     {{ FLATC }} -b --schema -o bin examples/string/schema/chat.fbs
     bin/as3flatc -o examples/string/src bin/chat.bfbs
+    {{ FLATC }} -b --schema -o bin examples/vector/schema/inventory.fbs
+    bin/as3flatc -o examples/vector/src bin/inventory.bfbs
     {{ FLATC }} -b --schema -o bin internal/testdata/scalars.fbs
     bin/as3flatc -o runtime/test/generated bin/scalars.bfbs
     {{ FLATC }} -b --schema -o bin internal/testdata/naming.fbs
@@ -37,6 +39,9 @@ generate: build-generator
     {{ FLATC }} -b --schema -o bin internal/testdata/strings.fbs
     bin/as3flatc -o runtime/test/generated bin/strings.bfbs
     {{ FLATC }} --python -o runtime/bin/python internal/testdata/strings.fbs
+    {{ FLATC }} -b --schema -o bin internal/testdata/vectors.fbs
+    bin/as3flatc -o runtime/test/generated bin/vectors.bfbs
+    {{ FLATC }} --python -o runtime/bin/python internal/testdata/vectors.fbs
 
 generate-reflection:
     {{ FLATC }} --go --gen-onefile --go-namespace reflection -o internal/reflection internal/reflection/upstream/reflection.fbs
@@ -53,7 +58,7 @@ build: build-generator
 
 build-test: generate
     mkdir -p runtime/bin/test
-    {{ AMXMLC }} -source-path runtime/src -source-path examples/point/src -source-path runtime/test/src -source-path runtime/test/generated -output runtime/bin/test/test.swf -optimize=true -compiler.strict=true -compiler.inline=true -debug=false runtime/test/src/Main.as
+    {{ AMXMLC }} -source-path runtime/src -source-path examples/point/src -source-path examples/vector/src -source-path runtime/test/src -source-path runtime/test/generated -output runtime/bin/test/test.swf -optimize=true -compiler.strict=true -compiler.inline=true -debug=false runtime/test/src/Main.as
 
 test: test-go build-test
     .venv/bin/python tools/test_interop.py

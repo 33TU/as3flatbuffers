@@ -6,7 +6,7 @@ around owned objects and reusable views into binary data.
 This initial branch includes a Go code generator and a working runtime for
 tables and inline structs with scalar fields (`bool`, `byte`, `ubyte`, `short`,
 `ushort`, `int`, `uint`, `long`, `ulong`, `float`, and `double` in `.fbs` schemas).
-Tables support UTF-8 strings. Tables and structs can also contain inline structs.
+Tables support UTF-8 strings and vectors of scalars, strings, structs, and tables. Tables and structs can also contain inline structs.
 Tables may reference other tables, including recursive and mutually recursive types. The runtime provides
 a reusable forward builder, borrowed views, and 64-bit word helpers.
 `Point` / `PointView` are generated from the example schema. This is not yet a
@@ -151,6 +151,34 @@ lengths are 32-bit and can exceed 65,535 bytes. See the
 Generated packers reserve each string field, close its table, then write the string
 and patch its reference. Strings and child tables share the same builder.
 
+## Vectors
+
+Table vector fields use `Vector.<T>` in owned messages. All 11 scalar types,
+strings, structs, and tables are supported as elements. Fields start with independent empty vectors and must remain non-null and resizable
+(`fixed = false`).
+Absent and empty wire vectors both decode to empty vectors; packing omits empty vectors. Object, string, and exact 64-bit elements must
+be non-null when packing. See the [inventory example](examples/vector/README.md).
+
+Borrowed vectors expose `view.itemsLength` and
+`view.items(index)`. Missing vectors have length zero; invalid indices throw
+`RangeError`. Struct/table elements share one cached view per field, rebound on
+access. Strings use native UTF-8 decoding, and 64-bit getters return fresh word
+objects. Helper names are escaped when they collide with schema fields.
+
+`unpack(bytes, destination)` reuses vectors, resizes them, and reuses surviving
+struct, table, and 64-bit elements by index. Resizing assigns the vector length
+directly. Absent input clears a vector in place; shrinking
+a vector drops removed elements. `clone()` copies vector storage and mutable
+elements deeply, while `reset()` clears vectors in place.
+
+Packing writes contiguous elements after the table, aligned for their element
+type. Generated packers call `prepareVector()` for alignment, `startVector()`
+to write the count, and `patchOffset()` to update the parent reference.
+String/table vectors reserve all element references before writing their
+children. Owned decoding validates vector extents against the original input
+length before allocating storage, then uses the shared domain-memory context.
+Borrowed access validates the vector extent and requested element.
+
 ## Inline structs
 
 Structs produce the same owned class / borrowed view pair. Their views hold a
@@ -277,6 +305,9 @@ layouts, padding, all scalar types, omitted fields, and 16-byte alignment. AIR
 also checks direct binding at nonzero offsets, borrowed reads, and deep reuse.
 Nested-table fixtures additionally cover a 32-node list, sibling branches, mutual
 recursion, aligned structs, malformed references, and builder reuse.
+Vector fixtures cover every scalar type, exact 64-bit values, strings, aligned
+structs, recursive tables, absent/empty states, changing lengths,
+deep reuse, and malformed counts, offsets, and truncated elements.
 
 ## Generate ActionScript
 
@@ -312,7 +343,7 @@ still rejected.
 Schema validation completes before any output files are written. The CLI overwrites
 matching generated files, but does not remove stale files after schema renames.
 
-Vectors, fixed-size arrays, enums/unions, required/key
+Fixed-size arrays, enums/unions, required/key
 fields, services, and file identifiers are currently unsupported.
 The CLI reports an error for unsupported features instead of emitting partial APIs.
 
@@ -350,10 +381,11 @@ examples/point/schema/      Reference .fbs schema
 examples/point/src/         Generated owned object and view
 examples/struct/            Inline Point schema, generated classes, and usage
 examples/string/            UTF-8 chat schema, generated classes, and usage
+examples/vector/            Inventory schema with scalar, string, struct, and table vectors
 tools/                      Reference-runtime interoperability harness
 ```
 
-The next milestones are vectors, fixed-size arrays, and enums/unions. Schema-specific verification, file identifiers,
+The next milestones are fixed-size arrays and enums/unions. Schema-specific verification, file identifiers,
 size-prefixed roots, and vtable deduplication are also not implemented yet.
 No Royale compatibility layer is included.
 

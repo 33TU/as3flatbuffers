@@ -20,6 +20,8 @@ type field struct {
 	Offset                              uint32
 	Struct, Table, String               bool
 	ViewCache                           string
+	Element                             *field
+	LengthName                          string
 }
 
 type object struct {

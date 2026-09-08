@@ -46,7 +46,9 @@ func generateReset(w *IndentWriter, o object) {
 	w.Line("{")
 	w.Indent()
 	for _, f := range o.Fields {
-		if f.Struct && o.Struct {
+		if f.Element != nil {
+			w.Line("msg.%s.length = 0;", f.Name)
+		} else if f.Struct && o.Struct {
 			w.Line("%s.reset(msg.%s);", f.Type, f.Name)
 		} else if f.Optional {
 			w.Line("msg.%s = null;", f.Name)
@@ -75,7 +77,9 @@ func generateClone(w *IndentWriter, o object) {
 	w.BlankLine()
 	w.Line("const destination:%s = new %s();", o.Name, o.Name)
 	for _, f := range o.Fields {
-		if f.Struct || f.Table {
+		if f.Element != nil {
+			generateVectorClone(w, f)
+		} else if f.Struct || f.Table {
 			w.Line("destination.%s = %s.clone(source.%s);", f.Name, f.Type, f.Name)
 		} else if f.Optional {
 			w.Line("destination.%s = source.%s ? source.%s.clone() : null;", f.Name, f.Name, f.Name)
@@ -96,7 +100,7 @@ func generateScalarImports(w *IndentWriter, o object) {
 		"as3flatbuffers.types.OptionalInt", "as3flatbuffers.types.OptionalUint",
 		"as3flatbuffers.types.OptionalNumber", "as3flatbuffers.types.OptionalBoolean"} {
 		for _, f := range o.Fields {
-			if f.Type == name {
+			if f.Type == name || (f.Element != nil && f.Element.Type == name) {
 				w.Line("import %s;", name)
 				break
 			}

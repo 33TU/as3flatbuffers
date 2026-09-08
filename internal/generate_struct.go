@@ -9,6 +9,9 @@ import (
 func generateStructImports(w *IndentWriter, o object, view bool) {
 	imports := make(map[string]bool)
 	for _, f := range o.Fields {
+		if f.Element != nil {
+			f = *f.Element
+		}
 		if (f.Struct || f.Table) && strings.Contains(f.Type, ".") {
 			imports[f.Type] = true
 			if view {
@@ -28,6 +31,11 @@ func generateStructImports(w *IndentWriter, o object, view bool) {
 
 func generateViewCaches(w *IndentWriter, o object) {
 	for _, f := range o.Fields {
+		if f.Element != nil {
+			cache := f.ViewCache
+			f = *f.Element
+			f.ViewCache = cache
+		}
 		if f.Table {
 			w.Line("private var %s:%sView;", f.ViewCache, f.Type)
 			w.BlankLine()
