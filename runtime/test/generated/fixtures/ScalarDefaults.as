@@ -7,7 +7,7 @@ package fixtures
     /** Owned mutable value. pack() writes a complete FlatBuffer into the destination. */
     public final class ScalarDefaults
     {
-        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+        private static const BUILDER:as3flatbuffers.BuilderContext = new as3flatbuffers.BuilderContext();
 
         public var xAxis:Number = 1.25;
         public var signedValue:int = -7;
@@ -42,35 +42,43 @@ package fixtures
             if (!source || !dst)
                 throw new ArgumentError("Source and destination must be non-null");
 
-            const builder:as3flatbuffers.Builder = BUILDER;
+            const context:as3flatbuffers.BuilderContext = BUILDER;
             try
             {
-                builder.reset(dst, true);
-                builder.finish(packInto(source, builder));
+                as3flatbuffers.Builder.reset(context, dst, true);
+                as3flatbuffers.Builder.finish(context, packInto(source, context));
             }
             finally
             {
-                builder.reset();
+                as3flatbuffers.Builder.reset(context);
             }
             return dst;
         }
 
-        /** Write into an active builder and return the absolute object offset. */
-        public static function packInto(source:ScalarDefaults, builder:as3flatbuffers.Builder):uint
+        /** Write into an active context and return the absolute object offset. */
+        public static function packInto(source:ScalarDefaults, context:as3flatbuffers.BuilderContext):uint
         {
-            if (!source || !builder)
-                throw new ArgumentError("Source and builder must be non-null");
+            if (!source || !context)
+                throw new ArgumentError("Source and context must be non-null");
 
-            builder.startTable(5, 4);
+            as3flatbuffers.Builder.startTable(context, 5, 4);
             if (source.xAxis != 1.25)
-                builder.addFloat32(0, source.xAxis);
+            {
+                as3flatbuffers.Builder.addFloat32(context, 0, source.xAxis);
+            }
             if (source.signedValue != -7)
-                builder.addInt32(2, source.signedValue);
+            {
+                as3flatbuffers.Builder.addInt32(context, 2, source.signedValue);
+            }
             if (source.unsignedValue != 4294967295)
-                builder.addUint32(3, source.unsignedValue);
+            {
+                as3flatbuffers.Builder.addUint32(context, 3, source.unsignedValue);
+            }
             if (source.reset_ != 9)
-                builder.addInt32(4, source.reset_);
-            return builder.endTable();
+            {
+                as3flatbuffers.Builder.addInt32(context, 4, source.reset_);
+            }
+            return as3flatbuffers.Builder.endTable(context);
         }
     }
 }

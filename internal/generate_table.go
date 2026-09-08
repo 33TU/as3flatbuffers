@@ -34,3 +34,23 @@ func generateTableFieldUnpack(w *IndentWriter, f field) {
 	w.Dedent()
 	w.Line("}")
 }
+
+// Only align a present reference, preserving layouts when the field is omitted.
+func generateReserveOffset(w *IndentWriter, f field, alignment uint32) {
+	condition := "source." + f.Name
+	if f.String {
+		condition += " != null"
+	}
+	if alignment >= 4 {
+		w.Line("const offset%d:uint = %s ? as3flatbuffers.Builder.reserveOffset(context, %d) : 0;", f.ID, condition, f.ID)
+		return
+	}
+	w.Line("var offset%d:uint = 0;", f.ID)
+	w.Line("if (%s)", condition)
+	w.Line("{")
+	w.Indent()
+	w.Line("as3flatbuffers.Builder.prepare(context, 4);")
+	w.Line("offset%d = as3flatbuffers.Builder.reserveOffset(context, %d);", f.ID, f.ID)
+	w.Dedent()
+	w.Line("}")
+}

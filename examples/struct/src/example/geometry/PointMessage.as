@@ -8,7 +8,7 @@ package example.geometry
     /** Owned mutable value. pack() writes a complete FlatBuffer into the destination. */
     public final class PointMessage
     {
-        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+        private static const BUILDER:as3flatbuffers.BuilderContext = new as3flatbuffers.BuilderContext();
 
         public var point:example.geometry.Point = null;
 
@@ -34,29 +34,29 @@ package example.geometry
             if (!source || !dst)
                 throw new ArgumentError("Source and destination must be non-null");
 
-            const builder:as3flatbuffers.Builder = BUILDER;
+            const context:as3flatbuffers.BuilderContext = BUILDER;
             try
             {
-                builder.reset(dst, true);
-                builder.finish(packInto(source, builder));
+                as3flatbuffers.Builder.reset(context, dst, true);
+                as3flatbuffers.Builder.finish(context, packInto(source, context));
             }
             finally
             {
-                builder.reset();
+                as3flatbuffers.Builder.reset(context);
             }
             return dst;
         }
 
-        /** Write into an active builder and return the absolute object offset. */
-        public static function packInto(source:PointMessage, builder:as3flatbuffers.Builder):uint
+        /** Write into an active context and return the absolute object offset. */
+        public static function packInto(source:PointMessage, context:as3flatbuffers.BuilderContext):uint
         {
-            if (!source || !builder)
-                throw new ArgumentError("Source and builder must be non-null");
+            if (!source || !context)
+                throw new ArgumentError("Source and context must be non-null");
 
-            builder.startTable(1, 4);
+            as3flatbuffers.Builder.startTable(context, 1, 4);
             if (source.point)
-                builder.addStruct(0, example.geometry.Point.packInto(source.point, builder));
-            return builder.endTable();
+                as3flatbuffers.Builder.addStruct(context, 0, example.geometry.Point.packInto(source.point, context));
+            return as3flatbuffers.Builder.endTable(context);
         }
     }
 }

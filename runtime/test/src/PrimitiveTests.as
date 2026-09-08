@@ -1,6 +1,7 @@
 package
 {
     import as3flatbuffers.Builder;
+    import as3flatbuffers.BuilderContext;
     import as3flatbuffers.types.Int64;
     import as3flatbuffers.types.UInt64;
     import fixtures.Primitives;
@@ -21,7 +22,7 @@ package
             const value:Primitives = new Primitives();
             const signed:Int64 = value.i64;
             const unsigned:UInt64 = value.u64;
-            const builder:Builder = new Builder();
+            const builder:BuilderContext = new BuilderContext();
             var retained:ByteArray;
             for (var i:int = 0; i < cases.length; i++)
             {
@@ -39,7 +40,7 @@ package
                 const unsignedGetter:UInt64 = view.u64;
                 unsignedGetter.high ^= 1;
                 check(view.u64.eq(value.u64), "Unsigned getter returns independent words");
-                builder.reset(FixtureBuffer.create());
+                Builder.reset(builder, FixtureBuffer.create());
                 const output:ByteArray = Primitives.pack(copy, FixtureBuffer.create());
                 write(directory.resolvePath("primitive-as3-" + i + ".bin"), output);
                 FixtureBuffer.bindRoot(view, output);
@@ -73,7 +74,7 @@ package
             verify(defaultClone, cases[0], check);
 
             const special:SpecialFloats = new SpecialFloats();
-            builder.reset(FixtureBuffer.create());
+            Builder.reset(builder, FixtureBuffer.create());
             const specialView:SpecialFloatsView = FixtureBuffer.bindRoot(new SpecialFloatsView(), SpecialFloats.pack(special, FixtureBuffer.create()));
             check(isNaN(specialView.f32) && specialView.f64 == Number.POSITIVE_INFINITY &&
                 specialView.negative == Number.NEGATIVE_INFINITY, "Nonfinite schema defaults");
@@ -81,11 +82,11 @@ package
             // A single 8-byte field exposes root-alignment bugs hidden by larger tables.
             for (var slots:uint = 1; slots <= 10; slots++)
             {
-                const small:Builder = new Builder();
-                small.reset(FixtureBuffer.create());
-                small.startTable(slots, 8);
-                small.addFloat64(0, Math.PI);
-                const aligned:ByteArray = small.finish(small.endTable());
+                const small:BuilderContext = new BuilderContext();
+                Builder.reset(small, FixtureBuffer.create());
+                Builder.startTable(small, slots, 8);
+                Builder.prepare(small, 8); Builder.addFloat64(small, 0, Math.PI);
+                const aligned:ByteArray = Builder.finish(small, Builder.endTable(small));
                 aligned.position = 0;
                 const root:uint = aligned.readUnsignedInt();
                 aligned.position = root;
@@ -102,10 +103,11 @@ package
                 ["addInt16", -32769, "readShort", 32767], ["addInt16", 32768, "readShort", -32768],
                 ["addUint16", 65536, "readUnsignedShort", 0]])
             {
-                builder.reset(FixtureBuffer.create());
-                builder.startTable(1, 8);
-                builder[test[0]](0, test[1]);
-                const truncated:ByteArray = builder.finish(builder.endTable());
+                Builder.reset(builder, FixtureBuffer.create());
+                Builder.startTable(builder, 1, 8);
+                Builder.prepare(builder, test[0] == "addInt8" || test[0] == "addUint8" ? 1 : 2);
+                Builder[test[0]](builder, 0, test[1]);
+                const truncated:ByteArray = Builder.finish(builder, Builder.endTable(builder));
                 truncated.position = 0;
                 const truncatedRoot:uint = truncated.readUnsignedInt();
                 truncated.position = truncatedRoot;
@@ -123,10 +125,10 @@ package
             FixtureBuffer.bindRoot(view, Primitives.pack(value, FixtureBuffer.create()));
             check(view.i8 == -128 && view.u8 == 0 && view.i16 == 32767 && view.u16 == 0,
                 "Generated table writes truncate narrow integers");
-            builder.reset(FixtureBuffer.create());
-            builder.startTable(1, 8);
+            Builder.reset(builder, FixtureBuffer.create());
+            Builder.startTable(builder, 1, 8);
             var rejected:Boolean = false;
-            try { builder.addInt64(0, null); } catch (missing:Error) { rejected = true; }
+            try { Builder.prepare(builder, 8); Builder.addInt64(builder, 0, null); } catch (missing:Error) { rejected = true; }
             check(rejected, "Reject missing 64-bit value");
         }
 

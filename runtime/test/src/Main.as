@@ -9,6 +9,7 @@ package
     import flash.utils.ByteArray;
     import flash.utils.Endian;
     import as3flatbuffers.Builder;
+    import as3flatbuffers.BuilderContext;
     import as3flatbuffers.types.Int64;
     import as3flatbuffers.types.UInt64;
     import as3flatbuffers.types.Int64Vector;
@@ -39,7 +40,7 @@ package
             {
                 const manifestBytes:ByteArray = read(directory.resolvePath("manifest.json"));
                 const manifest:Array = JSON.parse(manifestBytes.readUTFBytes(manifestBytes.length)) as Array;
-                const builder:Builder = new Builder();
+                const builder:BuilderContext = new BuilderContext();
                 const view:PointView = new PointView();
                 const owned:Point = new Point();
                 check(Point.clone(null) == null, "Static table clone preserves null");
@@ -55,7 +56,7 @@ package
                     const cloned:Point = Point.clone(owned);
                     check(cloned !== owned && cloned.x == owned.x && cloned.y == owned.y, "Owned clone");
                     check(PointView.unpack(view) !== owned, "Fresh unpack");
-                    builder.reset(FixtureBuffer.create());
+                    Builder.reset(builder, FixtureBuffer.create());
                     const output:ByteArray = Point.pack(owned, FixtureBuffer.create());
                     write(directory.resolvePath("as3-" + i + ".bin"), output);
                     FixtureBuffer.bindRoot(view, output);
@@ -121,9 +122,9 @@ package
                 check(caught, "Field outside table rejected");
 
                 // Integers preserve high bits rather than passing through Number.
-                builder.reset(FixtureBuffer.create()); builder.startTable(2, 8);
-                builder.addInt32(0, int.MIN_VALUE); builder.addUint32(1, uint.MAX_VALUE);
-                write(directory.resolvePath("integers.bin"), builder.finish(builder.endTable()));
+                Builder.reset(builder, FixtureBuffer.create()); Builder.startTable(builder, 2, 8);
+                Builder.prepare(builder, 4); Builder.addInt32(builder, 0, int.MIN_VALUE); Builder.prepare(builder, 4); Builder.addUint32(builder, 1, uint.MAX_VALUE);
+                write(directory.resolvePath("integers.bin"), Builder.finish(builder, Builder.endTable(builder)));
                 const signed:Int64 = new Int64(0xffffffff, -1);
                 check(signed.toString() == "-1" && signed.clone().eq(signed), "Signed 64-bit words");
                 const unsigned:UInt64 = new UInt64(0xffffffff, 0xffffffff);
@@ -140,7 +141,7 @@ package
                 check(scalar.xAxis == 1.25 && scalar.signedValue == -7 &&
                     scalar.unsignedValue == uint.MAX_VALUE && scalar.reset_ == 9,
                     "Generated owned defaults");
-                builder.reset(FixtureBuffer.create());
+                Builder.reset(builder, FixtureBuffer.create());
                 const scalarView:ScalarDefaultsView = new ScalarDefaultsView();
                 FixtureBuffer.bindRoot(scalarView, ScalarDefaults.pack(scalar, FixtureBuffer.create()));
                 check(scalarView.xAxis == 1.25 && scalarView.signedValue == -7 &&
@@ -150,7 +151,7 @@ package
                 scalar.signedValue = int.MIN_VALUE;
                 scalar.unsignedValue = 0;
                 scalar.reset_ = 42;
-                builder.reset(FixtureBuffer.create());
+                Builder.reset(builder, FixtureBuffer.create());
                 const scalarBytes:ByteArray = ScalarDefaults.pack(scalar, FixtureBuffer.create());
                 write(directory.resolvePath("scalars.bin"), scalarBytes);
                 FixtureBuffer.bindRoot(scalarView, scalarBytes);
@@ -175,7 +176,7 @@ package
                 naming.bind_2 = 456;
                 naming.bytes_ = -9;
                 naming.class_ = 17;
-                builder.reset(FixtureBuffer.create());
+                Builder.reset(builder, FixtureBuffer.create());
                 const namingBytes:ByteArray = Naming.pack(naming, FixtureBuffer.create());
                 write(directory.resolvePath("naming.bin"), namingBytes);
                 const namingView:NamingView = FixtureBuffer.bindRoot(new NamingView(), namingBytes);

@@ -1,5 +1,11 @@
 package
 {
+    import as3flatbuffers.types.OptionalBoolean;
+    import as3flatbuffers.types.OptionalInt;
+    import as3flatbuffers.types.OptionalUint;
+    import as3flatbuffers.types.OptionalNumber;
+    import as3flatbuffers.types.Int64;
+    import as3flatbuffers.types.UInt64;
     import fixtures.OptionalScalars;
     import fixtures.OptionalScalarsView;
     import flash.filesystem.File;
@@ -64,6 +70,43 @@ package
             }
             OptionalScalars.reset(value);
             verify(value, cases[0], check);
+            verifyAlignmentCombinations(check);
+        }
+
+        private static function verifyAlignmentCombinations(check:Function):void
+        {
+            const values:Array = [new as3flatbuffers.types.OptionalBoolean(),
+                new as3flatbuffers.types.OptionalInt(), new as3flatbuffers.types.OptionalUint(),
+                new as3flatbuffers.types.OptionalInt(), new as3flatbuffers.types.OptionalUint(),
+                new as3flatbuffers.types.OptionalInt(), new as3flatbuffers.types.OptionalUint(),
+                new as3flatbuffers.types.Int64(), new as3flatbuffers.types.UInt64(),
+                new as3flatbuffers.types.OptionalNumber(), new as3flatbuffers.types.OptionalNumber()];
+            const widths:Array = [1, 1, 1, 2, 2, 4, 4, 8, 8, 4, 8];
+            const value:OptionalScalars = new OptionalScalars();
+            const view:OptionalScalarsView = new OptionalScalarsView();
+            const bytes:ByteArray = FixtureBuffer.create();
+            for (var mask:uint = 0; mask < 2048; mask++)
+            {
+                for (var slot:uint = 0; slot < FIELDS.length; slot++)
+                    value[FIELDS[slot]] = mask & (1 << slot) ? values[slot] : null;
+                OptionalScalars.pack(value, bytes);
+                bytes.position = 0;
+                const root:uint = bytes.readUnsignedInt();
+                bytes.position = root;
+                const vtable:uint = root - bytes.readInt();
+                FixtureBuffer.bindRoot(view, bytes);
+                var valid:Boolean = true;
+                for (slot = 0; slot < FIELDS.length; slot++)
+                {
+                    bytes.position = vtable + 4 + slot * 2;
+                    const relative:uint = bytes.readUnsignedShort();
+                    const present:Boolean = (mask & (1 << slot)) != 0;
+                    valid = valid && ((relative != 0) == present);
+                    if (present) valid = valid && ((root + relative) % widths[slot] == 0);
+                    valid = valid && ((view[FIELDS[slot]] != null) == present);
+                }
+                check(valid, "Optional scalar alignment and presence mask " + mask);
+            }
         }
 
         private static function verify(value:Object, expected:Array, check:Function):void

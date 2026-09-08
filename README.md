@@ -61,12 +61,13 @@ There is no scratch ByteArray or final byte copy. Repacking the same destination
 invalidates views into its previous contents; bind them again afterward. A packing
 error may leave partial output in `dst`.
 
-Each generated class owns a `private static const BUILDER`. Its `pack()` resets
-that builder for `dst` and detaches the destination in `finally`, including on
-failure. The class retains construction state and its reusable field vector, but
-not output buffers. Packing is synchronous; nested tables and structs share the
-parent's active builder via
-`packInto(source, builder)`.
+Each generated class caches a `BuilderContext` in `private static const BUILDER`.
+`Builder` provides static operations taking that context as their first argument.
+The context owns the destination reference, reusable field vector, table/vtable
+positions, and root flag; its fields are package-internal. `pack()` resets the
+context for `dst` and detaches the destination in `finally`, including on failure.
+Packing is synchronous; nested tables and structs share the parent's context via
+`packInto(source, context)`.
 
 The forward builder reserves vtable space before writing each table, then patches
 field offsets and the root offset. It reserves slots for all schema fields, including
@@ -84,6 +85,9 @@ non-null when packing or cloning. Narrow integer writes truncate to the low 8 or
 Schema defaults are still range-checked by the generator.
 
 Generated table packers omit scalar schema defaults before calling the builder.
+They emit `Builder.prepare(context, alignment)` only where alignment is not already
+guaranteed on both present and absent field paths. Scalar add methods write the
+value and record its offset without adding padding.
 Optional scalars are written whenever present, including zero and false.
 `Builder` is internal support for generated packers, not a manual construction API.
 Generated code guarantees valid slots, alignment, call order, and reference patches.
@@ -159,7 +163,7 @@ field returns null; it does not invalidate an earlier returned child view.
 
 The generator uses reflected field offsets, sizes, and alignment, including
 padding and `force_align`. A struct's static `pack(source, dst)` writes raw struct
-bytes starting at zero, without a root-offset word. Its `packInto(source, builder)`
+bytes starting at zero, without a root-offset word. Its `packInto(source, context)`
 writes inline at the current aligned builder position and returns the absolute
 struct offset. Generated table packing records it immediately with `addStruct`.
 Struct packers prepare their size and alignment once, then write scalar fields
@@ -214,7 +218,7 @@ Generated code patches every reserved reference before calling `finish(root)`,
 which writes the root offset without tracking or validating completed objects.
 
 Owned input must be acyclic; packing does not detect object cycles. The outer
-`pack()` detaches its static builder in `finally`, including on failure.
+`pack()` detaches the destination from its cached context in `finally`, including on failure.
 Repeated references to the same child
 on separate branches are serialized independently; object identity is not preserved.
 `clone()` also expects acyclic input. Deep recursive operations are limited by
@@ -269,7 +273,7 @@ bin/as3flatc -o examples/point/src bin/point.bfbs
 
 Every supported table or struct produces an owned class and a `View` class. Owned objects
 have schema defaults and static `reset(msg)`, `clone(source)`, and
-`pack(source, dst)` methods, plus `packInto(source, builder)` for composition. `clone(null)` returns null. Generated owned classes
+`pack(source, dst)` methods, plus `packInto(source, context)` for composition. `clone(null)` returns null. Generated owned classes
 do not expose `copyFrom()`.
 Views expose lazy field getters and static `unpack(sourceView, destination = null)`.
 
@@ -321,7 +325,7 @@ configuration.
 cmd/as3flatc/               .bfbs -> AS3 command
 internal/                  Schema validation, naming, and source generation
 internal/reflection/       Official binary-schema bindings and source schema
-runtime/src/as3flatbuffers/  Builder, TableView, and scalar helpers
+runtime/src/as3flatbuffers/  Builder, BuilderContext, TableView, and scalar helpers
 runtime/test/               AIR tests
 runtime/bench/              AIR benchmark schemas, generated classes, and harness
 examples/point/schema/      Reference .fbs schema

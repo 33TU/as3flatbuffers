@@ -15,7 +15,7 @@ func generateMessage(w *IndentWriter, o object, objects map[string]object) {
 	w.Line("public final class %s", o.Name)
 	w.Line("{")
 	w.Indent()
-	w.Line("private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();")
+	w.Line("private static const BUILDER:as3flatbuffers.BuilderContext = new as3flatbuffers.BuilderContext();")
 	w.BlankLine()
 	generateFields(w, o)
 	w.BlankLine()

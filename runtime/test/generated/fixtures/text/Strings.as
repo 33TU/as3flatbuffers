@@ -9,7 +9,7 @@ package fixtures.text
     /** Owned mutable value. pack() writes a complete FlatBuffer into the destination. */
     public final class Strings
     {
-        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+        private static const BUILDER:as3flatbuffers.BuilderContext = new as3flatbuffers.BuilderContext();
 
         public var text:String = null;
         public var label_:String = null;
@@ -47,42 +47,51 @@ package fixtures.text
             if (!source || !dst)
                 throw new ArgumentError("Source and destination must be non-null");
 
-            const builder:as3flatbuffers.Builder = BUILDER;
+            const context:as3flatbuffers.BuilderContext = BUILDER;
             try
             {
-                builder.reset(dst, true);
-                builder.finish(packInto(source, builder));
+                as3flatbuffers.Builder.reset(context, dst, true);
+                as3flatbuffers.Builder.finish(context, packInto(source, context));
             }
             finally
             {
-                builder.reset();
+                as3flatbuffers.Builder.reset(context);
             }
             return dst;
         }
 
-        /** Write into an active builder and return the absolute object offset. */
-        public static function packInto(source:Strings, builder:as3flatbuffers.Builder):uint
+        /** Write into an active context and return the absolute object offset. */
+        public static function packInto(source:Strings, context:as3flatbuffers.BuilderContext):uint
         {
-            if (!source || !builder)
-                throw new ArgumentError("Source and builder must be non-null");
+            if (!source || !context)
+                throw new ArgumentError("Source and context must be non-null");
 
-            builder.startTable(5, 4);
-            const offset0:uint = source.text != null ? builder.reserveOffset(0) : 0;
-            const offset1:uint = source.label_ != null ? builder.reserveOffset(1) : 0;
-            const offset2:uint = source.stringValue_ != null ? builder.reserveOffset(2) : 0;
-            const offset3:uint = source.child ? builder.reserveOffset(3) : 0;
-            const offset4:uint = source.next ? builder.reserveOffset(4) : 0;
-            const table:uint = builder.endTable();
+            as3flatbuffers.Builder.startTable(context, 5, 4);
+            const offset0:uint = source.text != null ? as3flatbuffers.Builder.reserveOffset(context, 0) : 0;
+            const offset1:uint = source.label_ != null ? as3flatbuffers.Builder.reserveOffset(context, 1) : 0;
+            const offset2:uint = source.stringValue_ != null ? as3flatbuffers.Builder.reserveOffset(context, 2) : 0;
+            const offset3:uint = source.child ? as3flatbuffers.Builder.reserveOffset(context, 3) : 0;
+            const offset4:uint = source.next ? as3flatbuffers.Builder.reserveOffset(context, 4) : 0;
+            const table:uint = as3flatbuffers.Builder.endTable(context);
             if (offset0)
-                builder.writeString(offset0, source.text);
+            {
+                as3flatbuffers.Builder.prepare(context, 4);
+                as3flatbuffers.Builder.writeString(context, offset0, source.text);
+            }
             if (offset1)
-                builder.writeString(offset1, source.label_);
+            {
+                as3flatbuffers.Builder.prepare(context, 4);
+                as3flatbuffers.Builder.writeString(context, offset1, source.label_);
+            }
             if (offset2)
-                builder.writeString(offset2, source.stringValue_);
+            {
+                as3flatbuffers.Builder.prepare(context, 4);
+                as3flatbuffers.Builder.writeString(context, offset2, source.stringValue_);
+            }
             if (offset3)
-                builder.patchOffset(offset3, fixtures.text.Text.packInto(source.child, builder));
+                as3flatbuffers.Builder.patchOffset(context, offset3, fixtures.text.Text.packInto(source.child, context));
             if (offset4)
-                builder.patchOffset(offset4, fixtures.text.Strings.packInto(source.next, builder));
+                as3flatbuffers.Builder.patchOffset(context, offset4, fixtures.text.Strings.packInto(source.next, context));
             return table;
         }
     }

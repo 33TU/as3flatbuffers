@@ -8,7 +8,7 @@ package bench.data
     /** Owned mutable value. pack() writes a complete FlatBuffer into the destination. */
     public final class Inline
     {
-        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+        private static const BUILDER:as3flatbuffers.BuilderContext = new as3flatbuffers.BuilderContext();
 
         public var sequence:uint = 0;
         public var state:bench.data.State = null;
@@ -37,31 +37,33 @@ package bench.data
             if (!source || !dst)
                 throw new ArgumentError("Source and destination must be non-null");
 
-            const builder:as3flatbuffers.Builder = BUILDER;
+            const context:as3flatbuffers.BuilderContext = BUILDER;
             try
             {
-                builder.reset(dst, true);
-                builder.finish(packInto(source, builder));
+                as3flatbuffers.Builder.reset(context, dst, true);
+                as3flatbuffers.Builder.finish(context, packInto(source, context));
             }
             finally
             {
-                builder.reset();
+                as3flatbuffers.Builder.reset(context);
             }
             return dst;
         }
 
-        /** Write into an active builder and return the absolute object offset. */
-        public static function packInto(source:Inline, builder:as3flatbuffers.Builder):uint
+        /** Write into an active context and return the absolute object offset. */
+        public static function packInto(source:Inline, context:as3flatbuffers.BuilderContext):uint
         {
-            if (!source || !builder)
-                throw new ArgumentError("Source and builder must be non-null");
+            if (!source || !context)
+                throw new ArgumentError("Source and context must be non-null");
 
-            builder.startTable(2, 8);
+            as3flatbuffers.Builder.startTable(context, 2, 8);
             if (source.sequence != 0)
-                builder.addUint32(0, source.sequence);
+            {
+                as3flatbuffers.Builder.addUint32(context, 0, source.sequence);
+            }
             if (source.state)
-                builder.addStruct(1, bench.data.State.packInto(source.state, builder));
-            return builder.endTable();
+                as3flatbuffers.Builder.addStruct(context, 1, bench.data.State.packInto(source.state, context));
+            return as3flatbuffers.Builder.endTable(context);
         }
     }
 }

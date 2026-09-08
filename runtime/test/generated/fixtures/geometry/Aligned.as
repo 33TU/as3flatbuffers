@@ -7,7 +7,7 @@ package fixtures.geometry
     /** Owned inline struct. pack() writes raw struct bytes into the destination. */
     public final class Aligned
     {
-        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+        private static const BUILDER:as3flatbuffers.BuilderContext = new as3flatbuffers.BuilderContext();
 
         public var id:int = 0;
         public var value:Number = 0;
@@ -36,26 +36,26 @@ package fixtures.geometry
             if (!source || !dst)
                 throw new ArgumentError("Source and destination must be non-null");
 
-            const builder:as3flatbuffers.Builder = BUILDER;
+            const context:as3flatbuffers.BuilderContext = BUILDER;
             try
             {
-                builder.reset(dst, false);
-                builder.finish(packInto(source, builder));
+                as3flatbuffers.Builder.reset(context, dst, false);
+                as3flatbuffers.Builder.finish(context, packInto(source, context));
             }
             finally
             {
-                builder.reset();
+                as3flatbuffers.Builder.reset(context);
             }
             return dst;
         }
 
-        /** Write into an active builder and return the absolute object offset. */
-        public static function packInto(source:Aligned, builder:as3flatbuffers.Builder):uint
+        /** Write into an active context and return the absolute object offset. */
+        public static function packInto(source:Aligned, context:as3flatbuffers.BuilderContext):uint
         {
-            if (!source || !builder)
-                throw new ArgumentError("Source and builder must be non-null");
+            if (!source || !context)
+                throw new ArgumentError("Source and context must be non-null");
 
-            const bytes:flash.utils.ByteArray = builder.prepareStruct(16, 16);
+            const bytes:flash.utils.ByteArray = as3flatbuffers.Builder.prepareStruct(context, 16, 16);
             const start:uint = bytes.position;
 
             bytes.writeInt(source.id);

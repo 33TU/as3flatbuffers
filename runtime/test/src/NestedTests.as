@@ -1,6 +1,7 @@
 package
 {
     import as3flatbuffers.Builder;
+    import as3flatbuffers.BuilderContext;
     import fixtures.nested.Node;
     import fixtures.nested.NodeView;
     import fixtures.nested.Scene;
@@ -98,15 +99,16 @@ package
             FixtureBuffer.bindRoot(nodeView, prefixed, 16);
             check(nodeView.next.value == chain.next.value, "Nested references work at a nonzero root position");
 
-            const builder:Builder = new Builder();
-            builder.reset(dst);
-            builder.startTable(1, 4);
-            const slot:uint = builder.reserveOffset(0);
-            const parent:uint = builder.endTable();
-            builder.startTable(0, 4);
-            const childTable:uint = builder.endTable();
-            builder.patchOffset(slot, childTable);
-            check(builder.finish(parent) === dst, "Root may precede the last completed child table");
+            const builder:BuilderContext = new BuilderContext();
+            Builder.reset(builder, dst);
+            Builder.startTable(builder, 1, 4);
+            Builder.prepare(builder, 4);
+            const slot:uint = Builder.reserveOffset(builder, 0);
+            const parent:uint = Builder.endTable(builder);
+            Builder.startTable(builder, 0, 4);
+            const childTable:uint = Builder.endTable(builder);
+            Builder.patchOffset(builder, slot, childTable);
+            check(Builder.finish(builder, parent) === dst, "Root may precede the last completed child table");
         }
 
         private static function verify(value:Scene, expected:Object, check:Function):void

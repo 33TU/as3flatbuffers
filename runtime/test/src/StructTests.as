@@ -1,6 +1,7 @@
 package
 {
     import as3flatbuffers.Builder;
+    import as3flatbuffers.BuilderContext;
     import fixtures.InlineRoot;
     import fixtures.InlineRootView;
     import fixtures.geometry.Frame;
@@ -20,7 +21,7 @@ package
             const primitives:Array = JSON.parse(primitiveManifest.readUTFBytes(primitiveManifest.length)) as Array;
             const value:InlineRoot = new InlineRoot();
             const view:InlineRootView = new InlineRootView();
-            const builder:Builder = new Builder();
+            const builder:BuilderContext = new BuilderContext();
             check(Point.clone(null) == null && InlineRoot.clone(null) == null, "Static struct and containing-table null clones");
             for (var i:int = 0; i < cases.length; i++)
             {
@@ -54,7 +55,7 @@ package
                 }
                 else
                     check(!value.frame && !value.envelope && !value.aligned, "Absent structs clear reused destination");
-                builder.reset(FixtureBuffer.create());
+                Builder.reset(builder, FixtureBuffer.create());
                 const output:ByteArray = InlineRoot.pack(value, FixtureBuffer.create());
                 write(directory.resolvePath("struct-as3-" + i + ".bin"), output);
                 const roundTrip:InlineRoot = InlineRootView.unpack(FixtureBuffer.bindRoot(new InlineRootView(), output));

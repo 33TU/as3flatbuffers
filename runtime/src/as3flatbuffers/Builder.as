@@ -7,188 +7,108 @@ package as3flatbuffers
     /** Internal support for generated packers; writes forwards into a little-endian ByteArray. */
     public final class Builder
     {
-        private var bytes:ByteArray;
-        private const fields:Vector.<uint> = new Vector.<uint>();
-        private var tableStart:uint;
-        private var vtableStart:uint;
-        private var rootReserved:Boolean;
-
         /** Replace dst's contents, or detach when dst is null. Endian is unchanged. */
-        public function reset(dst:ByteArray = null, reserveRoot:Boolean = true):void
+        [Inline]
+        public static function reset(context:BuilderContext, dst:ByteArray = null, reserveRoot:Boolean = true):void
         {
-            bytes = dst;
-            fields.length = 0;
-            tableStart = 0;
-            vtableStart = 0;
-            rootReserved = reserveRoot;
-            if (bytes)
+            context.bytes = dst;
+            context.fields.length = 0;
+            context.tableStart = 0;
+            context.vtableStart = 0;
+            context.rootReserved = reserveRoot;
+            if (dst)
             {
-                bytes.length = 0;
-                bytes.position = 0;
+                dst.length = 0;
+                dst.position = 0;
                 if (reserveRoot)
-                    bytes.writeUnsignedInt(0);
+                    dst.writeUnsignedInt(0);
             }
         }
 
+        /** Patch the root offset and return dst itself, positioned at zero. No copy. */
         [Inline]
-        public final function startTable(fieldCount:uint, alignment:uint):void
+        public static function finish(context:BuilderContext, root:uint):ByteArray
         {
-            fields.length = fieldCount;
-            const vtableBytes:uint = (fieldCount + 2) * 2;
-            prepare(2, vtableBytes);
-            vtableStart = bytes.position;
-            // endTable writes every reserved byte, including absent field entries.
-            bytes.position += vtableBytes;
-            prepare(alignment, 4);
-            tableStart = bytes.position;
-            bytes.writeInt(int(tableStart - vtableStart));
-        }
+            const bytes:ByteArray = context.bytes;
 
-        [Inline]
-        public final function addBool(slot:uint, value:Boolean):void
-        {
-            prepare(1, 0);
-            bytes.writeBoolean(value);
-            fields[slot] = bytes.position - 1;
-        }
-
-        [Inline]
-        public final function addInt8(slot:uint, value:int):void
-        {
-            prepare(1, 0);
-            bytes.writeByte(value);
-            fields[slot] = bytes.position - 1;
-        }
-
-        [Inline]
-        public final function addUint8(slot:uint, value:uint):void
-        {
-            prepare(1, 0);
-            bytes.writeByte(value);
-            fields[slot] = bytes.position - 1;
-        }
-
-        [Inline]
-        public final function addInt16(slot:uint, value:int):void
-        {
-            prepare(2, 0);
-            bytes.writeShort(value);
-            fields[slot] = bytes.position - 2;
-        }
-
-        [Inline]
-        public final function addUint16(slot:uint, value:uint):void
-        {
-            prepare(2, 0);
-            bytes.writeShort(value);
-            fields[slot] = bytes.position - 2;
-        }
-
-        [Inline]
-        public final function addFloat64(slot:uint, value:Number):void
-        {
-            prepare(8, 0);
-            bytes.writeDouble(value);
-            fields[slot] = bytes.position - 8;
-        }
-
-        [Inline]
-        public final function addInt64(slot:uint, value:Int64):void
-        {
-            prepare(8, 0);
-            bytes.writeUnsignedInt(value.low);
-            bytes.writeUnsignedInt(uint(value.high));
-            fields[slot] = bytes.position - 8;
-        }
-
-        [Inline]
-        public final function addUint64(slot:uint, value:UInt64):void
-        {
-            prepare(8, 0);
-            bytes.writeUnsignedInt(value.low);
-            bytes.writeUnsignedInt(uint(value.high));
-            fields[slot] = bytes.position - 8;
-        }
-
-        [Inline]
-        public final function addFloat32(slot:uint, value:Number):void
-        {
-            prepare(4, 0);
-            bytes.writeFloat(value);
-            fields[slot] = bytes.position - 4;
-        }
-
-        [Inline]
-        public final function addInt32(slot:uint, value:int):void
-        {
-            prepare(4, 0);
-            bytes.writeInt(value);
-            fields[slot] = bytes.position - 4;
-        }
-
-        [Inline]
-        public final function addUint32(slot:uint, value:uint):void
-        {
-            prepare(4, 0);
-            bytes.writeUnsignedInt(value);
-            fields[slot] = bytes.position - 4;
-        }
-
-        /** Reserve a present table or string reference for a later forward-offset patch. */
-        public function reserveOffset(slot:uint):uint
-        {
-            prepare(4, 4);
-            const position:uint = bytes.position;
-            bytes.writeUnsignedInt(0);
-            fields[slot] = position;
-            return position;
-        }
-
-        public function patchOffset(position:uint, target:uint):void
-        {
-            const end:uint = bytes.position;
-            bytes.position = position;
-            bytes.writeUnsignedInt(target - position);
-            bytes.position = end;
-        }
-
-        /** Write a UTF-8 string and patch its reserved reference after closing the table. */
-        public function writeString(position:uint, value:String):void
-        {
-            prepare(4, 4);
-            const start:uint = bytes.position;
-            bytes.writeUnsignedInt(0);
-            bytes.writeUTFBytes(value);
-            const length:uint = bytes.position - start - 4;
-            prepare(1, 0);
-            bytes.writeByte(0);
-            const end:uint = bytes.position;
-            bytes.position = start;
-            bytes.writeUnsignedInt(length);
-            bytes.position = position;
-            bytes.writeUnsignedInt(start - position);
-            bytes.position = end;
-        }
-
-        /** Record an inline struct immediately after its packInto() call. */
-        public function addStruct(slot:uint, structOffset:uint):void
-        {
-            fields[slot] = structOffset;
-        }
-
-        /**
-         * Align a complete struct, then lend the destination for direct writes.
-         * Generated code must write exactly size bytes, including zero padding.
-         */
-        public function prepareStruct(size:uint, alignment:uint):ByteArray
-        {
-            prepare(alignment, size);
+            bytes.position = 0;
+            if (context.rootReserved)
+                bytes.writeUnsignedInt(root);
+            bytes.position = 0;
             return bytes;
         }
 
         [Inline]
-        public final function pad(count:uint):void
+        public static function startTable(context:BuilderContext, fieldCount:uint, alignment:uint):void
         {
+            const bytes:ByteArray = context.bytes;
+
+            context.fields.length = fieldCount;
+            const vtableBytes:uint = (fieldCount + 2) * 2;
+            prepare(context, 2);
+            context.vtableStart = bytes.position;
+            // endTable writes every reserved byte, including absent field entries.
+            bytes.position += vtableBytes;
+            prepare(context, alignment);
+            context.tableStart = bytes.position;
+            bytes.writeInt(int(context.tableStart - context.vtableStart));
+        }
+
+        [Inline]
+        public static function endTable(context:BuilderContext):uint
+        {
+            const bytes:ByteArray = context.bytes;
+            const tableStart:uint = context.tableStart;
+            const end:uint = bytes.position;
+            const objectSize:uint = end - tableStart;
+            if (objectSize > 65535)
+                throw new RangeError("Table is too large");
+
+            const fields:Vector.<uint> = context.fields;
+            const count:uint = fields.length;
+
+            bytes.position = context.vtableStart;
+            bytes.writeShort((count + 2) * 2);
+            bytes.writeShort(objectSize);
+            for (var i:uint = 0; i < count; i++)
+            {
+                const field:uint = fields[i];
+                bytes.writeShort(field ? field - tableStart : 0);
+            }
+
+            bytes.position = end;
+            fields.length = 0;
+            return tableStart;
+        }
+
+        [Inline]
+        public static function prepare(context:BuilderContext, alignment:uint):void
+        {
+            const bytes:ByteArray = context.bytes;
+
+            // All accepted alignments are powers of two.
+            var padding:uint = (0 - bytes.position) & (alignment - 1);
+            while (padding >= 16)
+            {
+                bytes.writeDouble(0);
+                bytes.writeDouble(0);
+                padding -= 16;
+            }
+            if (padding & 8)
+                bytes.writeDouble(0);
+            if (padding & 4)
+                bytes.writeUnsignedInt(0);
+            if (padding & 2)
+                bytes.writeShort(0);
+            if (padding & 1)
+                bytes.writeByte(0);
+        }
+
+        [Inline]
+        public static function pad(context:BuilderContext, count:uint):void
+        {
+            const bytes:ByteArray = context.bytes;
+
             // Buffer growth can expose old bytes after reuse, so write zeros explicitly.
             while (count >= 16)
             {
@@ -206,42 +126,116 @@ package as3flatbuffers
                 bytes.writeByte(0);
         }
 
-        public function endTable():uint
+        [Inline]
+        public static function addBool(context:BuilderContext, slot:uint, value:Boolean):void
         {
-            const end:uint = bytes.position;
-            const objectSize:uint = end - tableStart;
-            if (objectSize > 65535)
-                throw new RangeError("Table is too large");
+            const bytes:ByteArray = context.bytes;
 
-            const count:uint = fields.length;
-
-            bytes.position = vtableStart;
-            bytes.writeShort((count + 2) * 2);
-            bytes.writeShort(objectSize);
-            for (var i:uint = 0; i < count; i++)
-            {
-                const field:uint = fields[i];
-                bytes.writeShort(field ? field - tableStart : 0);
-            }
-
-            bytes.position = end;
-            fields.length = 0;
-            return tableStart;
-        }
-
-        /** Patch the root offset and return dst itself, positioned at zero. No copy. */
-        public function finish(root:uint):ByteArray
-        {
-            bytes.position = 0;
-            if (rootReserved)
-                bytes.writeUnsignedInt(root);
-            bytes.position = 0;
-            return bytes;
+            bytes.writeBoolean(value);
+            context.fields[slot] = bytes.position - 1;
         }
 
         [Inline]
-        private final function prepare(alignment:uint, additionalBytes:uint):void
+        public static function addInt8(context:BuilderContext, slot:uint, value:int):void
         {
+            const bytes:ByteArray = context.bytes;
+
+            bytes.writeByte(value);
+            context.fields[slot] = bytes.position - 1;
+        }
+
+        [Inline]
+        public static function addUint8(context:BuilderContext, slot:uint, value:uint):void
+        {
+            const bytes:ByteArray = context.bytes;
+
+            bytes.writeByte(value);
+            context.fields[slot] = bytes.position - 1;
+        }
+
+        [Inline]
+        public static function addInt16(context:BuilderContext, slot:uint, value:int):void
+        {
+            const bytes:ByteArray = context.bytes;
+
+            bytes.writeShort(value);
+            context.fields[slot] = bytes.position - 2;
+        }
+
+        [Inline]
+        public static function addUint16(context:BuilderContext, slot:uint, value:uint):void
+        {
+            const bytes:ByteArray = context.bytes;
+
+            bytes.writeShort(value);
+            context.fields[slot] = bytes.position - 2;
+        }
+
+        [Inline]
+        public static function addInt32(context:BuilderContext, slot:uint, value:int):void
+        {
+            const bytes:ByteArray = context.bytes;
+
+            bytes.writeInt(value);
+            context.fields[slot] = bytes.position - 4;
+        }
+
+        [Inline]
+        public static function addUint32(context:BuilderContext, slot:uint, value:uint):void
+        {
+            const bytes:ByteArray = context.bytes;
+
+            bytes.writeUnsignedInt(value);
+            context.fields[slot] = bytes.position - 4;
+        }
+
+        [Inline]
+        public static function addInt64(context:BuilderContext, slot:uint, value:Int64):void
+        {
+            const bytes:ByteArray = context.bytes;
+
+            bytes.writeUnsignedInt(value.low);
+            bytes.writeUnsignedInt(uint(value.high));
+            context.fields[slot] = bytes.position - 8;
+        }
+
+        [Inline]
+        public static function addUint64(context:BuilderContext, slot:uint, value:UInt64):void
+        {
+            const bytes:ByteArray = context.bytes;
+
+            bytes.writeUnsignedInt(value.low);
+            bytes.writeUnsignedInt(uint(value.high));
+            context.fields[slot] = bytes.position - 8;
+        }
+
+        [Inline]
+        public static function addFloat32(context:BuilderContext, slot:uint, value:Number):void
+        {
+            const bytes:ByteArray = context.bytes;
+
+            bytes.writeFloat(value);
+            context.fields[slot] = bytes.position - 4;
+        }
+
+        [Inline]
+        public static function addFloat64(context:BuilderContext, slot:uint, value:Number):void
+        {
+            const bytes:ByteArray = context.bytes;
+
+            bytes.writeDouble(value);
+            context.fields[slot] = bytes.position - 8;
+        }
+
+        /**
+         * Align a complete struct, then lend the destination for direct writes.
+         * Generated code must write exactly size bytes, including zero padding.
+         */
+        [Inline]
+        public static function prepareStruct(context:BuilderContext, size:uint, alignment:uint):ByteArray
+        {
+            const bytes:ByteArray = context.bytes;
+
             // All accepted alignments are powers of two.
             var padding:uint = (0 - bytes.position) & (alignment - 1);
             while (padding >= 16)
@@ -258,6 +252,56 @@ package as3flatbuffers
                 bytes.writeShort(0);
             if (padding & 1)
                 bytes.writeByte(0);
+            return bytes;
+        }
+
+        /** Record an inline struct immediately after its packInto() call. */
+        [Inline]
+        public static function addStruct(context:BuilderContext, slot:uint, structOffset:uint):void
+        {
+            context.fields[slot] = structOffset;
+        }
+
+        /** Reserve a present table or string reference for a later forward-offset patch. */
+        [Inline]
+        public static function reserveOffset(context:BuilderContext, slot:uint):uint
+        {
+            const bytes:ByteArray = context.bytes;
+
+            const position:uint = bytes.position;
+            bytes.writeUnsignedInt(0);
+            context.fields[slot] = position;
+            return position;
+        }
+
+        [Inline]
+        public static function patchOffset(context:BuilderContext, position:uint, target:uint):void
+        {
+            const bytes:ByteArray = context.bytes;
+
+            const end:uint = bytes.position;
+            bytes.position = position;
+            bytes.writeUnsignedInt(target - position);
+            bytes.position = end;
+        }
+
+        /** Write a UTF-8 string and patch its reserved reference after closing the table. */
+        [Inline]
+        public static function writeString(context:BuilderContext, position:uint, value:String):void
+        {
+            const bytes:ByteArray = context.bytes;
+
+            const start:uint = bytes.position;
+            bytes.writeUnsignedInt(0);
+            bytes.writeUTFBytes(value);
+            const length:uint = bytes.position - start - 4;
+            bytes.writeByte(0);
+            const end:uint = bytes.position;
+            bytes.position = start;
+            bytes.writeUnsignedInt(length);
+            bytes.position = position;
+            bytes.writeUnsignedInt(start - position);
+            bytes.position = end;
         }
     }
 }

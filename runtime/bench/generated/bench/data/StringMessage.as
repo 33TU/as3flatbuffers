@@ -7,7 +7,7 @@ package bench.data
     /** Owned mutable value. pack() writes a complete FlatBuffer into the destination. */
     public final class StringMessage
     {
-        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+        private static const BUILDER:as3flatbuffers.BuilderContext = new as3flatbuffers.BuilderContext();
 
         public var sequence:uint = 0;
         public var name:String = null;
@@ -42,38 +42,49 @@ package bench.data
             if (!source || !dst)
                 throw new ArgumentError("Source and destination must be non-null");
 
-            const builder:as3flatbuffers.Builder = BUILDER;
+            const context:as3flatbuffers.BuilderContext = BUILDER;
             try
             {
-                builder.reset(dst, true);
-                builder.finish(packInto(source, builder));
+                as3flatbuffers.Builder.reset(context, dst, true);
+                as3flatbuffers.Builder.finish(context, packInto(source, context));
             }
             finally
             {
-                builder.reset();
+                as3flatbuffers.Builder.reset(context);
             }
             return dst;
         }
 
-        /** Write into an active builder and return the absolute object offset. */
-        public static function packInto(source:StringMessage, builder:as3flatbuffers.Builder):uint
+        /** Write into an active context and return the absolute object offset. */
+        public static function packInto(source:StringMessage, context:as3flatbuffers.BuilderContext):uint
         {
-            if (!source || !builder)
-                throw new ArgumentError("Source and builder must be non-null");
+            if (!source || !context)
+                throw new ArgumentError("Source and context must be non-null");
 
-            builder.startTable(4, 4);
+            as3flatbuffers.Builder.startTable(context, 4, 4);
             if (source.sequence != 0)
-                builder.addUint32(0, source.sequence);
-            const offset1:uint = source.name != null ? builder.reserveOffset(1) : 0;
-            const offset2:uint = source.text != null ? builder.reserveOffset(2) : 0;
-            const offset3:uint = source.details != null ? builder.reserveOffset(3) : 0;
-            const table:uint = builder.endTable();
+            {
+                as3flatbuffers.Builder.addUint32(context, 0, source.sequence);
+            }
+            const offset1:uint = source.name != null ? as3flatbuffers.Builder.reserveOffset(context, 1) : 0;
+            const offset2:uint = source.text != null ? as3flatbuffers.Builder.reserveOffset(context, 2) : 0;
+            const offset3:uint = source.details != null ? as3flatbuffers.Builder.reserveOffset(context, 3) : 0;
+            const table:uint = as3flatbuffers.Builder.endTable(context);
             if (offset1)
-                builder.writeString(offset1, source.name);
+            {
+                as3flatbuffers.Builder.prepare(context, 4);
+                as3flatbuffers.Builder.writeString(context, offset1, source.name);
+            }
             if (offset2)
-                builder.writeString(offset2, source.text);
+            {
+                as3flatbuffers.Builder.prepare(context, 4);
+                as3flatbuffers.Builder.writeString(context, offset2, source.text);
+            }
             if (offset3)
-                builder.writeString(offset3, source.details);
+            {
+                as3flatbuffers.Builder.prepare(context, 4);
+                as3flatbuffers.Builder.writeString(context, offset3, source.details);
+            }
             return table;
         }
     }

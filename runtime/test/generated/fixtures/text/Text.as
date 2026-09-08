@@ -7,7 +7,7 @@ package fixtures.text
     /** Owned mutable value. pack() writes a complete FlatBuffer into the destination. */
     public final class Text
     {
-        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+        private static const BUILDER:as3flatbuffers.BuilderContext = new as3flatbuffers.BuilderContext();
 
         public var value:String = null;
 
@@ -33,30 +33,33 @@ package fixtures.text
             if (!source || !dst)
                 throw new ArgumentError("Source and destination must be non-null");
 
-            const builder:as3flatbuffers.Builder = BUILDER;
+            const context:as3flatbuffers.BuilderContext = BUILDER;
             try
             {
-                builder.reset(dst, true);
-                builder.finish(packInto(source, builder));
+                as3flatbuffers.Builder.reset(context, dst, true);
+                as3flatbuffers.Builder.finish(context, packInto(source, context));
             }
             finally
             {
-                builder.reset();
+                as3flatbuffers.Builder.reset(context);
             }
             return dst;
         }
 
-        /** Write into an active builder and return the absolute object offset. */
-        public static function packInto(source:Text, builder:as3flatbuffers.Builder):uint
+        /** Write into an active context and return the absolute object offset. */
+        public static function packInto(source:Text, context:as3flatbuffers.BuilderContext):uint
         {
-            if (!source || !builder)
-                throw new ArgumentError("Source and builder must be non-null");
+            if (!source || !context)
+                throw new ArgumentError("Source and context must be non-null");
 
-            builder.startTable(1, 4);
-            const offset0:uint = source.value != null ? builder.reserveOffset(0) : 0;
-            const table:uint = builder.endTable();
+            as3flatbuffers.Builder.startTable(context, 1, 4);
+            const offset0:uint = source.value != null ? as3flatbuffers.Builder.reserveOffset(context, 0) : 0;
+            const table:uint = as3flatbuffers.Builder.endTable(context);
             if (offset0)
-                builder.writeString(offset0, source.value);
+            {
+                as3flatbuffers.Builder.prepare(context, 4);
+                as3flatbuffers.Builder.writeString(context, offset0, source.value);
+            }
             return table;
         }
     }

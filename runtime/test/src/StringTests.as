@@ -1,6 +1,7 @@
 package
 {
     import as3flatbuffers.Builder;
+    import as3flatbuffers.BuilderContext;
     import fixtures.text.Strings;
     import fixtures.text.StringsView;
     import fixtures.text.Text;
@@ -111,13 +112,15 @@ package
             FixtureBuffer.bindRoot(textView, dst);
             check(textView.value == "recovered", "String builder reuse after native encoding cases");
 
-            const builder:Builder = new Builder();
-            builder.reset(dst);
-            builder.startTable(1, 4);
-            const reference:uint = builder.reserveOffset(0);
-            const table:uint = builder.endTable();
-            builder.writeString(reference, "");
-            FixtureBuffer.bindRoot(textView, builder.finish(table));
+            const builder:BuilderContext = new BuilderContext();
+            Builder.reset(builder, dst);
+            Builder.startTable(builder, 1, 4);
+            Builder.prepare(builder, 4);
+            const reference:uint = Builder.reserveOffset(builder, 0);
+            const table:uint = Builder.endTable(builder);
+            Builder.prepare(builder, 4);
+            Builder.writeString(builder, reference, "");
+            FixtureBuffer.bindRoot(textView, Builder.finish(builder, table));
             check(textView.value === "", "Forward string patch preserves present empty string");
 
             text.value = null;

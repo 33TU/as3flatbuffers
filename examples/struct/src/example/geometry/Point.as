@@ -7,7 +7,7 @@ package example.geometry
     /** Owned inline struct. pack() writes raw struct bytes into the destination. */
     public final class Point
     {
-        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+        private static const BUILDER:as3flatbuffers.BuilderContext = new as3flatbuffers.BuilderContext();
 
         public var x:Number = 0;
         public var y:Number = 0;
@@ -36,26 +36,26 @@ package example.geometry
             if (!source || !dst)
                 throw new ArgumentError("Source and destination must be non-null");
 
-            const builder:as3flatbuffers.Builder = BUILDER;
+            const context:as3flatbuffers.BuilderContext = BUILDER;
             try
             {
-                builder.reset(dst, false);
-                builder.finish(packInto(source, builder));
+                as3flatbuffers.Builder.reset(context, dst, false);
+                as3flatbuffers.Builder.finish(context, packInto(source, context));
             }
             finally
             {
-                builder.reset();
+                as3flatbuffers.Builder.reset(context);
             }
             return dst;
         }
 
-        /** Write into an active builder and return the absolute object offset. */
-        public static function packInto(source:Point, builder:as3flatbuffers.Builder):uint
+        /** Write into an active context and return the absolute object offset. */
+        public static function packInto(source:Point, context:as3flatbuffers.BuilderContext):uint
         {
-            if (!source || !builder)
-                throw new ArgumentError("Source and builder must be non-null");
+            if (!source || !context)
+                throw new ArgumentError("Source and context must be non-null");
 
-            const bytes:flash.utils.ByteArray = builder.prepareStruct(8, 4);
+            const bytes:flash.utils.ByteArray = as3flatbuffers.Builder.prepareStruct(context, 8, 4);
             const start:uint = bytes.position;
 
             bytes.writeFloat(source.x);

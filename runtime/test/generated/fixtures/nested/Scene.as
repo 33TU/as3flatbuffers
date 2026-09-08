@@ -9,7 +9,7 @@ package fixtures.nested
     /** Owned mutable value. pack() writes a complete FlatBuffer into the destination. */
     public final class Scene
     {
-        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+        private static const BUILDER:as3flatbuffers.BuilderContext = new as3flatbuffers.BuilderContext();
 
         public var head:fixtures.nested.Node = null;
         public var alternate:fixtures.nested.Node = null;
@@ -44,38 +44,40 @@ package fixtures.nested
             if (!source || !dst)
                 throw new ArgumentError("Source and destination must be non-null");
 
-            const builder:as3flatbuffers.Builder = BUILDER;
+            const context:as3flatbuffers.BuilderContext = BUILDER;
             try
             {
-                builder.reset(dst, true);
-                builder.finish(packInto(source, builder));
+                as3flatbuffers.Builder.reset(context, dst, true);
+                as3flatbuffers.Builder.finish(context, packInto(source, context));
             }
             finally
             {
-                builder.reset();
+                as3flatbuffers.Builder.reset(context);
             }
             return dst;
         }
 
-        /** Write into an active builder and return the absolute object offset. */
-        public static function packInto(source:Scene, builder:as3flatbuffers.Builder):uint
+        /** Write into an active context and return the absolute object offset. */
+        public static function packInto(source:Scene, context:as3flatbuffers.BuilderContext):uint
         {
-            if (!source || !builder)
-                throw new ArgumentError("Source and builder must be non-null");
+            if (!source || !context)
+                throw new ArgumentError("Source and context must be non-null");
 
-            builder.startTable(4, 4);
-            const offset0:uint = source.head ? builder.reserveOffset(0) : 0;
-            const offset1:uint = source.alternate ? builder.reserveOffset(1) : 0;
-            const offset2:uint = source.pair ? builder.reserveOffset(2) : 0;
+            as3flatbuffers.Builder.startTable(context, 4, 4);
+            const offset0:uint = source.head ? as3flatbuffers.Builder.reserveOffset(context, 0) : 0;
+            const offset1:uint = source.alternate ? as3flatbuffers.Builder.reserveOffset(context, 1) : 0;
+            const offset2:uint = source.pair ? as3flatbuffers.Builder.reserveOffset(context, 2) : 0;
             if (source.serial != 0)
-                builder.addInt32(3, source.serial);
-            const table:uint = builder.endTable();
+            {
+                as3flatbuffers.Builder.addInt32(context, 3, source.serial);
+            }
+            const table:uint = as3flatbuffers.Builder.endTable(context);
             if (offset0)
-                builder.patchOffset(offset0, fixtures.nested.Node.packInto(source.head, builder));
+                as3flatbuffers.Builder.patchOffset(context, offset0, fixtures.nested.Node.packInto(source.head, context));
             if (offset1)
-                builder.patchOffset(offset1, fixtures.nested.Node.packInto(source.alternate, builder));
+                as3flatbuffers.Builder.patchOffset(context, offset1, fixtures.nested.Node.packInto(source.alternate, context));
             if (offset2)
-                builder.patchOffset(offset2, fixtures.nested.Left.packInto(source.pair, builder));
+                as3flatbuffers.Builder.patchOffset(context, offset2, fixtures.nested.Left.packInto(source.pair, context));
             return table;
         }
     }

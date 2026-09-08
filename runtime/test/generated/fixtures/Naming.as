@@ -7,7 +7,7 @@ package fixtures
     /** Owned mutable value. pack() writes a complete FlatBuffer into the destination. */
     public final class Naming
     {
-        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+        private static const BUILDER:as3flatbuffers.BuilderContext = new as3flatbuffers.BuilderContext();
 
         public var snakeCase:int = 11;
         public var snakeCase_:int = 22;
@@ -66,51 +66,75 @@ package fixtures
             if (!source || !dst)
                 throw new ArgumentError("Source and destination must be non-null");
 
-            const builder:as3flatbuffers.Builder = BUILDER;
+            const context:as3flatbuffers.BuilderContext = BUILDER;
             try
             {
-                builder.reset(dst, true);
-                builder.finish(packInto(source, builder));
+                as3flatbuffers.Builder.reset(context, dst, true);
+                as3flatbuffers.Builder.finish(context, packInto(source, context));
             }
             finally
             {
-                builder.reset();
+                as3flatbuffers.Builder.reset(context);
             }
             return dst;
         }
 
-        /** Write into an active builder and return the absolute object offset. */
-        public static function packInto(source:Naming, builder:as3flatbuffers.Builder):uint
+        /** Write into an active context and return the absolute object offset. */
+        public static function packInto(source:Naming, context:as3flatbuffers.BuilderContext):uint
         {
-            if (!source || !builder)
-                throw new ArgumentError("Source and builder must be non-null");
+            if (!source || !context)
+                throw new ArgumentError("Source and context must be non-null");
 
-            builder.startTable(12, 4);
+            as3flatbuffers.Builder.startTable(context, 12, 4);
             if (source.snakeCase != 11)
-                builder.addInt32(0, source.snakeCase);
+            {
+                as3flatbuffers.Builder.addInt32(context, 0, source.snakeCase);
+            }
             if (source.snakeCase_ != 22)
-                builder.addInt32(1, source.snakeCase_);
+            {
+                as3flatbuffers.Builder.addInt32(context, 1, source.snakeCase_);
+            }
             if (source.reset_ != 33)
-                builder.addInt32(2, source.reset_);
+            {
+                as3flatbuffers.Builder.addInt32(context, 2, source.reset_);
+            }
             if (source.reset__ != 44)
-                builder.addInt32(3, source.reset__);
+            {
+                as3flatbuffers.Builder.addInt32(context, 3, source.reset__);
+            }
             if (source.reset___ != 55)
-                builder.addInt32(4, source.reset___);
+            {
+                as3flatbuffers.Builder.addInt32(context, 4, source.reset___);
+            }
             if (source.bind_ != 66)
-                builder.addInt32(5, source.bind_);
+            {
+                as3flatbuffers.Builder.addInt32(context, 5, source.bind_);
+            }
             if (source.bind_2 != 77)
-                builder.addInt32(6, source.bind_2);
+            {
+                as3flatbuffers.Builder.addInt32(context, 6, source.bind_2);
+            }
             if (source.__leadingName != 88)
-                builder.addInt32(7, source.__leadingName);
+            {
+                as3flatbuffers.Builder.addInt32(context, 7, source.__leadingName);
+            }
             if (source.trailingName_ != 99)
-                builder.addInt32(8, source.trailingName_);
+            {
+                as3flatbuffers.Builder.addInt32(context, 8, source.trailingName_);
+            }
             if (source.value_Name != 111)
-                builder.addInt32(9, source.value_Name);
+            {
+                as3flatbuffers.Builder.addInt32(context, 9, source.value_Name);
+            }
             if (source.bytes_ != 122)
-                builder.addInt32(10, source.bytes_);
+            {
+                as3flatbuffers.Builder.addInt32(context, 10, source.bytes_);
+            }
             if (source.class_ != 133)
-                builder.addInt32(11, source.class_);
-            return builder.endTable();
+            {
+                as3flatbuffers.Builder.addInt32(context, 11, source.class_);
+            }
+            return as3flatbuffers.Builder.endTable(context);
         }
     }
 }

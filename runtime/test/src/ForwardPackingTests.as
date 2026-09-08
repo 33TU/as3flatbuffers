@@ -1,6 +1,7 @@
 package
 {
     import as3flatbuffers.Builder;
+    import as3flatbuffers.BuilderContext;
     import as3flatbuffers.types.Int64;
     import as3flatbuffers.types.UInt64;
     import example.Point;
@@ -39,26 +40,26 @@ package
             check(view.x == 0 && view.y == 0, "Repacking clears old field presence");
 
             // Output appears in dst during construction, before finish patches the root.
-            const builder:Builder = new Builder();
-            builder.reset(dst);
-            builder.startTable(2, 4);
-            builder.addFloat32(0, 42);
+            const builder:BuilderContext = new BuilderContext();
+            Builder.reset(builder, dst);
+            Builder.startTable(builder, 2, 4);
+            Builder.prepare(builder, 4); Builder.addFloat32(builder, 0, 42);
             const end:uint = dst.position;
             check(dst.length == end && end > 4, "Builder writes directly into dst before finish");
             dst.position = end - 4;
             check(dst.readFloat() == 42, "Scalar bytes already reside in dst");
-            check(builder.finish(builder.endTable()) === dst, "Finish returns the same buffer without copying");
+            check(Builder.finish(builder, Builder.endTable(builder)) === dst, "Finish returns the same buffer without copying");
             const length:uint = dst.length;
-            builder.reset();
+            Builder.reset(builder);
             check(dst.length == length && dst.position == 0, "Detaching leaves finished bytes untouched");
-            rejects(function():void { builder.prepareStruct(4, 4).writeInt(7); }, check, "Detached builder cannot write");
+            rejects(function():void { Builder.prepareStruct(builder, 4, 4).writeInt(7); }, check, "Detached builder cannot write");
 
             const other:ByteArray = FixtureBuffer.create();
-            builder.reset(other);
-            builder.startTable(1, 4);
-            builder.addInt32(0, 99);
-            builder.finish(builder.endTable());
-            builder.reset();
+            Builder.reset(builder, other);
+            Builder.startTable(builder, 1, 4);
+            Builder.prepare(builder, 4); Builder.addInt32(builder, 0, 99);
+            Builder.finish(builder, Builder.endTable(builder));
+            Builder.reset(builder);
             check(FixtureBuffer.bindRoot(view, dst).x == 42, "Builder reuse cannot modify earlier destinations");
 
             // A packing exception must detach the class builder and discard open-table state.

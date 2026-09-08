@@ -13,7 +13,7 @@ package fixtures
     /** Owned mutable value. pack() writes a complete FlatBuffer into the destination. */
     public final class OptionalScalars
     {
-        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+        private static const BUILDER:as3flatbuffers.BuilderContext = new as3flatbuffers.BuilderContext();
 
         public var enabled:as3flatbuffers.types.OptionalBoolean = null;
         public var i8:as3flatbuffers.types.OptionalInt = null;
@@ -69,49 +69,79 @@ package fixtures
             if (!source || !dst)
                 throw new ArgumentError("Source and destination must be non-null");
 
-            const builder:as3flatbuffers.Builder = BUILDER;
+            const context:as3flatbuffers.BuilderContext = BUILDER;
             try
             {
-                builder.reset(dst, true);
-                builder.finish(packInto(source, builder));
+                as3flatbuffers.Builder.reset(context, dst, true);
+                as3flatbuffers.Builder.finish(context, packInto(source, context));
             }
             finally
             {
-                builder.reset();
+                as3flatbuffers.Builder.reset(context);
             }
             return dst;
         }
 
-        /** Write into an active builder and return the absolute object offset. */
-        public static function packInto(source:OptionalScalars, builder:as3flatbuffers.Builder):uint
+        /** Write into an active context and return the absolute object offset. */
+        public static function packInto(source:OptionalScalars, context:as3flatbuffers.BuilderContext):uint
         {
-            if (!source || !builder)
-                throw new ArgumentError("Source and builder must be non-null");
+            if (!source || !context)
+                throw new ArgumentError("Source and context must be non-null");
 
-            builder.startTable(11, 8);
+            as3flatbuffers.Builder.startTable(context, 11, 8);
             if (source.enabled)
-                builder.addBool(0, source.enabled.value);
+            {
+                as3flatbuffers.Builder.addBool(context, 0, source.enabled.value);
+            }
             if (source.i8)
-                builder.addInt8(1, source.i8.value);
+            {
+                as3flatbuffers.Builder.addInt8(context, 1, source.i8.value);
+            }
             if (source.u8)
-                builder.addUint8(2, source.u8.value);
+            {
+                as3flatbuffers.Builder.addUint8(context, 2, source.u8.value);
+            }
             if (source.i16)
-                builder.addInt16(3, source.i16.value);
+            {
+                as3flatbuffers.Builder.prepare(context, 2);
+                as3flatbuffers.Builder.addInt16(context, 3, source.i16.value);
+            }
             if (source.u16)
-                builder.addUint16(4, source.u16.value);
+            {
+                as3flatbuffers.Builder.prepare(context, 2);
+                as3flatbuffers.Builder.addUint16(context, 4, source.u16.value);
+            }
             if (source.i32)
-                builder.addInt32(5, source.i32.value);
+            {
+                as3flatbuffers.Builder.prepare(context, 4);
+                as3flatbuffers.Builder.addInt32(context, 5, source.i32.value);
+            }
             if (source.u32)
-                builder.addUint32(6, source.u32.value);
+            {
+                as3flatbuffers.Builder.prepare(context, 4);
+                as3flatbuffers.Builder.addUint32(context, 6, source.u32.value);
+            }
             if (source.i64)
-                builder.addInt64(7, source.i64);
+            {
+                as3flatbuffers.Builder.prepare(context, 8);
+                as3flatbuffers.Builder.addInt64(context, 7, source.i64);
+            }
             if (source.u64)
-                builder.addUint64(8, source.u64);
+            {
+                as3flatbuffers.Builder.prepare(context, 8);
+                as3flatbuffers.Builder.addUint64(context, 8, source.u64);
+            }
             if (source.f32)
-                builder.addFloat32(9, source.f32.value);
+            {
+                as3flatbuffers.Builder.prepare(context, 4);
+                as3flatbuffers.Builder.addFloat32(context, 9, source.f32.value);
+            }
             if (source.f64)
-                builder.addFloat64(10, source.f64.value);
-            return builder.endTable();
+            {
+                as3flatbuffers.Builder.prepare(context, 8);
+                as3flatbuffers.Builder.addFloat64(context, 10, source.f64.value);
+            }
+            return as3flatbuffers.Builder.endTable(context);
         }
     }
 }

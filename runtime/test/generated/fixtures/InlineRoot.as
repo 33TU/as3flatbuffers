@@ -11,7 +11,7 @@ package fixtures
     /** Owned mutable value. pack() writes a complete FlatBuffer into the destination. */
     public final class InlineRoot
     {
-        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+        private static const BUILDER:as3flatbuffers.BuilderContext = new as3flatbuffers.BuilderContext();
 
         public var point:fixtures.geometry.Point = null;
         public var frame:fixtures.geometry.Frame = null;
@@ -52,39 +52,43 @@ package fixtures
             if (!source || !dst)
                 throw new ArgumentError("Source and destination must be non-null");
 
-            const builder:as3flatbuffers.Builder = BUILDER;
+            const context:as3flatbuffers.BuilderContext = BUILDER;
             try
             {
-                builder.reset(dst, true);
-                builder.finish(packInto(source, builder));
+                as3flatbuffers.Builder.reset(context, dst, true);
+                as3flatbuffers.Builder.finish(context, packInto(source, context));
             }
             finally
             {
-                builder.reset();
+                as3flatbuffers.Builder.reset(context);
             }
             return dst;
         }
 
-        /** Write into an active builder and return the absolute object offset. */
-        public static function packInto(source:InlineRoot, builder:as3flatbuffers.Builder):uint
+        /** Write into an active context and return the absolute object offset. */
+        public static function packInto(source:InlineRoot, context:as3flatbuffers.BuilderContext):uint
         {
-            if (!source || !builder)
-                throw new ArgumentError("Source and builder must be non-null");
+            if (!source || !context)
+                throw new ArgumentError("Source and context must be non-null");
 
-            builder.startTable(6, 16);
+            as3flatbuffers.Builder.startTable(context, 6, 16);
             if (source.point)
-                builder.addStruct(0, fixtures.geometry.Point.packInto(source.point, builder));
+                as3flatbuffers.Builder.addStruct(context, 0, fixtures.geometry.Point.packInto(source.point, context));
             if (source.frame)
-                builder.addStruct(1, fixtures.geometry.Frame.packInto(source.frame, builder));
+                as3flatbuffers.Builder.addStruct(context, 1, fixtures.geometry.Frame.packInto(source.frame, context));
             if (source.envelope)
-                builder.addStruct(2, fixtures.geometry.Envelope.packInto(source.envelope, builder));
+                as3flatbuffers.Builder.addStruct(context, 2, fixtures.geometry.Envelope.packInto(source.envelope, context));
             if (source.aligned)
-                builder.addStruct(3, fixtures.geometry.Aligned.packInto(source.aligned, builder));
+                as3flatbuffers.Builder.addStruct(context, 3, fixtures.geometry.Aligned.packInto(source.aligned, context));
             if (source.label_ != 0)
-                builder.addInt32(4, source.label_);
+            {
+                as3flatbuffers.Builder.addInt32(context, 4, source.label_);
+            }
             if (source.pointView != 0)
-                builder.addInt32(5, source.pointView);
-            return builder.endTable();
+            {
+                as3flatbuffers.Builder.addInt32(context, 5, source.pointView);
+            }
+            return as3flatbuffers.Builder.endTable(context);
         }
     }
 }

@@ -7,7 +7,7 @@ package bench.data
     /** Owned mutable value. pack() writes a complete FlatBuffer into the destination. */
     public final class Scalars
     {
-        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+        private static const BUILDER:as3flatbuffers.BuilderContext = new as3flatbuffers.BuilderContext();
 
         public var sequence:uint = 0;
         public var delta:int = 0;
@@ -66,51 +66,77 @@ package bench.data
             if (!source || !dst)
                 throw new ArgumentError("Source and destination must be non-null");
 
-            const builder:as3flatbuffers.Builder = BUILDER;
+            const context:as3flatbuffers.BuilderContext = BUILDER;
             try
             {
-                builder.reset(dst, true);
-                builder.finish(packInto(source, builder));
+                as3flatbuffers.Builder.reset(context, dst, true);
+                as3flatbuffers.Builder.finish(context, packInto(source, context));
             }
             finally
             {
-                builder.reset();
+                as3flatbuffers.Builder.reset(context);
             }
             return dst;
         }
 
-        /** Write into an active builder and return the absolute object offset. */
-        public static function packInto(source:Scalars, builder:as3flatbuffers.Builder):uint
+        /** Write into an active context and return the absolute object offset. */
+        public static function packInto(source:Scalars, context:as3flatbuffers.BuilderContext):uint
         {
-            if (!source || !builder)
-                throw new ArgumentError("Source and builder must be non-null");
+            if (!source || !context)
+                throw new ArgumentError("Source and context must be non-null");
 
-            builder.startTable(12, 8);
+            as3flatbuffers.Builder.startTable(context, 12, 8);
             if (source.sequence != 0)
-                builder.addUint32(0, source.sequence);
+            {
+                as3flatbuffers.Builder.addUint32(context, 0, source.sequence);
+            }
             if (source.delta != 0)
-                builder.addInt32(1, source.delta);
+            {
+                as3flatbuffers.Builder.addInt32(context, 1, source.delta);
+            }
             if (source.checksum != 0)
-                builder.addUint32(2, source.checksum);
+            {
+                as3flatbuffers.Builder.addUint32(context, 2, source.checksum);
+            }
             if (source.x != 0)
-                builder.addFloat32(3, source.x);
+            {
+                as3flatbuffers.Builder.addFloat32(context, 3, source.x);
+            }
             if (source.y != 0)
-                builder.addFloat32(4, source.y);
+            {
+                as3flatbuffers.Builder.addFloat32(context, 4, source.y);
+            }
             if (source.z != 0)
-                builder.addFloat32(5, source.z);
+            {
+                as3flatbuffers.Builder.addFloat32(context, 5, source.z);
+            }
             if (source.vx != 0)
-                builder.addFloat32(6, source.vx);
+            {
+                as3flatbuffers.Builder.addFloat32(context, 6, source.vx);
+            }
             if (source.vy != 0)
-                builder.addFloat32(7, source.vy);
+            {
+                as3flatbuffers.Builder.addFloat32(context, 7, source.vy);
+            }
             if (source.vz != 0)
-                builder.addFloat32(8, source.vz);
+            {
+                as3flatbuffers.Builder.addFloat32(context, 8, source.vz);
+            }
             if (source.precision != 0)
-                builder.addFloat64(9, source.precision);
+            {
+                as3flatbuffers.Builder.prepare(context, 8);
+                as3flatbuffers.Builder.addFloat64(context, 9, source.precision);
+            }
             if (source.active != false)
-                builder.addBool(10, source.active);
+            {
+                as3flatbuffers.Builder.addBool(context, 10, source.active);
+            }
             if (source.kind != 0)
-                builder.addUint32(11, source.kind);
-            return builder.endTable();
+            {
+                as3flatbuffers.Builder.prepare(context, 4);
+                as3flatbuffers.Builder.addUint32(context, 11, source.kind);
+            }
+            return as3flatbuffers.Builder.endTable(context);
         }
     }
 }

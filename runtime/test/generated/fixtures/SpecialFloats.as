@@ -7,7 +7,7 @@ package fixtures
     /** Owned mutable value. pack() writes a complete FlatBuffer into the destination. */
     public final class SpecialFloats
     {
-        private static const BUILDER:as3flatbuffers.Builder = new as3flatbuffers.Builder();
+        private static const BUILDER:as3flatbuffers.BuilderContext = new as3flatbuffers.BuilderContext();
 
         public var f32:Number = NaN;
         public var f64:Number = Number.POSITIVE_INFINITY;
@@ -39,32 +39,38 @@ package fixtures
             if (!source || !dst)
                 throw new ArgumentError("Source and destination must be non-null");
 
-            const builder:as3flatbuffers.Builder = BUILDER;
+            const context:as3flatbuffers.BuilderContext = BUILDER;
             try
             {
-                builder.reset(dst, true);
-                builder.finish(packInto(source, builder));
+                as3flatbuffers.Builder.reset(context, dst, true);
+                as3flatbuffers.Builder.finish(context, packInto(source, context));
             }
             finally
             {
-                builder.reset();
+                as3flatbuffers.Builder.reset(context);
             }
             return dst;
         }
 
-        /** Write into an active builder and return the absolute object offset. */
-        public static function packInto(source:SpecialFloats, builder:as3flatbuffers.Builder):uint
+        /** Write into an active context and return the absolute object offset. */
+        public static function packInto(source:SpecialFloats, context:as3flatbuffers.BuilderContext):uint
         {
-            if (!source || !builder)
-                throw new ArgumentError("Source and builder must be non-null");
+            if (!source || !context)
+                throw new ArgumentError("Source and context must be non-null");
 
-            builder.startTable(3, 8);
-            builder.addFloat32(0, source.f32);
+            as3flatbuffers.Builder.startTable(context, 3, 8);
+            as3flatbuffers.Builder.addFloat32(context, 0, source.f32);
             if (source.f64 != Number.POSITIVE_INFINITY)
-                builder.addFloat64(1, source.f64);
+            {
+                as3flatbuffers.Builder.prepare(context, 8);
+                as3flatbuffers.Builder.addFloat64(context, 1, source.f64);
+            }
             if (source.negative != Number.NEGATIVE_INFINITY)
-                builder.addFloat64(2, source.negative);
-            return builder.endTable();
+            {
+                as3flatbuffers.Builder.prepare(context, 8);
+                as3flatbuffers.Builder.addFloat64(context, 2, source.negative);
+            }
+            return as3flatbuffers.Builder.endTable(context);
         }
     }
 }
