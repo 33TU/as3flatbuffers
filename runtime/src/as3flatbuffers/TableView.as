@@ -53,7 +53,7 @@ package as3flatbuffers
             const relative:uint = bytes.readUnsignedShort();
             if (!relative)
                 return 0;
-            if (relative < 4 || relative > objectSize || width > objectSize - relative)
+            if (relative < 4 || Number(relative) + width > objectSize)
                 throw new RangeError("Field lies outside its table");
 
             return table + relative;
