@@ -361,7 +361,8 @@ just bench --samples 7 --sample-ms 300
 
 The [AIR benchmark](runtime/bench/README.md) measures packing into reused bytes,
 fresh/reused unpacking, and one-field/all-field view reads for scalars, inline
-structs, linked lists, and short/long UTF-8 strings. AMF3 and JSON baselines use the same logical values.
+structs, linked lists, short/long UTF-8 strings, and scalar/string/struct/table
+vectors. AMF3 and JSON baselines use the same logical values.
 It validates round trips, warms each operation, and reports median operations/sec,
 MB/sec, encoded sizes, and sample variation. Raw results are saved under
 `runtime/bin/bench-<id>/`. `just bench-as3pb` adds matching AS3PB workloads when an

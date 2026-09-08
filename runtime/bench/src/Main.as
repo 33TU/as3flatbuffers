@@ -5,6 +5,10 @@ package
     import bench.Runner;
     import bench.ScalarWorkload;
     import bench.StringWorkload;
+    import bench.VectorScalarsWorkload;
+    import bench.VectorStringsWorkload;
+    import bench.VectorStructsWorkload;
+    import bench.VectorTablesWorkload;
     import bench.Workload;
     import flash.desktop.NativeApplication;
     import flash.display.Sprite;
@@ -38,7 +42,9 @@ package
                 const runner:Runner = new Runner(count, samples, targetMs);
                 const workloads:Vector.<Workload> = new <Workload>[
                     new ScalarWorkload(count), new InlineWorkload(count), new NestedWorkload(count),
-                    new StringWorkload(count, false), new StringWorkload(count, true)];
+                    new StringWorkload(count, false), new StringWorkload(count, true),
+                    new VectorScalarsWorkload(count), new VectorStringsWorkload(count), new VectorStructsWorkload(count), new VectorTablesWorkload(count)];
+                result.workloadCount = workloads.length;
                 for each (var workload:Workload in workloads)
                 {
                     result.results = result.results.concat(runner.run(workload));

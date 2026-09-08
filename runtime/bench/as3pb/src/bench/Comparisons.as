@@ -11,6 +11,10 @@ package bench
                 case "nested-8-nodes": return new PBNestedWorkload(source.objects);
                 case "strings-short":
                 case "strings-long": return new PBStringWorkload(source.objects);
+                case "vectors-scalars": return new PBVectorScalarsWorkload(source.objects);
+                case "vectors-strings": return new PBVectorStringsWorkload(source.objects);
+                case "vectors-structs": return new PBVectorStructsWorkload(source.objects);
+                case "vectors-tables": return new PBVectorTablesWorkload(source.objects);
                 default: throw new ArgumentError("Unknown AS3PB workload");
             }
         }

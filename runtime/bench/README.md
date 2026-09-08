@@ -35,10 +35,26 @@ Each workload contains 64 deterministic messages by default:
 - **strings-long:** the same fields, with the details string containing 8–32
   repeated mixed-language phrases plus a message-specific suffix.
 
-`--count` accepts 16–256 messages. Vectors and 64-bit word helpers are not
-part of these workloads. AS3PB's original benchmark includes bytes and repeated
-fields that these workloads do not include, so these numbers are not
-directly comparable to its existing benchmark. The sequence/delta/checksum/position
+- **vectors-scalars:** a sequence plus vectors of signed deltas, unsigned checksums,
+  and float32 weights. AS3PB uses packed `sint32`, `fixed32`, and `float` fields.
+- **vectors-strings:** a sequence and a string vector mixing empty, ASCII,
+  Finnish, Japanese, and emoji values.
+- **vectors-structs:** a sequence and inline `Vec3` elements. AS3PB represents
+  each element as a repeated message with three float32 fields.
+- **vectors-tables:** the same logical points stored as FlatBuffers tables,
+  compared with repeated AS3PB messages.
+
+Vector lengths rotate through 0, 8, 16, and 32 across the input messages (14
+on average). Each scalar-vector message has three vectors of that length;
+the other vector workloads have one. Empty vectors are omitted by both formats.
+Unpack/reuse includes vector shrinking and growth, and surviving child objects
+are reused where the library supports it. The complete typed values and borrowed
+view elements are checked before timing. AS3PB inputs come from the same plain
+objects, and its full fresh/reused output is checked independently.
+
+`--count` accepts 16–256 messages. ByteArray fields and 64-bit word helpers are not
+part of these workloads. These numbers are not directly comparable to AS3PB's
+original benchmark, whose schemas and data differ. The sequence/delta/checksum/position
 value patterns follow that benchmark. Use the optional AS3PB comparison below for
 matching schemas and the same harness.
 
@@ -56,8 +72,8 @@ reads, and complete AMF3/JSON round trips before benchmarking.
 - **view/all-fields:** bind the root and read every scalar, including every nested
   struct and linked-list node, accumulating their values.
 
-FlatBuffers unpack and view measurements include root-offset resolution and
-binding. Child views are reused after warmup. AMF3 and JSON use the same logical
+FlatBuffers unpack measurements include root-offset resolution and the domain-memory
+copy; view measurements include root-offset resolution and binding. Child views are reused after warmup. AMF3 and JSON use the same logical
 values represented as plain objects; they do not reconstruct generated typed
 classes. Both baseline decoders materialize all fields and consume the root
 sequence. JSON timings include UTF-8 encoding/decoding, and AMF3 uses object

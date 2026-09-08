@@ -41,3 +41,9 @@ table Node {
     y:float;
     next:Node;
 }
+
+table VectorScalars { sequence:uint; deltas:[int]; checksums:[uint]; weights:[float]; }
+table VectorStrings { sequence:uint; texts:[string]; }
+table VectorStructs { sequence:uint; points:[Vec3]; }
+table VectorItem { x:float; y:float; z:float; }
+table VectorTables { sequence:uint; points:[VectorItem]; }
