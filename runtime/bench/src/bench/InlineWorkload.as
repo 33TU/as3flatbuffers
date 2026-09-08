@@ -45,8 +45,8 @@ package bench
                 encoded.push(bytes);
                 bind(bytes);
                 Check.equal(sumView(view), Check.sum(expected));
-                Check.equal(project(InlineView.unpack(view)), expected);
-                Check.equal(project(InlineView.unpack(view, reused)), expected);
+                Check.equal(project(Inline.unpack(bytes)), expected);
+                Check.equal(project(Inline.unpack(bytes, reused)), expected);
             }
         }
 
@@ -80,16 +80,14 @@ package bench
                     for (round = 0; round < rounds; round++)
                         for (i = 0; i < encoded.length; i++)
                         {
-                            bind(encoded[i]);
-                            checksum += InlineView.unpack(view).sequence;
+                            checksum += Inline.unpack(encoded[i]).sequence;
                         }
                     break;
                 case "unpack/reuse":
                     for (round = 0; round < rounds; round++)
                         for (i = 0; i < encoded.length; i++)
                         {
-                            bind(encoded[i]);
-                            checksum += InlineView.unpack(view, reused).sequence;
+                            checksum += Inline.unpack(encoded[i], reused).sequence;
                         }
                     break;
                 case "view/one-field":

@@ -12,18 +12,18 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 	w.Line("throw new ArgumentError(\"Source and destination must be non-null\");")
 	w.Dedent()
 	w.BlankLine()
-	w.Line("const context:as3flatbuffers.BuilderContext = BUILDER;")
+	w.Line("const context:as3flatbuffers.PackContext = PACK;")
 	w.Line("try")
 	w.Line("{")
 	w.Indent()
-	w.Line("as3flatbuffers.Builder.begin(context, dst, %t);", !o.Struct)
-	w.Line("as3flatbuffers.Builder.finish(context, packInto(source, context));")
+	w.Line("as3flatbuffers.Pack.begin(context, dst, %t);", !o.Struct)
+	w.Line("as3flatbuffers.Pack.finish(context, packInto(source, context));")
 	w.Dedent()
 	w.Line("}")
 	w.Line("finally")
 	w.Line("{")
 	w.Indent()
-	w.Line("as3flatbuffers.Builder.reset(context);")
+	w.Line("as3flatbuffers.Pack.reset(context);")
 	w.Dedent()
 	w.Line("}")
 	w.Line("return dst;")
@@ -35,7 +35,7 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 		generateStructPack(w, o, objects)
 		return
 	}
-	w.Line("public static function packInto(source:%s, context:as3flatbuffers.BuilderContext):uint", o.Name)
+	w.Line("public static function packInto(source:%s, context:as3flatbuffers.PackContext):uint", o.Name)
 	w.Line("{")
 	w.Indent()
 	generatePackCheck(w)
@@ -46,10 +46,10 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 			alignment = f.Alignment
 		}
 	}
-	w.Line("as3flatbuffers.Builder.prepare(context, 2);")
-	w.Line("as3flatbuffers.Builder.reserveVtable(context, %d);", o.Count)
-	w.Line("as3flatbuffers.Builder.prepare(context, %d);", alignment)
-	w.Line("as3flatbuffers.Builder.startTable(context);")
+	w.Line("as3flatbuffers.Pack.prepare(context, 2);")
+	w.Line("as3flatbuffers.Pack.reserveVtable(context, %d);", o.Count)
+	w.Line("as3flatbuffers.Pack.prepare(context, %d);", alignment)
+	w.Line("as3flatbuffers.Pack.startTable(context);")
 	// The table header leaves the first field at a four-byte boundary.
 	guaranteedAlignment := uint32(4)
 	for _, f := range o.Fields {
@@ -63,7 +63,7 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 		if f.Struct {
 			w.Line("if (source.%s)", f.Name)
 			w.Indent()
-			w.Line("as3flatbuffers.Builder.addStruct(context, %d, %s.packInto(source.%s, context));", f.ID, f.Type, f.Name)
+			w.Line("as3flatbuffers.Pack.addStruct(context, %d, %s.packInto(source.%s, context));", f.ID, f.Type, f.Name)
 			w.Dedent()
 			continue
 		}
@@ -94,20 +94,20 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 		w.Line("}")
 	}
 	if hasOffsetFields(o) {
-		w.Line("const table:uint = as3flatbuffers.Builder.endTable(context);")
+		w.Line("const table:uint = as3flatbuffers.Pack.endTable(context);")
 		for _, f := range o.Fields {
 			if f.Table || f.String {
 				w.Line("if (offset%d)", f.ID)
 				if f.String {
 					w.Line("{")
 					w.Indent()
-					w.Line("as3flatbuffers.Builder.prepare(context, 4);")
-					w.Line("as3flatbuffers.Builder.writeString(context, offset%d, source.%s);", f.ID, f.Name)
+					w.Line("as3flatbuffers.Pack.prepare(context, 4);")
+					w.Line("as3flatbuffers.Pack.writeString(context, offset%d, source.%s);", f.ID, f.Name)
 					w.Dedent()
 					w.Line("}")
 				} else {
 					w.Indent()
-					w.Line("as3flatbuffers.Builder.patchOffset(context, offset%d, %s.packInto(source.%s, context));", f.ID, f.Type, f.Name)
+					w.Line("as3flatbuffers.Pack.patchOffset(context, offset%d, %s.packInto(source.%s, context));", f.ID, f.Type, f.Name)
 					w.Dedent()
 				}
 			}
@@ -117,7 +117,7 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 	if hasOffsetFields(o) {
 		w.Line("return table;")
 	} else {
-		w.Line("return as3flatbuffers.Builder.endTable(context);")
+		w.Line("return as3flatbuffers.Pack.endTable(context);")
 	}
 	w.Dedent()
 	w.Line("}")

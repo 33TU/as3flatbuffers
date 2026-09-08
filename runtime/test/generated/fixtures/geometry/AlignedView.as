@@ -41,23 +41,5 @@ package fixtures.geometry
             bytes.position = base + 8;
             return bytes.readDouble();
         }
-
-        public static function unpack(source:AlignedView, destination:Aligned = null):Aligned
-        {
-            if (!source || !source.bytes)
-                throw new Error("View is not bound");
-
-            const bytes:flash.utils.ByteArray = source.bytes;
-            const base:uint = source.base;
-            if (!destination)
-                destination = new Aligned();
-
-            bytes.position = base + 0;
-            destination.id = bytes.readInt();
-
-            bytes.position = base + 8;
-            destination.value = bytes.readDouble();
-            return destination;
-        }
     }
 }

@@ -100,38 +100,5 @@ package bench.data
             bytes.position = base + 60;
             return bytes.readUnsignedInt();
         }
-
-        public static function unpack(source:StateView, destination:State = null):State
-        {
-            if (!source || !source.bytes)
-                throw new Error("View is not bound");
-
-            const bytes:flash.utils.ByteArray = source.bytes;
-            const base:uint = source.base;
-            if (!destination)
-                destination = new State();
-
-            destination.position = bench.data.Vec3View.unpack(source.positionView.bind(bytes, base + 0), destination.position);
-
-            destination.velocity = bench.data.Vec3View.unpack(source.velocityView.bind(bytes, base + 12), destination.velocity);
-
-            destination.facing = bench.data.Vec3View.unpack(source.facingView.bind(bytes, base + 24), destination.facing);
-
-            bytes.position = base + 36;
-            destination.delta = bytes.readInt();
-
-            bytes.position = base + 40;
-            destination.checksum = bytes.readUnsignedInt();
-
-            bytes.position = base + 48;
-            destination.precision = bytes.readDouble();
-
-            bytes.position = base + 56;
-            destination.active = bytes.readBoolean();
-
-            bytes.position = base + 60;
-            destination.kind = bytes.readUnsignedInt();
-            return destination;
-        }
     }
 }

@@ -17,8 +17,6 @@ func generateView(w *IndentWriter, o object) {
 	w.Indent()
 	generateViewCaches(w, o)
 	generateViewAccessors(w, o)
-	w.BlankLine()
-	generateUnpack(w, o)
 	w.Dedent()
 	w.Line("}")
 	endPackage(w)

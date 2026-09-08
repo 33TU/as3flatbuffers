@@ -1,7 +1,7 @@
 package
 {
-    import as3flatbuffers.Builder;
-    import as3flatbuffers.BuilderContext;
+    import as3flatbuffers.Pack;
+    import as3flatbuffers.PackContext;
     import as3flatbuffers.types.Int64;
     import as3flatbuffers.types.UInt64;
     import example.Point;
@@ -40,38 +40,38 @@ package
             check(view.x == 0 && view.y == 0, "Repacking clears old field presence");
 
             // Output appears in dst during construction, before finish patches the root.
-            const builder:BuilderContext = new BuilderContext();
-            Builder.begin(builder, dst, true);
-            Builder.prepare(builder, 2);
-            Builder.reserveVtable(builder, 2);
-            Builder.prepare(builder, 4);
-            Builder.startTable(builder);
-            Builder.prepare(builder, 4);
-            Builder.addFloat32(builder, 0, 42);
+            const builder:PackContext = new PackContext();
+            Pack.begin(builder, dst, true);
+            Pack.prepare(builder, 2);
+            Pack.reserveVtable(builder, 2);
+            Pack.prepare(builder, 4);
+            Pack.startTable(builder);
+            Pack.prepare(builder, 4);
+            Pack.addFloat32(builder, 0, 42);
             const end:uint = dst.position;
-            check(dst.length == end && end > 4, "Builder writes directly into dst before finish");
+            check(dst.length == end && end > 4, "Pack writes directly into dst before finish");
             dst.position = end - 4;
             check(dst.readFloat() == 42, "Scalar bytes already reside in dst");
-            check(Builder.finish(builder, Builder.endTable(builder)) === dst, "Finish returns the same buffer without copying");
+            check(Pack.finish(builder, Pack.endTable(builder)) === dst, "Finish returns the same buffer without copying");
             const length:uint = dst.length;
-            Builder.reset(builder);
+            Pack.reset(builder);
             check(dst.length == length && dst.position == 0, "Detaching leaves finished bytes untouched");
             rejects(function():void
                 {
-                    Builder.prepareStruct(builder, 4, 4).writeInt(7);
+                    Pack.prepareStruct(builder, 4, 4).writeInt(7);
                 }, check, "Detached builder cannot write");
 
             const other:ByteArray = FixtureBuffer.create();
-            Builder.begin(builder, other, true);
-            Builder.prepare(builder, 2);
-            Builder.reserveVtable(builder, 1);
-            Builder.prepare(builder, 4);
-            Builder.startTable(builder);
-            Builder.prepare(builder, 4);
-            Builder.addInt32(builder, 0, 99);
-            Builder.finish(builder, Builder.endTable(builder));
-            Builder.reset(builder);
-            check(FixtureBuffer.bindRoot(view, dst).x == 42, "Builder reuse cannot modify earlier destinations");
+            Pack.begin(builder, other, true);
+            Pack.prepare(builder, 2);
+            Pack.reserveVtable(builder, 1);
+            Pack.prepare(builder, 4);
+            Pack.startTable(builder);
+            Pack.prepare(builder, 4);
+            Pack.addInt32(builder, 0, 99);
+            Pack.finish(builder, Pack.endTable(builder));
+            Pack.reset(builder);
+            check(FixtureBuffer.bindRoot(view, dst).x == 42, "Pack reuse cannot modify earlier destinations");
 
             // A packing exception must detach the class builder and discard open-table state.
             const invalid:Primitives = new Primitives();

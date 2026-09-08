@@ -19,8 +19,8 @@ Chat.pack(chat, bytes);
 const view:ChatView = new ChatView();
 view.bind(bytes, bytes.readUnsignedInt());
 trace(view.sender, view.message);
-const owned:Chat = ChatView.unpack(view);
-ChatView.unpack(view, owned); // Reuses the message; strings are immutable values.
+const owned:Chat = Chat.unpack(bytes);
+Chat.unpack(bytes, owned); // Reuses the message; strings are immutable values.
 ```
 
 `null` omits a string field; `""` writes a present empty string. Strings use a

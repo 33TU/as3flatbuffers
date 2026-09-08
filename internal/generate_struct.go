@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 )
@@ -77,63 +78,17 @@ func generateStructView(w *IndentWriter, o object) {
 		w.Dedent()
 		w.Line("}")
 	}
-	w.BlankLine()
-	w.Line("public static function unpack(source:%sView, destination:%s = null):%s", o.Name, o.Name, o.Name)
-	w.Line("{")
-	w.Indent()
-	generateUnpackSource(w, true)
-	w.Line("if (!destination)")
-	w.Indent()
-	w.Line("destination = new %s();", o.Name)
-	w.Dedent()
-	w.BlankLine()
-	for i, f := range o.Fields {
-		if i > 0 {
-			w.BlankLine()
-		}
-		if f.Struct {
-			generateStructFieldUnpack(w, f, true)
-		} else if f.WordDefault != "" {
-			w.Line("if (!destination.%s)", f.Name)
-			w.Indent()
-			w.Line("destination.%s = new %s();", f.Name, f.Type)
-			w.Dedent()
-			w.BlankLine()
-			w.Line("bytes.position = base + %d;", f.Offset)
-			w.Line("destination.%s.set(bytes.readUnsignedInt(), bytes.%s());", f.Name, highReader(f))
-		} else {
-			w.Line("bytes.position = base + %d;", f.Offset)
-			w.Line("destination.%s = bytes.%s();", f.Name, scalarRead(f))
-		}
-	}
-	w.Line("return destination;")
-	w.Dedent()
-	w.Line("}")
 	w.Dedent()
 	w.Line("}")
 	endPackage(w)
 }
 
 func generateStructFieldUnpack(w *IndentWriter, f field, inline bool) {
-	if !inline {
-		// Block scope does not scope AS3 vars; derive a distinct local name.
-		w.Line("const %sPosition:uint = source.fieldOffset(%d, %d);", f.ViewCache, 4+uint32(f.ID)*2, f.Width)
-		w.Line("if (!%sPosition)", f.ViewCache)
-		w.Line("{")
-		w.Indent()
-		w.Line("destination.%s = null;", f.Name)
-		w.Dedent()
-		w.Line("}")
-		w.Line("else")
-		w.Line("{")
-		w.Indent()
-	}
 	if inline {
-		w.Line("destination.%s = %sView.unpack(source.%s.bind(bytes, base + %d), destination.%s);", f.Name, f.Type, f.ViewCache, f.Offset, f.Name)
+		w.Line("destination.%s = %s.unpackFrom(context, base + %d, destination.%s);", f.Name, f.Type, f.Offset, f.Name)
 	} else {
-		w.Line("destination.%s = %sView.unpack(source.%s.bind(bytes, %sPosition), destination.%s);", f.Name, f.Type, f.ViewCache, f.ViewCache, f.Name)
-		w.Dedent()
-		w.Line("}")
+		w.Line("const position%d:uint = as3flatbuffers.Unpack.fieldOffset(vtable, vtableSize, objectSize, base, %d, %d);", f.ID, 4+uint32(f.ID)*2, f.Width)
+		w.Line("destination.%s = position%d ? %s.unpackFrom(context, position%d, destination.%s) : null;", f.Name, f.ID, f.Type, f.ID, f.Name)
 	}
 }
 
@@ -148,4 +103,24 @@ func scalarRead(f field) string {
 	return map[string]string{"bool": "readBoolean", "int8": "readByte", "uint8": "readUnsignedByte",
 		"int16": "readShort", "uint16": "readUnsignedShort", "int32": "readInt", "uint32": "readUnsignedInt",
 		"float32": "readFloat", "float64": "readDouble"}[f.Reader]
+}
+
+func generateStructUnpackFields(w *IndentWriter, o object) {
+	for i, f := range o.Fields {
+		if i > 0 {
+			w.BlankLine()
+		}
+		if f.Struct {
+			generateStructFieldUnpack(w, f, true)
+		} else if f.WordDefault != "" {
+			w.Line("if (!destination.%s)", f.Name)
+			w.Indent()
+			w.Line("destination.%s = new %s();", f.Name, f.Type)
+			w.Dedent()
+			w.BlankLine()
+			w.Line("destination.%s.set(uint(li32(base + %d)), %s);", f.Name, f.Offset, memoryHighRead(f, fmt.Sprintf("base + %d", f.Offset+4)))
+		} else {
+			w.Line("destination.%s = %s;", f.Name, memoryScalarRead(f, fmt.Sprintf("base + %d", f.Offset)))
+		}
+	}
 }

@@ -28,8 +28,9 @@ messageView.bind(bytes, bytes.readUnsignedInt());
 const pointView:PointView = messageView.point;
 trace(pointView.x, pointView.y);
 
-const owned:Point = PointView.unpack(pointView);
-PointView.unpack(pointView, owned); // Reuse an independent owned Point.
+const decoded:PointMessage = PointMessage.unpack(bytes);
+const owned:Point = decoded.point;
+PointMessage.unpack(bytes, decoded); // Reuse the message and its owned Point.
 
 message.point.x = 42;
 PointMessage.pack(message, bytes); // Replaces the same destination directly.
@@ -50,3 +51,5 @@ it inside the table automatically, sharing the parent’s builder through `Point
 `Point.pack(point, dst)` writes a standalone raw Point at offset zero, with no root
 word. Both public pack methods require a caller-selected little-endian destination,
 replace its contents, and return it positioned at zero.
+
+For standalone struct bytes, use `Point.unpack(bytes, destination, structOffset)`.

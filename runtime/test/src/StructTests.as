@@ -1,7 +1,7 @@
 package
 {
-    import as3flatbuffers.Builder;
-    import as3flatbuffers.BuilderContext;
+    import as3flatbuffers.Pack;
+    import as3flatbuffers.PackContext;
     import fixtures.InlineRoot;
     import fixtures.InlineRootView;
     import fixtures.geometry.Frame;
@@ -15,20 +15,21 @@ package
     {
         public static function run(directory:File, check:Function, read:Function, write:Function):void
         {
+            var unpackInput:ByteArray;
             const manifest:ByteArray = read(directory.resolvePath("structs.json"));
             const cases:Array = JSON.parse(manifest.readUTFBytes(manifest.length)) as Array;
             const primitiveManifest:ByteArray = read(directory.resolvePath("primitives.json"));
             const primitives:Array = JSON.parse(primitiveManifest.readUTFBytes(primitiveManifest.length)) as Array;
             const value:InlineRoot = new InlineRoot();
             const view:InlineRootView = new InlineRootView();
-            const builder:BuilderContext = new BuilderContext();
+            const builder:PackContext = new PackContext();
             check(Point.clone(null) == null && InlineRoot.clone(null) == null, "Static struct and containing-table null clones");
             for (var i:int = 0; i < cases.length; i++)
             {
                 const item:Object = cases[i];
                 const oldFrame:Frame = value.frame;
-                FixtureBuffer.bindRoot(view, read(directory.resolvePath("struct-python-" + i + ".bin")));
-                check(InlineRootView.unpack(view, value) === value, "Struct-containing table reuse");
+                FixtureBuffer.bindRoot(view, unpackInput = read(directory.resolvePath("struct-python-" + i + ".bin")));
+                check(InlineRoot.unpack(unpackInput, value) === value, "Struct-containing table reuse");
                 check(value.label_ == i && value.pointView == 42, "Struct cache names avoid field collisions");
                 check((value.point != null) == item.present && (view.point != null) == item.present, "Struct table-field presence");
                 if (item.present)
@@ -46,7 +47,7 @@ package
                     check(view.envelope.frame === view.envelope.frame, "Deep struct getters reuse cached views");
                     const point:Point = value.frame.point;
                     const signed:Object = value.frame.signedValue;
-                    InlineRootView.unpack(view, value);
+                    InlineRoot.unpack(unpackInput, value);
                     check(value.frame.point === point && value.frame.signedValue === signed, "Deep unpack reuses points and word objects");
                     const clone:InlineRoot = InlineRoot.clone(value);
                     check(clone.frame !== value.frame && clone.frame.point !== point &&
@@ -56,23 +57,23 @@ package
                 }
                 else
                     check(!value.frame && !value.envelope && !value.aligned, "Absent structs clear reused destination");
-                Builder.begin(builder, FixtureBuffer.create(), true);
+                Pack.begin(builder, FixtureBuffer.create(), true);
                 const output:ByteArray = InlineRoot.pack(value, FixtureBuffer.create());
                 write(directory.resolvePath("struct-as3-" + i + ".bin"), output);
-                const roundTrip:InlineRoot = InlineRootView.unpack(FixtureBuffer.bindRoot(new InlineRootView(), output));
+                const roundTrip:InlineRoot = InlineRoot.unpack(output);
                 if (item.present)
                     verifyFrame(roundTrip.frame, primitives[item["case"]], item, check);
             }
-            FixtureBuffer.bindRoot(view, read(directory.resolvePath("struct-python-1.bin")));
+            FixtureBuffer.bindRoot(view, unpackInput = read(directory.resolvePath("struct-python-1.bin")));
             const retainedChild:PointView = view.point;
-            const snapshot:Point = PointView.unpack(retainedChild);
-            FixtureBuffer.bindRoot(view, read(directory.resolvePath("struct-python-2.bin")));
+            const snapshot:Point = InlineRoot.unpack(unpackInput).point;
+            FixtureBuffer.bindRoot(view, unpackInput = read(directory.resolvePath("struct-python-2.bin")));
             check(view.point === retainedChild && retainedChild.x == cases[2].x && snapshot.x == cases[1].x,
                     "Getter rebinds the cached child; owned snapshots remain independent");
-            InlineRootView.unpack(FixtureBuffer.bindRoot(view, read(directory.resolvePath("struct-python-3.bin"))), value);
-            check(retainedChild.x == cases[3].x, "Unpack and getters share the cached child");
-            FixtureBuffer.bindRoot(view, read(directory.resolvePath("struct-python-0.bin")));
-            check(view.point == null && retainedChild.x == cases[3].x,
+            InlineRoot.unpack(read(directory.resolvePath("struct-python-3.bin")), value);
+            check(retainedChild.x == cases[2].x && value.point.x == cases[3].x, "Owned unpack leaves borrowed child views unchanged");
+            FixtureBuffer.bindRoot(view, unpackInput = read(directory.resolvePath("struct-python-0.bin")));
+            check(view.point == null && retainedChild.x == cases[2].x,
                     "Absent field returns null without rebinding a retained child");
 
             const frame:Frame = new Frame();
@@ -94,7 +95,7 @@ package
             raw.writeFloat(-2.5);
             raw.endian = Endian.BIG_ENDIAN;
             const direct:PointView = new PointView().bind(raw, 1);
-            const owned:Point = PointView.unpack(direct);
+            const owned:Point = Point.unpack(raw, null, 1);
             check(direct.x == 1.25 && direct.y == -2.5, "Struct bind sets endian and accepts an arbitrary base offset");
             raw.position = 1;
             raw.writeFloat(42);

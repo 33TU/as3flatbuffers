@@ -11,18 +11,5 @@ package fixtures.text
         {
             return stringValue(4);
         }
-
-        public static function unpack(source:TextView, destination:Text = null):Text
-        {
-            if (!source || !source.bytes)
-                throw new Error("View is not bound");
-
-            const bytes:flash.utils.ByteArray = source.bytes;
-            if (!destination)
-                destination = new Text();
-
-            destination.value = source.stringValue(4);
-            return destination;
-        }
     }
 }

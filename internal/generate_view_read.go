@@ -1,5 +1,7 @@
 package internal
 
+import "fmt"
+
 func generateTableGetter(w *IndentWriter, f field) {
 	if f.String {
 		w.Line("return stringValue(%d);", 4+uint32(f.ID)*2)
@@ -39,7 +41,7 @@ func generateTableGetter(w *IndentWriter, f field) {
 
 // Read scalars directly, preserving defaults and mutable helper reuse.
 func generateTableScalarUnpack(w *IndentWriter, f field) {
-	w.Line("const position%d:uint = source.fieldOffset(%d, %d);", f.ID, 4+uint32(f.ID)*2, f.Width)
+	w.Line("const position%d:uint = as3flatbuffers.Unpack.fieldOffset(vtable, vtableSize, objectSize, base, %d, %d);", f.ID, 4+uint32(f.ID)*2, f.Width)
 	if !f.Optional && f.WordDefault == "" {
 		w.Line("if (!position%d)", f.ID)
 		w.Line("{")
@@ -50,8 +52,7 @@ func generateTableScalarUnpack(w *IndentWriter, f field) {
 		w.Line("else")
 		w.Line("{")
 		w.Indent()
-		w.Line("bytes.position = position%d;", f.ID)
-		w.Line("destination.%s = bytes.%s();", f.Name, scalarRead(f))
+		w.Line("destination.%s = %s;", f.Name, memoryScalarRead(f, fmt.Sprintf("position%d", f.ID)))
 		w.Dedent()
 		w.Line("}")
 		return
@@ -83,11 +84,10 @@ func generateTableScalarUnpack(w *IndentWriter, f field) {
 		w.Line("{")
 		w.Indent()
 	}
-	w.Line("bytes.position = position%d;", f.ID)
 	if f.WordDefault != "" {
-		w.Line("destination.%s.set(bytes.readUnsignedInt(), bytes.%s());", f.Name, highReader(f))
+		w.Line("destination.%s.set(uint(li32(position%d)), %s);", f.Name, f.ID, memoryHighRead(f, fmt.Sprintf("position%d + 4", f.ID)))
 	} else {
-		w.Line("destination.%s.value = bytes.%s();", f.Name, scalarRead(f))
+		w.Line("destination.%s.value = %s;", f.Name, memoryScalarRead(f, fmt.Sprintf("position%d", f.ID)))
 	}
 	w.Dedent()
 	w.Line("}")

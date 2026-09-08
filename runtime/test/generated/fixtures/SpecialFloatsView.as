@@ -36,49 +36,5 @@ package fixtures
             bytes.position = position;
             return bytes.readDouble();
         }
-
-        public static function unpack(source:SpecialFloatsView, destination:SpecialFloats = null):SpecialFloats
-        {
-            if (!source || !source.bytes)
-                throw new Error("View is not bound");
-
-            const bytes:flash.utils.ByteArray = source.bytes;
-            if (!destination)
-                destination = new SpecialFloats();
-
-            const position0:uint = source.fieldOffset(4, 4);
-            if (!position0)
-            {
-                destination.f32 = NaN;
-            }
-            else
-            {
-                bytes.position = position0;
-                destination.f32 = bytes.readFloat();
-            }
-
-            const position1:uint = source.fieldOffset(6, 8);
-            if (!position1)
-            {
-                destination.f64 = Number.POSITIVE_INFINITY;
-            }
-            else
-            {
-                bytes.position = position1;
-                destination.f64 = bytes.readDouble();
-            }
-
-            const position2:uint = source.fieldOffset(8, 8);
-            if (!position2)
-            {
-                destination.negative = Number.NEGATIVE_INFINITY;
-            }
-            else
-            {
-                bytes.position = position2;
-                destination.negative = bytes.readDouble();
-            }
-            return destination;
-        }
     }
 }

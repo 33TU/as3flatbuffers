@@ -16,26 +16,5 @@ package example.geometry
             const position:uint = fieldOffset(4, 8);
             return position ? this.pointView.bind(bytes, position) : null;
         }
-
-        public static function unpack(source:PointMessageView, destination:PointMessage = null):PointMessage
-        {
-            if (!source || !source.bytes)
-                throw new Error("View is not bound");
-
-            const bytes:flash.utils.ByteArray = source.bytes;
-            if (!destination)
-                destination = new PointMessage();
-
-            const pointViewPosition:uint = source.fieldOffset(4, 8);
-            if (!pointViewPosition)
-            {
-                destination.point = null;
-            }
-            else
-            {
-                destination.point = example.geometry.PointView.unpack(source.pointView.bind(bytes, pointViewPosition), destination.point);
-            }
-            return destination;
-        }
     }
 }

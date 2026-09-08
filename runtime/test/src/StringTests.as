@@ -1,7 +1,7 @@
 package
 {
-    import as3flatbuffers.Builder;
-    import as3flatbuffers.BuilderContext;
+    import as3flatbuffers.Pack;
+    import as3flatbuffers.PackContext;
     import fixtures.text.Strings;
     import fixtures.text.StringsView;
     import fixtures.text.Text;
@@ -13,6 +13,7 @@ package
     {
         public static function run(directory:File, check:Function, read:Function, write:Function):void
         {
+            var unpackInput:ByteArray;
             const manifest:ByteArray = read(directory.resolvePath("strings.json"));
             const cases:Array = JSON.parse(manifest.readUTFBytes(manifest.length)) as Array;
             const view:StringsView = new StringsView();
@@ -21,11 +22,11 @@ package
             for (var i:uint = 0; i < cases.length; i++)
             {
                 const expected:String = nativeString(cases[i]);
-                FixtureBuffer.bindRoot(view, read(directory.resolvePath("string-python-" + i + ".bin")));
+                FixtureBuffer.bindRoot(view, unpackInput = read(directory.resolvePath("string-python-" + i + ".bin")));
                 check(view.text === expected, "String getter uses native UTF-8 decoding case " + i);
                 check(view.label_ == "label" && view.stringValue_ === "", "String fields distinguish empty and avoid helper collisions");
                 const oldChild:Text = value.child;
-                check(StringsView.unpack(view, value) === value, "String unpack reuses destination");
+                check(Strings.unpack(unpackInput, value) === value, "String unpack reuses destination");
                 check(value.text === expected && value.child.value === expected && value.next.text === expected,
                         "String unpack preserves nested values case " + i);
                 if (oldChild)
@@ -39,7 +40,7 @@ package
                 copy.next.text = cases[i];
                 check(Strings.pack(copy, dst) === dst && dst.position == 0, "String pack reuses caller buffer");
                 write(directory.resolvePath("string-as3-" + i + ".bin"), dst);
-                FixtureBuffer.bindRoot(view, dst);
+                FixtureBuffer.bindRoot(view, unpackInput = dst);
                 check(view.text === expected && view.next.text === expected, "String AS3 native round trip case " + i);
                 Strings.reset(copy);
                 check(copy.text == null && copy.label_ == null && copy.stringValue_ == null, "String reset restores absence");
@@ -70,7 +71,7 @@ package
                     }, check, "Malformed string offset rejected");
                 rejects(function():void
                     {
-                        TextView.unpack(textView);
+                        Text.unpack(dst);
                     }, check, "Malformed string offset rejected by unpack");
             }
             for each (bad in [6, uint.MAX_VALUE])
@@ -81,7 +82,7 @@ package
                 FixtureBuffer.bindRoot(textView, dst);
                 rejects(function():void
                     {
-                        TextView.unpack(textView);
+                        Text.unpack(dst);
                     }, check, "Malformed string length rejected");
             }
             Text.pack(text, dst);
@@ -89,14 +90,14 @@ package
             FixtureBuffer.bindRoot(textView, dst);
             rejects(function():void
                 {
-                    TextView.unpack(textView);
+                    Text.unpack(dst);
                 }, check, "Missing zero terminator rejected");
             Text.pack(text, dst);
             dst.length = originalLength - 1;
             FixtureBuffer.bindRoot(textView, dst);
             rejects(function():void
                 {
-                    TextView.unpack(textView);
+                    Text.unpack(dst);
                 }, check, "Truncated string terminator rejected");
 
             for each (var malformed:Array in [[0x80], [0xC0, 0xAF], [0xE0, 0x80, 0x80],
@@ -113,7 +114,7 @@ package
                 dst.position = start + 4;
                 const nativeDecoded:String = dst.readUTFBytes(malformed.length);
                 FixtureBuffer.bindRoot(textView, dst);
-                check(textView.value === nativeDecoded && TextView.unpack(textView).value === nativeDecoded,
+                check(textView.value === nativeDecoded && Text.unpack(dst).value === nativeDecoded,
                         "Malformed UTF-8 follows native decoding without extra validation");
             }
             for each (var invalid:String in ["\uD800", "\uDC00", "\uD800x"])
@@ -128,18 +129,18 @@ package
             FixtureBuffer.bindRoot(textView, dst);
             check(textView.value == "recovered", "String builder reuse after native encoding cases");
 
-            const builder:BuilderContext = new BuilderContext();
-            Builder.begin(builder, dst, true);
-            Builder.prepare(builder, 2);
-            Builder.reserveVtable(builder, 1);
-            Builder.prepare(builder, 4);
-            Builder.startTable(builder);
-            Builder.prepare(builder, 4);
-            const reference:uint = Builder.reserveOffset(builder, 0);
-            const table:uint = Builder.endTable(builder);
-            Builder.prepare(builder, 4);
-            Builder.writeString(builder, reference, "");
-            FixtureBuffer.bindRoot(textView, Builder.finish(builder, table));
+            const builder:PackContext = new PackContext();
+            Pack.begin(builder, dst, true);
+            Pack.prepare(builder, 2);
+            Pack.reserveVtable(builder, 1);
+            Pack.prepare(builder, 4);
+            Pack.startTable(builder);
+            Pack.prepare(builder, 4);
+            const reference:uint = Pack.reserveOffset(builder, 0);
+            const table:uint = Pack.endTable(builder);
+            Pack.prepare(builder, 4);
+            Pack.writeString(builder, reference, "");
+            FixtureBuffer.bindRoot(textView, Pack.finish(builder, table));
             check(textView.value === "", "Forward string patch preserves present empty string");
 
             text.value = null;
@@ -147,7 +148,7 @@ package
             FixtureBuffer.bindRoot(textView, dst);
             const destination:Text = new Text();
             destination.value = "old";
-            TextView.unpack(textView, destination);
+            Text.unpack(dst, destination);
             check(destination.value == null, "Missing string clears reused destination");
         }
 

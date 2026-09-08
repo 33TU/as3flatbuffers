@@ -49,7 +49,7 @@ func TestDefaultsIDsAndEscaping(t *testing.T) {
 	for _, want := range []string{
 		"public var xAxis:Number = 1.25;", "public var signedValue:int = -7;",
 		"public var unsignedValue:uint = 4294967295;", "public var reset_:int = 9;",
-		"as3flatbuffers.Builder.reserveVtable(context, 5);", "as3flatbuffers.Builder.startTable(context);", "if (source.signedValue != -7)", "as3flatbuffers.Builder.addInt32(context, 2, source.signedValue);",
+		"as3flatbuffers.Pack.reserveVtable(context, 5);", "as3flatbuffers.Pack.startTable(context);", "if (source.signedValue != -7)", "as3flatbuffers.Pack.addInt32(context, 2, source.signedValue);",
 	} {
 		if !strings.Contains(owned, want) {
 			t.Errorf("missing %q", want)

@@ -136,58 +136,5 @@ package fixtures.geometry
             bytes.position = base + 52;
             return bytes.readFloat();
         }
-
-        public static function unpack(source:FrameView, destination:Frame = null):Frame
-        {
-            if (!source || !source.bytes)
-                throw new Error("View is not bound");
-
-            const bytes:flash.utils.ByteArray = source.bytes;
-            const base:uint = source.base;
-            if (!destination)
-                destination = new Frame();
-
-            bytes.position = base + 0;
-            destination.tag = bytes.readUnsignedByte();
-
-            destination.point = fixtures.geometry.PointView.unpack(source.pointView.bind(bytes, base + 4), destination.point);
-
-            bytes.position = base + 12;
-            destination.count = bytes.readShort();
-
-            if (!destination.signedValue)
-                destination.signedValue = new as3flatbuffers.types.Int64();
-
-            bytes.position = base + 16;
-            destination.signedValue.set(bytes.readUnsignedInt(), bytes.readInt());
-
-            if (!destination.unsignedValue)
-                destination.unsignedValue = new as3flatbuffers.types.UInt64();
-
-            bytes.position = base + 24;
-            destination.unsignedValue.set(bytes.readUnsignedInt(), bytes.readUnsignedInt());
-
-            bytes.position = base + 32;
-            destination.weight = bytes.readDouble();
-
-            bytes.position = base + 40;
-            destination.enabled = bytes.readBoolean();
-
-            bytes.position = base + 41;
-            destination.tiny = bytes.readByte();
-
-            bytes.position = base + 42;
-            destination.small = bytes.readUnsignedShort();
-
-            bytes.position = base + 44;
-            destination.number = bytes.readInt();
-
-            bytes.position = base + 48;
-            destination.unsignedNumber = bytes.readUnsignedInt();
-
-            bytes.position = base + 52;
-            destination.fraction = bytes.readFloat();
-            return destination;
-        }
     }
 }

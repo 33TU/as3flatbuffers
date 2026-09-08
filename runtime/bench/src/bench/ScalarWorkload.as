@@ -38,8 +38,8 @@ package bench
                 encoded.push(bytes);
                 bind(bytes);
                 Check.equal(sumView(view), Check.sum(expected));
-                Check.equal(project(ScalarsView.unpack(view)), expected);
-                Check.equal(project(ScalarsView.unpack(view, reused)), expected);
+                Check.equal(project(Scalars.unpack(bytes)), expected);
+                Check.equal(project(Scalars.unpack(bytes, reused)), expected);
             }
         }
 
@@ -73,16 +73,14 @@ package bench
                     for (round = 0; round < rounds; round++)
                         for (i = 0; i < encoded.length; i++)
                         {
-                            bind(encoded[i]);
-                            checksum += ScalarsView.unpack(view).sequence;
+                            checksum += Scalars.unpack(encoded[i]).sequence;
                         }
                     break;
                 case "unpack/reuse":
                     for (round = 0; round < rounds; round++)
                         for (i = 0; i < encoded.length; i++)
                         {
-                            bind(encoded[i]);
-                            checksum += ScalarsView.unpack(view, reused).sequence;
+                            checksum += Scalars.unpack(encoded[i], reused).sequence;
                         }
                     break;
                 case "view/one-field":

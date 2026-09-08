@@ -10,7 +10,16 @@ type TableNames struct {
 }
 
 var tableMembers = map[string]struct{}{
-	"BUILDER":      {},
+	"UNPACK":       {},
+	"PACK":         {},
+	"unpackFrom":   {},
+	"li8":          {},
+	"li16":         {},
+	"li32":         {},
+	"lf32":         {},
+	"lf64":         {},
+	"sxi8":         {},
+	"sxi16":        {},
 	"bindAt":       {},
 	"fieldOffset":  {},
 	"tableOffset":  {},

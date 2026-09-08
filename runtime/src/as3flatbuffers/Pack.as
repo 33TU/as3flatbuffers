@@ -5,11 +5,11 @@ package as3flatbuffers
     import flash.utils.ByteArray;
 
     /** Internal support for generated packers; writes forwards into a little-endian ByteArray. */
-    public final class Builder
+    public final class Pack
     {
         /** Clear construction state and detach the destination without changing its bytes. */
         [Inline]
-        public static function reset(context:BuilderContext):void
+        public static function reset(context:PackContext):void
         {
             context.bytes = null;
             context.fields.length = 0;
@@ -20,7 +20,7 @@ package as3flatbuffers
 
         /** Start packing into a non-null destination, replacing its contents. Endian is unchanged. */
         [Inline]
-        public static function begin(context:BuilderContext, dst:ByteArray, reserveRoot:Boolean):void
+        public static function begin(context:PackContext, dst:ByteArray, reserveRoot:Boolean):void
         {
             dst.length = 0;
             dst.position = 0;
@@ -37,7 +37,7 @@ package as3flatbuffers
 
         /** Patch the root offset and return dst itself, positioned at zero. No copy. */
         [Inline]
-        public static function finish(context:BuilderContext, root:uint):ByteArray
+        public static function finish(context:PackContext, root:uint):ByteArray
         {
             const bytes:ByteArray = context.bytes;
 
@@ -49,7 +49,7 @@ package as3flatbuffers
         }
 
         [Inline]
-        public static function reserveVtable(context:BuilderContext, fieldCount:uint):void
+        public static function reserveVtable(context:PackContext, fieldCount:uint):void
         {
             const bytes:ByteArray = context.bytes;
 
@@ -61,7 +61,7 @@ package as3flatbuffers
         }
 
         [Inline]
-        public static function startTable(context:BuilderContext):void
+        public static function startTable(context:PackContext):void
         {
             const bytes:ByteArray = context.bytes;
 
@@ -70,7 +70,7 @@ package as3flatbuffers
         }
 
         [Inline]
-        public static function endTable(context:BuilderContext):uint
+        public static function endTable(context:PackContext):uint
         {
             const bytes:ByteArray = context.bytes;
             const tableStart:uint = context.tableStart;
@@ -97,7 +97,7 @@ package as3flatbuffers
         }
 
         [Inline]
-        public static function prepare(context:BuilderContext, alignment:uint):void
+        public static function prepare(context:PackContext, alignment:uint):void
         {
             const bytes:ByteArray = context.bytes;
 
@@ -120,7 +120,7 @@ package as3flatbuffers
         }
 
         [Inline]
-        public static function pad(context:BuilderContext, count:uint):void
+        public static function pad(context:PackContext, count:uint):void
         {
             const bytes:ByteArray = context.bytes;
 
@@ -142,7 +142,7 @@ package as3flatbuffers
         }
 
         [Inline]
-        public static function addBool(context:BuilderContext, slot:uint, value:Boolean):void
+        public static function addBool(context:PackContext, slot:uint, value:Boolean):void
         {
             const bytes:ByteArray = context.bytes;
 
@@ -151,7 +151,7 @@ package as3flatbuffers
         }
 
         [Inline]
-        public static function addInt8(context:BuilderContext, slot:uint, value:int):void
+        public static function addInt8(context:PackContext, slot:uint, value:int):void
         {
             const bytes:ByteArray = context.bytes;
 
@@ -160,7 +160,7 @@ package as3flatbuffers
         }
 
         [Inline]
-        public static function addUint8(context:BuilderContext, slot:uint, value:uint):void
+        public static function addUint8(context:PackContext, slot:uint, value:uint):void
         {
             const bytes:ByteArray = context.bytes;
 
@@ -169,7 +169,7 @@ package as3flatbuffers
         }
 
         [Inline]
-        public static function addInt16(context:BuilderContext, slot:uint, value:int):void
+        public static function addInt16(context:PackContext, slot:uint, value:int):void
         {
             const bytes:ByteArray = context.bytes;
 
@@ -178,7 +178,7 @@ package as3flatbuffers
         }
 
         [Inline]
-        public static function addUint16(context:BuilderContext, slot:uint, value:uint):void
+        public static function addUint16(context:PackContext, slot:uint, value:uint):void
         {
             const bytes:ByteArray = context.bytes;
 
@@ -187,7 +187,7 @@ package as3flatbuffers
         }
 
         [Inline]
-        public static function addInt32(context:BuilderContext, slot:uint, value:int):void
+        public static function addInt32(context:PackContext, slot:uint, value:int):void
         {
             const bytes:ByteArray = context.bytes;
 
@@ -196,7 +196,7 @@ package as3flatbuffers
         }
 
         [Inline]
-        public static function addUint32(context:BuilderContext, slot:uint, value:uint):void
+        public static function addUint32(context:PackContext, slot:uint, value:uint):void
         {
             const bytes:ByteArray = context.bytes;
 
@@ -205,7 +205,7 @@ package as3flatbuffers
         }
 
         [Inline]
-        public static function addInt64(context:BuilderContext, slot:uint, value:Int64):void
+        public static function addInt64(context:PackContext, slot:uint, value:Int64):void
         {
             const bytes:ByteArray = context.bytes;
 
@@ -215,7 +215,7 @@ package as3flatbuffers
         }
 
         [Inline]
-        public static function addUint64(context:BuilderContext, slot:uint, value:UInt64):void
+        public static function addUint64(context:PackContext, slot:uint, value:UInt64):void
         {
             const bytes:ByteArray = context.bytes;
 
@@ -225,7 +225,7 @@ package as3flatbuffers
         }
 
         [Inline]
-        public static function addFloat32(context:BuilderContext, slot:uint, value:Number):void
+        public static function addFloat32(context:PackContext, slot:uint, value:Number):void
         {
             const bytes:ByteArray = context.bytes;
 
@@ -234,7 +234,7 @@ package as3flatbuffers
         }
 
         [Inline]
-        public static function addFloat64(context:BuilderContext, slot:uint, value:Number):void
+        public static function addFloat64(context:PackContext, slot:uint, value:Number):void
         {
             const bytes:ByteArray = context.bytes;
 
@@ -247,7 +247,7 @@ package as3flatbuffers
          * Generated code must write exactly size bytes, including zero padding.
          */
         [Inline]
-        public static function prepareStruct(context:BuilderContext, size:uint, alignment:uint):ByteArray
+        public static function prepareStruct(context:PackContext, size:uint, alignment:uint):ByteArray
         {
             const bytes:ByteArray = context.bytes;
 
@@ -272,14 +272,14 @@ package as3flatbuffers
 
         /** Record an inline struct immediately after its packInto() call. */
         [Inline]
-        public static function addStruct(context:BuilderContext, slot:uint, structOffset:uint):void
+        public static function addStruct(context:PackContext, slot:uint, structOffset:uint):void
         {
             context.fields[slot] = structOffset;
         }
 
         /** Reserve a present table or string reference for a later forward-offset patch. */
         [Inline]
-        public static function reserveOffset(context:BuilderContext, slot:uint):uint
+        public static function reserveOffset(context:PackContext, slot:uint):uint
         {
             const bytes:ByteArray = context.bytes;
 
@@ -290,7 +290,7 @@ package as3flatbuffers
         }
 
         [Inline]
-        public static function patchOffset(context:BuilderContext, position:uint, target:uint):void
+        public static function patchOffset(context:PackContext, position:uint, target:uint):void
         {
             const bytes:ByteArray = context.bytes;
 
@@ -302,7 +302,7 @@ package as3flatbuffers
 
         /** Write a UTF-8 string and patch its reserved reference after closing the table. */
         [Inline]
-        public static function writeString(context:BuilderContext, position:uint, value:String):void
+        public static function writeString(context:PackContext, position:uint, value:String):void
         {
             const bytes:ByteArray = context.bytes;
 

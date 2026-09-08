@@ -1,11 +1,11 @@
 package internal
 
 func generateStructPack(w *IndentWriter, o object, objects map[string]object) {
-	w.Line("public static function packInto(source:%s, context:as3flatbuffers.BuilderContext):uint", o.Name)
+	w.Line("public static function packInto(source:%s, context:as3flatbuffers.PackContext):uint", o.Name)
 	w.Line("{")
 	w.Indent()
 	generatePackCheck(w)
-	w.Line("const bytes:flash.utils.ByteArray = as3flatbuffers.Builder.prepareStruct(context, %d, %d);", o.Size, o.Alignment)
+	w.Line("const bytes:flash.utils.ByteArray = as3flatbuffers.Pack.prepareStruct(context, %d, %d);", o.Size, o.Alignment)
 	w.Line("const start:uint = bytes.position;")
 	w.BlankLine()
 	generateStructWrites(w, o, objects, "")

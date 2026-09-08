@@ -29,8 +29,8 @@ Point.pack(point, bytes);
 const view:PointView = new PointView();
 view.bind(bytes, bytes.readUnsignedInt());
 trace(view.x, view.y);              // Reads the input directly.
-const owned:Point = PointView.unpack(view);  // Independent mutable value.
-PointView.unpack(view, owned);     // Overwrites a reusable destination.
+const owned:Point = Point.unpack(bytes);  // Independent mutable value.
+Point.unpack(bytes, owned);     // Overwrites a reusable destination.
 
 point.x = 42;
 Point.pack(point, bytes);          // Reuses the caller-owned destination.
@@ -61,12 +61,12 @@ There is no scratch ByteArray or final byte copy. Repacking the same destination
 invalidates views into its previous contents; bind them again afterward. A packing
 error may leave partial output in `dst`.
 
-Each generated class caches a `BuilderContext` in `private static const BUILDER`.
-`Builder` provides static operations taking that context as their first argument.
+Each generated class caches a `PackContext` in `private static const PACK`.
+`Pack` provides static operations taking that context as their first argument.
 The context owns the destination reference, reusable field vector, table/vtable
 positions, and root flag; its fields are package-internal. `pack()` calls
-`Builder.begin(context, dst, reserveRoot)` to initialize output,
-then `Builder.reset(context)` in `finally` to clear state and detach the destination,
+`Pack.begin(context, dst, reserveRoot)` to initialize output,
+then `Pack.reset(context)` in `finally` to clear state and detach the destination,
 including on failure.
 Packing is synchronous; nested tables and structs share the parent's context via
 `packInto(source, context)`.
@@ -76,22 +76,37 @@ field offsets and the root offset. It reserves slots for all schema fields, incl
 omitted fields, so the encoded size can differ from the previous backwards builder.
 The output remains compatible with standard FlatBuffers readers.
 
+`Message.unpack(bytes, destination = null, offset = 0)` copies the input once into
+a cached `UnpackContext` and uses `Unpack` memory intrinsics for scalar and offset reads.
+For tables, offset locates the root-offset word; for structs, it is the raw struct position.
+The input endian setting is unchanged. Table metadata stays in local variables, so
+child decoding cannot overwrite a parent's offsets. Nested tables and structs share that
+copy through generated `unpackFrom()` calls. The root restores the caller's
+`ApplicationDomain.domainMemory` in `finally`, including on decoding errors.
+`unpackFrom(context, position, destination)`, `Unpack`, and `UnpackContext` are internal support for generated code; call
+`unpack()` from application code. This path requires the ASC2 compiler used by the
+AIR builds here. Scratch storage grows as needed and is retained for reuse.
+Borrowed getters still read the original ByteArray, and strings still use native
+`readUTFBytes()`. Bounds checks use the original input length, not scratch capacity.
+The copy can outweigh the read savings for large, string-heavy messages; there is
+currently no size-based fallback.
+
 `long` and `ulong` fields use `as3flatbuffers.types.Int64` and `UInt64`, with
 separate low/high words to preserve all 64 bits. Non-nullable owned fields start with non-null
 word objects; `reset(msg)` reuses them and requires them to remain non-null.
-`unpack(view, existing)` reuses them or allocates replacements for null destination
+`unpack(bytes, existing)` reuses them or allocates replacements for null destination
 fields. `clone(source)` copies the
 words independently. A view's 64-bit getter returns a fresh word object;
-`unpack(view, existing)` avoids those getter allocations. Keep source word fields
+`unpack(bytes, existing)` avoids those getter allocations. Keep source word fields
 non-null when packing or cloning. Narrow integer writes truncate to the low 8 or 16 bits, matching ByteArray.
 Schema defaults are still range-checked by the generator.
 
 Generated table packers omit scalar schema defaults before calling the builder.
-They emit `Builder.prepare(context, alignment)` only where alignment is not already
+They emit `Pack.prepare(context, alignment)` only where alignment is not already
 guaranteed on both present and absent field paths. Scalar add methods write the
 value and record its offset without adding padding.
 Optional scalars are written whenever present, including zero and false.
-`Builder` is internal support for generated packers, not a manual construction API.
+`Pack` is internal support for generated packers, not a manual construction API.
 Generated code guarantees valid slots, alignment, call order, and reference patches.
 The builder retains the table body size limit;
 it does not validate those generator-controlled operations.
@@ -102,7 +117,7 @@ represents absence; a non-null wrapper holds a present `.value`, including zero
 or false. Nullable `long` and `ulong` use `Int64` and `UInt64` directly, with null
 representing absence. All 11 scalar types support nullable fields.
 
-Nullable fields initialize and reset to null. `unpack(view, existing)` reuses
+Nullable fields initialize and reset to null. `unpack(bytes, existing)` reuses
 present destination wrappers, allocates missing ones, and clears absent fields.
 `clone(source)` deeply copies wrappers, and a view getter returns an independent wrapper
 or null. Packing preserves present zero/false values instead of omitting them.
@@ -148,17 +163,17 @@ has this layout:
 ```as3
 const view:PointView = new PointView().bind(bytes, structOffset);
 trace(view.x, view.y);  // Float32 at structOffset and structOffset + 4.
-const point:Point = PointView.unpack(view);
-PointView.unpack(view, point);    // Reuse an owned destination.
+const point:Point = Point.unpack(bytes, null, structOffset);
+Point.unpack(bytes, point, structOffset);    // Reuse an owned destination.
 ```
 
 Struct fields inside a table default to null and may be omitted. Struct fields
 inside another struct are always inline and start with owned child instances;
 keep them non-null when packing or resetting. `reset(msg)` reuses those children and their 64-bit
-word objects. `clone(source)` copies deeply. Struct-valued getters and `unpack(view, existing)`
-reuse the same private child views, initialized with their parent and held in const
-fields. Repeated getter calls return the same child instance. After the parent is
-rebound, a subsequent getter or unpack call rebinds that child, affecting any
+word objects. `clone(source)` copies deeply. Struct-valued getters reuse private child views, initialized with their parent
+and held in const fields. Owned unpacking decodes directly from offsets without
+creating, binding, or modifying views. Repeated getter calls return the same child instance. After the parent is
+rebound, a subsequent getter rebinds that child, affecting any
 retained references to it. Use `unpack()` for independent owned values, or create
 and bind a separate view when you need an independent binding. An absent table
 field returns null; it does not invalidate an earlier returned child view.
@@ -202,15 +217,15 @@ Node.pack(first, bytes);
 const view:NodeView = new NodeView();
 view.bind(bytes, bytes.readUnsignedInt());
 trace(view.next.value); // 2
-NodeView.unpack(view, first); // Reuses the existing nodes.
+Node.unpack(bytes, first); // Reuses the existing nodes.
 Node.reset(first);            // Clears next to null and value to zero.
 ```
 
 Absent table fields return null. Table child views are allocated on first access
-and then reused by getters and `unpack()`. They are lazy so constructing a recursive
+and then reused by getters. They are lazy so constructing a recursive
 view does not recursively construct an infinite chain. As with struct views,
 subsequent access after rebinding can change a retained child view's binding.
-`clone()` makes independent nested objects; `unpack(view, destination)` reuses
+`clone()` makes independent nested objects; `unpack(bytes, destination)` reuses
 existing child objects and clears children that are absent in the input.
 
 Packing reserves each present reference inside the parent, closes that table,
@@ -275,16 +290,17 @@ bin/as3flatc -o examples/point/src bin/point.bfbs
 
 Every supported table or struct produces an owned class and a `View` class. Owned objects
 have schema defaults and static `reset(msg)`, `clone(source)`, and
-`pack(source, dst)` methods, plus `packInto(source, context)` for composition. `clone(null)` returns null. Generated owned classes
+`pack(source, dst)` and `unpack(bytes, destination = null, offset = 0)` methods.
+Generated `packInto()` and `unpackFrom()` calls compose nested objects. `clone(null)` returns null. Generated owned classes
 do not expose `copyFrom()`.
-Views expose lazy field getters and static `unpack(sourceView, destination = null)`.
+Views expose binding and lazy field getters.
 
 Source generation uses AS3PB's `IndentWriter` approach: focused Go emitters for
 owned fields and methods, packing, unpacking, binding, and direct view reads under
 `internal/`. Shared Go emitters keep the generator logic in one place while each
 generated view contains its own implementation.
 `unpack()` emits direct scalar reads into the destination instead of calling
-getters. Nested tables and structs pass cached child views into their static `unpack()` methods.
+getters. Nested tables and structs share a root context and decode directly from absolute offsets.
 
 Field IDs and deprecated slot gaps come from the binary schema. Case conversion
 uses AS3PB's naming helpers: field names become lower camel case while leading,
@@ -327,7 +343,7 @@ configuration.
 cmd/as3flatc/               .bfbs -> AS3 command
 internal/                  Schema validation, naming, and source generation
 internal/reflection/       Official binary-schema bindings and source schema
-runtime/src/as3flatbuffers/  Builder, BuilderContext, TableView, and scalar helpers
+runtime/src/as3flatbuffers/  Pack/PackContext, Unpack/UnpackContext, TableView, and scalar helpers
 runtime/test/               AIR tests
 runtime/bench/              AIR benchmark schemas, generated classes, and harness
 examples/point/schema/      Reference .fbs schema

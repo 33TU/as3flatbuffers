@@ -26,37 +26,5 @@ package bench.data
             const position:uint = fieldOffset(6, 64);
             return position ? this.stateView.bind(bytes, position) : null;
         }
-
-        public static function unpack(source:InlineView, destination:Inline = null):Inline
-        {
-            if (!source || !source.bytes)
-                throw new Error("View is not bound");
-
-            const bytes:flash.utils.ByteArray = source.bytes;
-            if (!destination)
-                destination = new Inline();
-
-            const position0:uint = source.fieldOffset(4, 4);
-            if (!position0)
-            {
-                destination.sequence = 0;
-            }
-            else
-            {
-                bytes.position = position0;
-                destination.sequence = bytes.readUnsignedInt();
-            }
-
-            const stateViewPosition:uint = source.fieldOffset(6, 64);
-            if (!stateViewPosition)
-            {
-                destination.state = null;
-            }
-            else
-            {
-                destination.state = bench.data.StateView.unpack(source.stateView.bind(bytes, stateViewPosition), destination.state);
-            }
-            return destination;
-        }
     }
 }

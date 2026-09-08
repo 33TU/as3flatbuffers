@@ -26,38 +26,5 @@ package example
             bytes.position = position;
             return bytes.readFloat();
         }
-
-        public static function unpack(source:PointView, destination:Point = null):Point
-        {
-            if (!source || !source.bytes)
-                throw new Error("View is not bound");
-
-            const bytes:flash.utils.ByteArray = source.bytes;
-            if (!destination)
-                destination = new Point();
-
-            const position0:uint = source.fieldOffset(4, 4);
-            if (!position0)
-            {
-                destination.x = 0;
-            }
-            else
-            {
-                bytes.position = position0;
-                destination.x = bytes.readFloat();
-            }
-
-            const position1:uint = source.fieldOffset(6, 4);
-            if (!position1)
-            {
-                destination.y = 0;
-            }
-            else
-            {
-                bytes.position = position1;
-                destination.y = bytes.readFloat();
-            }
-            return destination;
-        }
     }
 }

@@ -31,33 +31,5 @@ package bench.data
         {
             return stringValue(10);
         }
-
-        public static function unpack(source:StringMessageView, destination:StringMessage = null):StringMessage
-        {
-            if (!source || !source.bytes)
-                throw new Error("View is not bound");
-
-            const bytes:flash.utils.ByteArray = source.bytes;
-            if (!destination)
-                destination = new StringMessage();
-
-            const position0:uint = source.fieldOffset(4, 4);
-            if (!position0)
-            {
-                destination.sequence = 0;
-            }
-            else
-            {
-                bytes.position = position0;
-                destination.sequence = bytes.readUnsignedInt();
-            }
-
-            destination.name = source.stringValue(6);
-
-            destination.text = source.stringValue(8);
-
-            destination.details = source.stringValue(10);
-            return destination;
-        }
     }
 }

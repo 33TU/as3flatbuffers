@@ -17,6 +17,7 @@ package
 
         public static function run(directory:File, check:Function, read:Function, write:Function):void
         {
+            var unpackInput:ByteArray;
             const manifest:ByteArray = read(directory.resolvePath("optional.json"));
             const cases:Array = JSON.parse(manifest.readUTFBytes(manifest.length)) as Array;
             const value:OptionalScalars = new OptionalScalars();
@@ -27,8 +28,8 @@ package
                 const previous:Array = [];
                 for each (var name:String in FIELDS)
                     previous.push(value[name]);
-                FixtureBuffer.bindRoot(view, read(directory.resolvePath("optional-python-" + i + ".bin")));
-                check(OptionalScalarsView.unpack(view, value) === value, "Optional unpack reuses destination");
+                FixtureBuffer.bindRoot(view, unpackInput = read(directory.resolvePath("optional-python-" + i + ".bin")));
+                check(OptionalScalars.unpack(unpackInput, value) === value, "Optional unpack reuses destination");
                 verify(value, cases[i], check);
                 verify(view, cases[i], check);
                 for (var slot:int = 0; slot < FIELDS.length; slot++)
@@ -43,7 +44,7 @@ package
                 verify(copy, cases[i], check);
                 for each (name in FIELDS)
                     check(!value[name] || copy[name] !== value[name], "Optional clone has independent wrappers");
-                OptionalScalarsView.unpack(view, value);
+                OptionalScalars.unpack(unpackInput, value);
                 for (slot = 0; slot < FIELDS.length; slot++)
                 {
                     name = FIELDS[slot];
@@ -53,8 +54,8 @@ package
                 verify(value, cases[i], check);
                 const output:ByteArray = OptionalScalars.pack(copy, FixtureBuffer.create());
                 write(directory.resolvePath("optional-as3-" + i + ".bin"), output);
-                FixtureBuffer.bindRoot(view, output);
-                verify(OptionalScalarsView.unpack(view), cases[i], check);
+                FixtureBuffer.bindRoot(view, unpackInput = output);
+                verify(OptionalScalars.unpack(unpackInput), cases[i], check);
                 if (copy.i64)
                     copy.i64.low ^= 1;
                 if (copy.u64)
@@ -64,12 +65,12 @@ package
                 verify(value, cases[i], check);
                 OptionalScalars.reset(copy);
                 verify(copy, cases[0], check);
-                OptionalScalarsView.unpack(view, copy);
+                OptionalScalars.unpack(unpackInput, copy);
                 verify(copy, cases[i], check);
                 OptionalScalars.reset(value);
                 verify(value, cases[0], check);
                 // Leave populated wrappers for the next iteration's reuse check.
-                OptionalScalarsView.unpack(view, value);
+                OptionalScalars.unpack(unpackInput, value);
             }
             OptionalScalars.reset(value);
             verify(value, cases[0], check);

@@ -50,26 +50,5 @@ package bench.data
             bytes.position = base + 8;
             return bytes.readFloat();
         }
-
-        public static function unpack(source:Vec3View, destination:Vec3 = null):Vec3
-        {
-            if (!source || !source.bytes)
-                throw new Error("View is not bound");
-
-            const bytes:flash.utils.ByteArray = source.bytes;
-            const base:uint = source.base;
-            if (!destination)
-                destination = new Vec3();
-
-            bytes.position = base + 0;
-            destination.x = bytes.readFloat();
-
-            bytes.position = base + 4;
-            destination.y = bytes.readFloat();
-
-            bytes.position = base + 8;
-            destination.z = bytes.readFloat();
-            return destination;
-        }
     }
 }

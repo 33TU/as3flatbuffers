@@ -1,7 +1,7 @@
 package
 {
-    import as3flatbuffers.Builder;
-    import as3flatbuffers.BuilderContext;
+    import as3flatbuffers.Pack;
+    import as3flatbuffers.PackContext;
     import fixtures.nested.Node;
     import fixtures.nested.NodeView;
     import fixtures.nested.Scene;
@@ -15,6 +15,7 @@ package
     {
         public static function run(directory:File, check:Function, read:Function, write:Function):void
         {
+            var unpackInput:ByteArray;
             const manifest:ByteArray = read(directory.resolvePath("nested.json"));
             const cases:Array = JSON.parse(manifest.readUTFBytes(manifest.length)) as Array;
             const view:SceneView = new SceneView();
@@ -22,8 +23,8 @@ package
             const dst:ByteArray = FixtureBuffer.create();
             for (var i:uint = 0; i < cases.length; i++)
             {
-                FixtureBuffer.bindRoot(view, read(directory.resolvePath("nested-python-" + i + ".bin")));
-                check(SceneView.unpack(view, value) === value, "Nested unpack reuses root");
+                FixtureBuffer.bindRoot(view, unpackInput = read(directory.resolvePath("nested-python-" + i + ".bin")));
+                check(Scene.unpack(unpackInput, value) === value, "Nested unpack reuses root");
                 verify(value, cases[i], check);
                 verify(Scene.clone(value), cases[i], check);
                 if (value.head)
@@ -34,7 +35,7 @@ package
                     const borrowed:NodeView = view.head;
                     check(view.head === borrowed, "Nested table getter reuses its lazy view");
                     check(borrowed.next === borrowed.next, "Recursive getter reuses its lazy view");
-                    SceneView.unpack(view, value);
+                    Scene.unpack(unpackInput, value);
                     check(value.head === head && head.next === next && head.position === position,
                             "Nested unpack deeply reuses destination tables and structs");
                     const cloned:Scene = Scene.clone(value);
@@ -46,7 +47,7 @@ package
                 }
                 Scene.pack(value, dst);
                 write(directory.resolvePath("nested-as3-" + i + ".bin"), dst);
-                verify(SceneView.unpack(FixtureBuffer.bindRoot(view, dst)), cases[i], check);
+                verify(Scene.unpack(dst), cases[i], check);
             }
             Scene.reset(value);
             check(!value.head && !value.alternate && !value.pair && value.serial == 0, "Static reset clears table references");
@@ -61,7 +62,7 @@ package
             const nodeView:NodeView = FixtureBuffer.bindRoot(new NodeView(), dst);
             check(nodeView.value == 1 && nodeView.next.value == 2 && nodeView.branch.value == 2,
                     "Standalone recursive root and repeated sibling references pack correctly");
-            const snapshot:Node = NodeView.unpack(nodeView);
+            const snapshot:Node = Node.unpack(dst);
             check(snapshot.next !== snapshot.branch, "Shared source children are serialized as independent values");
             const oldChild:NodeView = nodeView.next;
             chain.next = null;
@@ -73,8 +74,8 @@ package
             Node.pack(chain, dst);
             FixtureBuffer.bindRoot(nodeView, dst);
             check(nodeView.next === oldChild && oldChild.value == 77, "Rebinding reuses the existing child view");
-            NodeView.unpack(nodeView, snapshot);
-            check(snapshot.next.value == 77, "Unpack and getters share the recursive child cache");
+            Node.unpack(dst, snapshot);
+            check(snapshot.next.value == 77, "Owned unpack decodes recursive children independently of view caches");
 
             // References are checked before binding the borrowed child table.
             Node.pack(chain, dst);
@@ -91,7 +92,7 @@ package
                 FixtureBuffer.bindRoot(nodeView, dst);
                 rejects(function():void
                     {
-                        NodeView.unpack(nodeView);
+                        Node.unpack(dst);
                     }, check, "Malformed child offset rejected by unpack");
                 rejects(function():void
                     {
@@ -106,22 +107,22 @@ package
             FixtureBuffer.bindRoot(nodeView, prefixed, 16);
             check(nodeView.next.value == chain.next.value, "Nested references work at a nonzero root position");
 
-            const builder:BuilderContext = new BuilderContext();
-            Builder.begin(builder, dst, true);
-            Builder.prepare(builder, 2);
-            Builder.reserveVtable(builder, 1);
-            Builder.prepare(builder, 4);
-            Builder.startTable(builder);
-            Builder.prepare(builder, 4);
-            const slot:uint = Builder.reserveOffset(builder, 0);
-            const parent:uint = Builder.endTable(builder);
-            Builder.prepare(builder, 2);
-            Builder.reserveVtable(builder, 0);
-            Builder.prepare(builder, 4);
-            Builder.startTable(builder);
-            const childTable:uint = Builder.endTable(builder);
-            Builder.patchOffset(builder, slot, childTable);
-            check(Builder.finish(builder, parent) === dst, "Root may precede the last completed child table");
+            const builder:PackContext = new PackContext();
+            Pack.begin(builder, dst, true);
+            Pack.prepare(builder, 2);
+            Pack.reserveVtable(builder, 1);
+            Pack.prepare(builder, 4);
+            Pack.startTable(builder);
+            Pack.prepare(builder, 4);
+            const slot:uint = Pack.reserveOffset(builder, 0);
+            const parent:uint = Pack.endTable(builder);
+            Pack.prepare(builder, 2);
+            Pack.reserveVtable(builder, 0);
+            Pack.prepare(builder, 4);
+            Pack.startTable(builder);
+            const childTable:uint = Pack.endTable(builder);
+            Pack.patchOffset(builder, slot, childTable);
+            check(Pack.finish(builder, parent) === dst, "Root may precede the last completed child table");
         }
 
         private static function verify(value:Scene, expected:Object, check:Function):void

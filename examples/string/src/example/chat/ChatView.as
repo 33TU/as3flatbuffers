@@ -16,20 +16,5 @@ package example.chat
         {
             return stringValue(6);
         }
-
-        public static function unpack(source:ChatView, destination:Chat = null):Chat
-        {
-            if (!source || !source.bytes)
-                throw new Error("View is not bound");
-
-            const bytes:flash.utils.ByteArray = source.bytes;
-            if (!destination)
-                destination = new Chat();
-
-            destination.sender = source.stringValue(4);
-
-            destination.message = source.stringValue(6);
-            return destination;
-        }
     }
 }

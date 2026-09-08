@@ -55,50 +55,5 @@ package fixtures.text
             this.nextView.bind(bytes, position);
             return this.nextView;
         }
-
-        public static function unpack(source:StringsView, destination:Strings = null):Strings
-        {
-            if (!source || !source.bytes)
-                throw new Error("View is not bound");
-
-            const bytes:flash.utils.ByteArray = source.bytes;
-            if (!destination)
-                destination = new Strings();
-
-            destination.text = source.stringValue(4);
-
-            destination.label_ = source.stringValue(6);
-
-            destination.stringValue_ = source.stringValue(8);
-
-            const childViewPosition:uint = source.tableOffset(10);
-            if (!childViewPosition)
-            {
-                destination.child = null;
-            }
-            else
-            {
-                if (!source.childView)
-                    source.childView = new fixtures.text.TextView();
-
-                source.childView.bind(bytes, childViewPosition);
-                destination.child = fixtures.text.TextView.unpack(source.childView, destination.child);
-            }
-
-            const nextViewPosition:uint = source.tableOffset(12);
-            if (!nextViewPosition)
-            {
-                destination.next = null;
-            }
-            else
-            {
-                if (!source.nextView)
-                    source.nextView = new fixtures.text.StringsView();
-
-                source.nextView.bind(bytes, nextViewPosition);
-                destination.next = fixtures.text.StringsView.unpack(source.nextView, destination.next);
-            }
-            return destination;
-        }
     }
 }

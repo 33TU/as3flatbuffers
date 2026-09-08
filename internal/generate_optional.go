@@ -16,7 +16,7 @@ func generateOptionalPack(w *IndentWriter, f field, alignment uint32) {
 // Scalar writers only write and record the field; alignment is decided by the generator.
 func generateScalarPackWrite(w *IndentWriter, f field, value string, alignment uint32) {
 	if f.Alignment > alignment {
-		w.Line("as3flatbuffers.Builder.prepare(context, %d);", f.Alignment)
+		w.Line("as3flatbuffers.Pack.prepare(context, %d);", f.Alignment)
 	}
-	w.Line("as3flatbuffers.Builder.%s(context, %d, %s);", f.Writer, f.ID, value)
+	w.Line("as3flatbuffers.Pack.%s(context, %d, %s);", f.Writer, f.ID, value)
 }

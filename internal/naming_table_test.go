@@ -11,6 +11,9 @@ func TestTableNames(t *testing.T) {
 		{"reset", "reset_"}, {"Reset", "reset_2"}, {"reset_", "reset__"},
 		{"bind", "bind_"}, {"Bind", "bind_2"}, {"unpack", "unpack_"},
 		{"bytes", "bytes_"}, {"float32", "float32_"},
+		{"unpack_from", "unpackFrom_"},
+
+		{"li32", "li32_"}, {"sxi8", "sxi8_"},
 		{"class", "class_"}, {"Class", "class__"},
 		{"snake_case", "snakeCase"}, {"snakeCase", "snakeCase_"},
 		{"snake_Case", "snakeCase_2"}, {"http_server", "httpServer"},

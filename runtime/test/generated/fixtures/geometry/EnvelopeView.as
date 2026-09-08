@@ -53,25 +53,5 @@ package fixtures.geometry
             bytes.position = base + 64;
             return bytes.readShort();
         }
-
-        public static function unpack(source:EnvelopeView, destination:Envelope = null):Envelope
-        {
-            if (!source || !source.bytes)
-                throw new Error("View is not bound");
-
-            const bytes:flash.utils.ByteArray = source.bytes;
-            const base:uint = source.base;
-            if (!destination)
-                destination = new Envelope();
-
-            bytes.position = base + 0;
-            destination.lead = bytes.readByte();
-
-            destination.frame = fixtures.geometry.FrameView.unpack(source.frameView.bind(bytes, base + 8), destination.frame);
-
-            bytes.position = base + 64;
-            destination.tail = bytes.readShort();
-            return destination;
-        }
     }
 }

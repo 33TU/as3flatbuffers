@@ -16,22 +16,22 @@ func TestPrimitiveGeneration(t *testing.T) {
 	if len(files) != 4 {
 		t.Fatalf("got %d files", len(files))
 	}
-	owned, view := string(files[0].Data), string(files[1].Data)
+	owned := string(files[0].Data)
 	for _, want := range []string{
 		"public var enabled:Boolean = true;",
 		"public var i8:int = -7;", "public var u16:uint = 65535;",
 		"public var f64:Number = 1.2345678901234567;",
 		"new as3flatbuffers.types.Int64(0, -2147483648)",
 		"new as3flatbuffers.types.UInt64(4294967295, 2147483647)",
-		"if (source.i64.low != 0 || source.i64.high != -2147483648)", "as3flatbuffers.Builder.addInt64(context, 7, source.i64);",
+		"if (source.i64.low != 0 || source.i64.high != -2147483648)", "as3flatbuffers.Pack.addInt64(context, 7, source.i64);",
 		"destination.i64.copyFrom(source.i64);",
 	} {
 		if !strings.Contains(owned, want) {
 			t.Errorf("missing %q", want)
 		}
 	}
-	if !strings.Contains(view, "if (!destination.i64)\n                destination.i64 = new as3flatbuffers.types.Int64();") ||
-		!strings.Contains(view, "destination.i64.set(bytes.readUnsignedInt(), bytes.readInt());") {
+	if !strings.Contains(owned, "if (!destination.i64)\n                destination.i64 = new as3flatbuffers.types.Int64();") ||
+		!strings.Contains(owned, "destination.i64.set(uint(li32(position7)), li32(position7 + 4));") {
 		t.Error("unpack must preserve word-object reuse")
 	}
 }

@@ -3,7 +3,7 @@ package as3flatbuffers
     import flash.utils.ByteArray;
 
     /** Reusable state owned by a generated packer. */
-    public final class BuilderContext
+    public final class PackContext
     {
         internal var bytes:ByteArray;
         internal const fields:Vector.<uint> = new Vector.<uint>();

@@ -33,41 +33,5 @@ package fixtures.nested
             this.leftView.bind(bytes, position);
             return this.leftView;
         }
-
-        public static function unpack(source:RightView, destination:Right = null):Right
-        {
-            if (!source || !source.bytes)
-                throw new Error("View is not bound");
-
-            const bytes:flash.utils.ByteArray = source.bytes;
-            if (!destination)
-                destination = new Right();
-
-            const position0:uint = source.fieldOffset(4, 8);
-            if (!position0)
-            {
-                destination.weight = 0;
-            }
-            else
-            {
-                bytes.position = position0;
-                destination.weight = bytes.readDouble();
-            }
-
-            const leftViewPosition:uint = source.tableOffset(6);
-            if (!leftViewPosition)
-            {
-                destination.left = null;
-            }
-            else
-            {
-                if (!source.leftView)
-                    source.leftView = new fixtures.nested.LeftView();
-
-                source.leftView.bind(bytes, leftViewPosition);
-                destination.left = fixtures.nested.LeftView.unpack(source.leftView, destination.left);
-            }
-            return destination;
-        }
     }
 }
