@@ -18,20 +18,21 @@ package as3flatbuffers
             bytes = null;
             if (!input)
                 throw new ArgumentError("Input must be non-null");
-            if (offset > input.length || input.length - offset < 4)
+            const inputLength:uint = input.length;
+            if (offset > inputLength || inputLength - offset < 4)
                 throw new RangeError("Truncated table");
 
             input.endian = Endian.LITTLE_ENDIAN;
             input.position = offset;
             const voffset:Number = Number(offset) - input.readInt();
-            if (voffset < 0 || voffset > input.length - 4)
+            if (voffset < 0 || voffset > inputLength - 4)
                 throw new RangeError("Invalid vtable offset");
 
             input.position = uint(voffset);
             const vtSize:uint = input.readUnsignedShort();
             const objSize:uint = input.readUnsignedShort();
-            if (vtSize < 4 || (vtSize & 1) || vtSize > input.length - voffset ||
-                    objSize < 4 || objSize > input.length - offset)
+            if (vtSize < 4 || (vtSize & 1) || vtSize > inputLength - voffset ||
+                    objSize < 4 || objSize > inputLength - offset)
                 throw new RangeError("Invalid table size");
 
             table = offset;
@@ -47,6 +48,7 @@ package as3flatbuffers
             if (slot >= vtableSize)
                 return 0;
 
+            const bytes:ByteArray = this.bytes;
             bytes.position = vtable + slot;
             const relative:uint = bytes.readUnsignedShort();
             if (!relative)
@@ -63,6 +65,7 @@ package as3flatbuffers
             if (slot >= vtableSize)
                 return null;
 
+            const bytes:ByteArray = this.bytes;
             bytes.position = vtable + slot;
             const fieldRelative:uint = bytes.readUnsignedShort();
             if (!fieldRelative)
@@ -92,6 +95,7 @@ package as3flatbuffers
             if (slot >= vtableSize)
                 return 0;
 
+            const bytes:ByteArray = this.bytes;
             bytes.position = vtable + slot;
             const fieldRelative:uint = bytes.readUnsignedShort();
             if (!fieldRelative)
