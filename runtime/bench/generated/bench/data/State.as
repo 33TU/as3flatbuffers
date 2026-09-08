@@ -53,7 +53,7 @@ package bench.data
             return destination;
         }
 
-        /** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */
+        /** Replace dst with packed bytes. Writes little-endian without changing dst.endian. Returns dst at position zero. */
         public static function pack(source:State, dst:flash.utils.ByteArray):flash.utils.ByteArray
         {
             if (!source || !dst)
@@ -78,35 +78,30 @@ package bench.data
             if (!source || !context)
                 throw new ArgumentError("Source and context must be non-null");
 
-            const bytes:flash.utils.ByteArray = as3flatbuffers.Pack.prepareStruct(context, 64, 8);
-            const start:uint = bytes.position;
-
+            const start:uint = as3flatbuffers.Pack.prepareStruct(context, 64, 8);
             if (!source.position)
-                throw new ArgumentError("position must be non-null");
-
-            bytes.writeFloat(source.position.x);
-            bytes.writeFloat(source.position.y);
-            bytes.writeFloat(source.position.z);
+                throw new ArgumentError("source.position must be non-null");
+            sf32(source.position.x, start + 0);
+            sf32(source.position.y, start + 4);
+            sf32(source.position.z, start + 8);
             if (!source.velocity)
-                throw new ArgumentError("velocity must be non-null");
-
-            bytes.writeFloat(source.velocity.x);
-            bytes.writeFloat(source.velocity.y);
-            bytes.writeFloat(source.velocity.z);
+                throw new ArgumentError("source.velocity must be non-null");
+            sf32(source.velocity.x, start + 12);
+            sf32(source.velocity.y, start + 16);
+            sf32(source.velocity.z, start + 20);
             if (!source.facing)
-                throw new ArgumentError("facing must be non-null");
-
-            bytes.writeFloat(source.facing.x);
-            bytes.writeFloat(source.facing.y);
-            bytes.writeFloat(source.facing.z);
-            bytes.writeInt(source.delta);
-            bytes.writeUnsignedInt(source.checksum);
-            bytes.writeUnsignedInt(0);
-            bytes.writeDouble(source.precision);
-            bytes.writeBoolean(source.active);
-            bytes.writeShort(0);
-            bytes.writeByte(0);
-            bytes.writeUnsignedInt(source.kind);
+                throw new ArgumentError("source.facing must be non-null");
+            sf32(source.facing.x, start + 24);
+            sf32(source.facing.y, start + 28);
+            sf32(source.facing.z, start + 32);
+            si32(source.delta, start + 36);
+            si32(source.checksum, start + 40);
+            si32(0, start + 44);
+            sf64(source.precision, start + 48);
+            si8((source.active ? 1 : 0), start + 56);
+            si16(0, start + 57);
+            si8(0, start + 59);
+            si32(source.kind, start + 60);
             return start;
         }
 

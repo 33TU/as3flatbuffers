@@ -34,7 +34,7 @@ package example.inventory
             return destination;
         }
 
-        /** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */
+        /** Replace dst with packed bytes. Writes little-endian without changing dst.endian. Returns dst at position zero. */
         public static function pack(source:Position, dst:flash.utils.ByteArray):flash.utils.ByteArray
         {
             if (!source || !dst)
@@ -59,11 +59,9 @@ package example.inventory
             if (!source || !context)
                 throw new ArgumentError("Source and context must be non-null");
 
-            const bytes:flash.utils.ByteArray = as3flatbuffers.Pack.prepareStruct(context, 8, 4);
-            const start:uint = bytes.position;
-
-            bytes.writeFloat(source.x);
-            bytes.writeFloat(source.y);
+            const start:uint = as3flatbuffers.Pack.prepareStruct(context, 8, 4);
+            sf32(source.x, start + 0);
+            sf32(source.y, start + 4);
             return start;
         }
 

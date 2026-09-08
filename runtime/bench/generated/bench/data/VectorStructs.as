@@ -39,7 +39,7 @@ package bench.data
             return destination;
         }
 
-        /** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */
+        /** Replace dst with packed bytes. Writes little-endian without changing dst.endian. Returns dst at position zero. */
         public static function pack(source:VectorStructs, dst:flash.utils.ByteArray):flash.utils.ByteArray
         {
             if (!source || !dst)
@@ -64,6 +64,7 @@ package bench.data
             if (!source || !context)
                 throw new ArgumentError("Source and context must be non-null");
 
+            as3flatbuffers.Pack.ensure(context, 30);
             as3flatbuffers.Pack.prepare(context, 2);
             as3flatbuffers.Pack.reserveVtable(context, 2);
             as3flatbuffers.Pack.prepare(context, 4);
@@ -76,14 +77,18 @@ package bench.data
             const table:uint = as3flatbuffers.Pack.endTable(context);
             if (offset1)
             {
-                const bytes1:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 4);
+                as3flatbuffers.Pack.prepareVector(context, 4, source.points.length, 12);
                 const vector1:uint = as3flatbuffers.Pack.startVector(context, source.points.length);
                 as3flatbuffers.Pack.patchOffset(context, offset1, vector1);
+                const data1:uint = as3flatbuffers.Pack.reserve(context, source.points.length * 12);
                 for (var index1:uint = 0; index1 < source.points.length; index1++)
                 {
                     if (source.points[index1] == null)
                         throw new ArgumentError("points elements must be non-null");
-                    bench.data.Vec3.packInto(source.points[index1], context);
+                    const element1:uint = data1 + index1 * 12;
+                    sf32(source.points[index1].x, element1 + 0);
+                    sf32(source.points[index1].y, element1 + 4);
+                    sf32(source.points[index1].z, element1 + 8);
                 }
             }
             return table;

@@ -64,8 +64,8 @@ All inputs, encoded fixtures, and reusable destinations are created before timin
 Every workload validates fresh and reused FlatBuffers unpacking, all-field view
 reads, and complete AMF3/JSON round trips before benchmarking.
 
-- **pack/reuse-bytes:** pack to one reusable destination. This includes resetting
-  and finishing it; there is no timed fixture-copy operation.
+- **pack/reuse-bytes:** pack to one reusable destination. This includes binding domain memory, growing writable capacity, restoring the
+  previous binding, and trimming output; there is no timed fixture-copy operation.
 - **unpack/fresh:** materialize a complete new object graph per message.
 - **unpack/reuse:** reuse one destination graph across the dataset.
 - **view/one-field:** bind the root and read only its sequence.

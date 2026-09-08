@@ -1,5 +1,6 @@
 package
 {
+    import avm2.intrinsics.memory.*;
     import as3flatbuffers.Pack;
     import as3flatbuffers.PackContext;
     import example.PointView;
@@ -81,21 +82,16 @@ package
                 for (var i:uint = 0; i < 128; i++)
                     bytes.writeByte(255);
                 Pack.begin(builder, bytes, false);
-                Pack.prepareStruct(builder, 1, 1).writeByte(42);
+                const first:uint = Pack.prepareStruct(builder, 1, 1);
+                si8(42, first);
                 Pack.pad(builder, count);
+                Pack.finish(builder, 0);
+                bytes.position = bytes.length;
                 check(bytes.length == count + 1 && bytes.position == count + 1 && bytes[0] == 42,
                         "Padding preserves the prefix and advances by its exact size");
                 for (i = 1; i < bytes.length; i++)
                     check(bytes[i] == 0, "Padding after buffer reuse contains only zero bytes");
             }
-            Pack.begin(builder, bytes, false);
-            for (i = 0; i < 16; i++)
-                bytes.writeByte(255);
-            bytes.position = 4;
-            Pack.pad(builder, 7);
-            check(bytes.length == 16 && bytes.position == 11, "Padding over existing bytes preserves the tail");
-            for (i = 0; i < 16; i++)
-                check(bytes[i] == (i >= 4 && i < 11 ? 0 : 255), "Padding clears exactly the requested region");
             for each (var alignment:uint in [4, 8, 16, 32, 64, 128, 256])
                 for each (var prefix:uint in [0, 1, 7])
                 {

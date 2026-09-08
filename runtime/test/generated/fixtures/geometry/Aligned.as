@@ -34,7 +34,7 @@ package fixtures.geometry
             return destination;
         }
 
-        /** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */
+        /** Replace dst with packed bytes. Writes little-endian without changing dst.endian. Returns dst at position zero. */
         public static function pack(source:Aligned, dst:flash.utils.ByteArray):flash.utils.ByteArray
         {
             if (!source || !dst)
@@ -59,12 +59,10 @@ package fixtures.geometry
             if (!source || !context)
                 throw new ArgumentError("Source and context must be non-null");
 
-            const bytes:flash.utils.ByteArray = as3flatbuffers.Pack.prepareStruct(context, 16, 16);
-            const start:uint = bytes.position;
-
-            bytes.writeInt(source.id);
-            bytes.writeUnsignedInt(0);
-            bytes.writeDouble(source.value);
+            const start:uint = as3flatbuffers.Pack.prepareStruct(context, 16, 16);
+            si32(source.id, start + 0);
+            si32(0, start + 4);
+            sf64(source.value, start + 8);
             return start;
         }
 

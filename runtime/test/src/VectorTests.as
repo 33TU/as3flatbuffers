@@ -11,6 +11,7 @@ package
     import fixtures.vectors.Aligned;
     import fixtures.vectors.Entry;
     import fixtures.vectors.EntryView;
+    import avm2.intrinsics.memory.*;
     import as3flatbuffers.Pack;
     import as3flatbuffers.PackContext;
     import as3flatbuffers.types.Int64;
@@ -130,11 +131,12 @@ package
                 for (var prefix:uint = 0; prefix < Math.max(4, alignment); prefix++)
                 {
                     Pack.begin(context, bytes, true);
+                    const prefixStart:uint = Pack.reserve(context, prefix);
                     for (var i:uint = 0; i < prefix; i++)
-                        bytes.writeByte(127);
-                    const before:uint = bytes.position;
-                    check(Pack.prepareVector(context, alignment) === bytes, "Vector preparation returns destination");
-                    const header:uint = bytes.position;
+                        si8(127, prefixStart + i);
+                    const before:uint = 4 + prefix;
+                    Pack.prepareVector(context, alignment, 7, 1);
+                    const header:uint = Pack.reserve(context, 0);
                     check(header % 4 == 0 && (header + 4) % alignment == 0,
                             "Vector header and payload alignment at every starting position");
                     var paddingZero:Boolean = true;
@@ -143,9 +145,9 @@ package
                     check(paddingZero && (prefix == 0 || bytes[before - 1] == 127),
                             "Vector padding is zero and preserves preceding data");
                     const start:uint = Pack.startVector(context, 7);
-                    check(start == header && bytes.position == header + 4, "Vector start only writes count");
+                    check(start == header && Pack.reserve(context, 0) == header + 4, "Vector start only writes count");
                     Pack.patchOffset(context, 0, start);
-                    check(bytes.position == header + 4, "Vector reference patch restores element cursor");
+                    check(Pack.reserve(context, 0) == header + 4, "Vector reference patch preserves element cursor");
                     bytes.position = 0;
                     check(bytes.readUnsignedInt() == header, "Vector reference targets header");
                     bytes.position = header;

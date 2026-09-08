@@ -2,21 +2,15 @@ package internal
 
 import "fmt"
 
-func generateVectorPack(w *IndentWriter, f field) {
+func generateVectorPack(w *IndentWriter, f field, objects map[string]object) {
 	e := *f.Element
 	w.Line("if (offset%d)", f.ID)
 	w.Line("{")
 	w.Indent()
-	w.Line("const bytes%d:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, %d);", f.ID, e.Alignment)
+	w.Line("as3flatbuffers.Pack.prepareVector(context, %d, source.%s.length, %d);", e.Alignment, f.Name, e.Width)
 	w.Line("const vector%d:uint = as3flatbuffers.Pack.startVector(context, source.%s.length);", f.ID, f.Name)
 	w.Line("as3flatbuffers.Pack.patchOffset(context, offset%d, vector%d);", f.ID, f.ID)
-	if e.Table || e.String {
-		w.Line("const data%d:uint = bytes%d.position;", f.ID, f.ID)
-		w.Line("for (var reserve%d:uint = 0; reserve%d < source.%s.length; reserve%d++)", f.ID, f.ID, f.Name, f.ID)
-		w.Indent()
-		w.Line("bytes%d.writeUnsignedInt(0);", f.ID)
-		w.Dedent()
-	}
+	w.Line("const data%d:uint = as3flatbuffers.Pack.reserve(context, source.%s.length * %d);", f.ID, f.Name, e.Width)
 	w.Line("for (var index%d:uint = 0; index%d < source.%s.length; index%d++)", f.ID, f.ID, f.Name, f.ID)
 	w.Line("{")
 	w.Indent()
@@ -35,13 +29,10 @@ func generateVectorPack(w *IndentWriter, f field) {
 		w.Line("const child%d:uint = %s.packInto(%s, context);", f.ID, e.Type, value)
 		w.Line("as3flatbuffers.Pack.patchOffset(context, data%d + index%d * 4, child%d);", f.ID, f.ID, f.ID)
 	case e.Struct:
-		w.Line("%s.packInto(%s, context);", e.Type, value)
-	case e.WordDefault != "":
-		w.Line("bytes%d.writeUnsignedInt(%s.low);", f.ID, value)
-		w.Line("bytes%d.writeUnsignedInt(uint(%s.high));", f.ID, value)
+		w.Line("const element%d:uint = data%d + index%d * %d;", f.ID, f.ID, f.ID, e.Width)
+		generateMemoryStruct(w, objects[e.Type], objects, value, fmt.Sprintf("element%d", f.ID), 0)
 	default:
-		write := map[string]string{"bool": "writeBoolean", "int8": "writeByte", "uint8": "writeByte", "int16": "writeShort", "uint16": "writeShort", "int32": "writeInt", "uint32": "writeUnsignedInt", "float32": "writeFloat", "float64": "writeDouble"}[e.Reader]
-		w.Line("bytes%d.%s(%s);", f.ID, write, value)
+		generateMemoryWrite(w, e, value, fmt.Sprintf("data%d + index%d * %d", f.ID, f.ID, e.Width))
 	}
 	w.Dedent()
 	w.Line("}")

@@ -40,7 +40,7 @@ package bench.data
             return destination;
         }
 
-        /** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */
+        /** Replace dst with packed bytes. Writes little-endian without changing dst.endian. Returns dst at position zero. */
         public static function pack(source:VectorScalars, dst:flash.utils.ByteArray):flash.utils.ByteArray
         {
             if (!source || !dst)
@@ -65,6 +65,7 @@ package bench.data
             if (!source || !context)
                 throw new ArgumentError("Source and context must be non-null");
 
+            as3flatbuffers.Pack.ensure(context, 48);
             as3flatbuffers.Pack.prepare(context, 2);
             as3flatbuffers.Pack.reserveVtable(context, 4);
             as3flatbuffers.Pack.prepare(context, 4);
@@ -79,32 +80,35 @@ package bench.data
             const table:uint = as3flatbuffers.Pack.endTable(context);
             if (offset1)
             {
-                const bytes1:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 4);
+                as3flatbuffers.Pack.prepareVector(context, 4, source.deltas.length, 4);
                 const vector1:uint = as3flatbuffers.Pack.startVector(context, source.deltas.length);
                 as3flatbuffers.Pack.patchOffset(context, offset1, vector1);
+                const data1:uint = as3flatbuffers.Pack.reserve(context, source.deltas.length * 4);
                 for (var index1:uint = 0; index1 < source.deltas.length; index1++)
                 {
-                    bytes1.writeInt(source.deltas[index1]);
+                    si32(source.deltas[index1], data1 + index1 * 4);
                 }
             }
             if (offset2)
             {
-                const bytes2:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 4);
+                as3flatbuffers.Pack.prepareVector(context, 4, source.checksums.length, 4);
                 const vector2:uint = as3flatbuffers.Pack.startVector(context, source.checksums.length);
                 as3flatbuffers.Pack.patchOffset(context, offset2, vector2);
+                const data2:uint = as3flatbuffers.Pack.reserve(context, source.checksums.length * 4);
                 for (var index2:uint = 0; index2 < source.checksums.length; index2++)
                 {
-                    bytes2.writeUnsignedInt(source.checksums[index2]);
+                    si32(source.checksums[index2], data2 + index2 * 4);
                 }
             }
             if (offset3)
             {
-                const bytes3:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 4);
+                as3flatbuffers.Pack.prepareVector(context, 4, source.weights.length, 4);
                 const vector3:uint = as3flatbuffers.Pack.startVector(context, source.weights.length);
                 as3flatbuffers.Pack.patchOffset(context, offset3, vector3);
+                const data3:uint = as3flatbuffers.Pack.reserve(context, source.weights.length * 4);
                 for (var index3:uint = 0; index3 < source.weights.length; index3++)
                 {
-                    bytes3.writeFloat(source.weights[index3]);
+                    sf32(source.weights[index3], data3 + index3 * 4);
                 }
             }
             return table;

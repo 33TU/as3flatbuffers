@@ -104,7 +104,7 @@ package fixtures.vectors
             return destination;
         }
 
-        /** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */
+        /** Replace dst with packed bytes. Writes little-endian without changing dst.endian. Returns dst at position zero. */
         public static function pack(source:Vectors, dst:flash.utils.ByteArray):flash.utils.ByteArray
         {
             if (!source || !dst)
@@ -129,6 +129,7 @@ package fixtures.vectors
             if (!source || !context)
                 throw new ArgumentError("Source and context must be non-null");
 
+            as3flatbuffers.Pack.ensure(context, 165);
             as3flatbuffers.Pack.prepare(context, 2);
             as3flatbuffers.Pack.reserveVtable(context, 17);
             as3flatbuffers.Pack.prepare(context, 4);
@@ -159,128 +160,137 @@ package fixtures.vectors
             const table:uint = as3flatbuffers.Pack.endTable(context);
             if (offset0)
             {
-                const bytes0:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 1);
+                as3flatbuffers.Pack.prepareVector(context, 1, source.flags.length, 1);
                 const vector0:uint = as3flatbuffers.Pack.startVector(context, source.flags.length);
                 as3flatbuffers.Pack.patchOffset(context, offset0, vector0);
+                const data0:uint = as3flatbuffers.Pack.reserve(context, source.flags.length * 1);
                 for (var index0:uint = 0; index0 < source.flags.length; index0++)
                 {
-                    bytes0.writeBoolean(source.flags[index0]);
+                    si8((source.flags[index0] ? 1 : 0), data0 + index0 * 1);
                 }
             }
             if (offset1)
             {
-                const bytes1:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 1);
+                as3flatbuffers.Pack.prepareVector(context, 1, source.signedBytes.length, 1);
                 const vector1:uint = as3flatbuffers.Pack.startVector(context, source.signedBytes.length);
                 as3flatbuffers.Pack.patchOffset(context, offset1, vector1);
+                const data1:uint = as3flatbuffers.Pack.reserve(context, source.signedBytes.length * 1);
                 for (var index1:uint = 0; index1 < source.signedBytes.length; index1++)
                 {
-                    bytes1.writeByte(source.signedBytes[index1]);
+                    si8(source.signedBytes[index1], data1 + index1 * 1);
                 }
             }
             if (offset2)
             {
-                const bytes2:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 1);
+                as3flatbuffers.Pack.prepareVector(context, 1, source.unsignedBytes.length, 1);
                 const vector2:uint = as3flatbuffers.Pack.startVector(context, source.unsignedBytes.length);
                 as3flatbuffers.Pack.patchOffset(context, offset2, vector2);
+                const data2:uint = as3flatbuffers.Pack.reserve(context, source.unsignedBytes.length * 1);
                 for (var index2:uint = 0; index2 < source.unsignedBytes.length; index2++)
                 {
-                    bytes2.writeByte(source.unsignedBytes[index2]);
+                    si8(source.unsignedBytes[index2], data2 + index2 * 1);
                 }
             }
             if (offset3)
             {
-                const bytes3:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 2);
+                as3flatbuffers.Pack.prepareVector(context, 2, source.signedShorts.length, 2);
                 const vector3:uint = as3flatbuffers.Pack.startVector(context, source.signedShorts.length);
                 as3flatbuffers.Pack.patchOffset(context, offset3, vector3);
+                const data3:uint = as3flatbuffers.Pack.reserve(context, source.signedShorts.length * 2);
                 for (var index3:uint = 0; index3 < source.signedShorts.length; index3++)
                 {
-                    bytes3.writeShort(source.signedShorts[index3]);
+                    si16(source.signedShorts[index3], data3 + index3 * 2);
                 }
             }
             if (offset4)
             {
-                const bytes4:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 2);
+                as3flatbuffers.Pack.prepareVector(context, 2, source.unsignedShorts.length, 2);
                 const vector4:uint = as3flatbuffers.Pack.startVector(context, source.unsignedShorts.length);
                 as3flatbuffers.Pack.patchOffset(context, offset4, vector4);
+                const data4:uint = as3flatbuffers.Pack.reserve(context, source.unsignedShorts.length * 2);
                 for (var index4:uint = 0; index4 < source.unsignedShorts.length; index4++)
                 {
-                    bytes4.writeShort(source.unsignedShorts[index4]);
+                    si16(source.unsignedShorts[index4], data4 + index4 * 2);
                 }
             }
             if (offset5)
             {
-                const bytes5:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 4);
+                as3flatbuffers.Pack.prepareVector(context, 4, source.ints.length, 4);
                 const vector5:uint = as3flatbuffers.Pack.startVector(context, source.ints.length);
                 as3flatbuffers.Pack.patchOffset(context, offset5, vector5);
+                const data5:uint = as3flatbuffers.Pack.reserve(context, source.ints.length * 4);
                 for (var index5:uint = 0; index5 < source.ints.length; index5++)
                 {
-                    bytes5.writeInt(source.ints[index5]);
+                    si32(source.ints[index5], data5 + index5 * 4);
                 }
             }
             if (offset6)
             {
-                const bytes6:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 4);
+                as3flatbuffers.Pack.prepareVector(context, 4, source.uints.length, 4);
                 const vector6:uint = as3flatbuffers.Pack.startVector(context, source.uints.length);
                 as3flatbuffers.Pack.patchOffset(context, offset6, vector6);
+                const data6:uint = as3flatbuffers.Pack.reserve(context, source.uints.length * 4);
                 for (var index6:uint = 0; index6 < source.uints.length; index6++)
                 {
-                    bytes6.writeUnsignedInt(source.uints[index6]);
+                    si32(source.uints[index6], data6 + index6 * 4);
                 }
             }
             if (offset7)
             {
-                const bytes7:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 8);
+                as3flatbuffers.Pack.prepareVector(context, 8, source.longs.length, 8);
                 const vector7:uint = as3flatbuffers.Pack.startVector(context, source.longs.length);
                 as3flatbuffers.Pack.patchOffset(context, offset7, vector7);
+                const data7:uint = as3flatbuffers.Pack.reserve(context, source.longs.length * 8);
                 for (var index7:uint = 0; index7 < source.longs.length; index7++)
                 {
                     if (source.longs[index7] == null)
                         throw new ArgumentError("longs elements must be non-null");
-                    bytes7.writeUnsignedInt(source.longs[index7].low);
-                    bytes7.writeUnsignedInt(uint(source.longs[index7].high));
+                    si32(source.longs[index7].low, data7 + index7 * 8);
+                    si32(source.longs[index7].high, data7 + index7 * 8 + 4);
                 }
             }
             if (offset8)
             {
-                const bytes8:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 8);
+                as3flatbuffers.Pack.prepareVector(context, 8, source.ulongs.length, 8);
                 const vector8:uint = as3flatbuffers.Pack.startVector(context, source.ulongs.length);
                 as3flatbuffers.Pack.patchOffset(context, offset8, vector8);
+                const data8:uint = as3flatbuffers.Pack.reserve(context, source.ulongs.length * 8);
                 for (var index8:uint = 0; index8 < source.ulongs.length; index8++)
                 {
                     if (source.ulongs[index8] == null)
                         throw new ArgumentError("ulongs elements must be non-null");
-                    bytes8.writeUnsignedInt(source.ulongs[index8].low);
-                    bytes8.writeUnsignedInt(uint(source.ulongs[index8].high));
+                    si32(source.ulongs[index8].low, data8 + index8 * 8);
+                    si32(source.ulongs[index8].high, data8 + index8 * 8 + 4);
                 }
             }
             if (offset9)
             {
-                const bytes9:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 4);
+                as3flatbuffers.Pack.prepareVector(context, 4, source.floats.length, 4);
                 const vector9:uint = as3flatbuffers.Pack.startVector(context, source.floats.length);
                 as3flatbuffers.Pack.patchOffset(context, offset9, vector9);
+                const data9:uint = as3flatbuffers.Pack.reserve(context, source.floats.length * 4);
                 for (var index9:uint = 0; index9 < source.floats.length; index9++)
                 {
-                    bytes9.writeFloat(source.floats[index9]);
+                    sf32(source.floats[index9], data9 + index9 * 4);
                 }
             }
             if (offset10)
             {
-                const bytes10:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 8);
+                as3flatbuffers.Pack.prepareVector(context, 8, source.doubles.length, 8);
                 const vector10:uint = as3flatbuffers.Pack.startVector(context, source.doubles.length);
                 as3flatbuffers.Pack.patchOffset(context, offset10, vector10);
+                const data10:uint = as3flatbuffers.Pack.reserve(context, source.doubles.length * 8);
                 for (var index10:uint = 0; index10 < source.doubles.length; index10++)
                 {
-                    bytes10.writeDouble(source.doubles[index10]);
+                    sf64(source.doubles[index10], data10 + index10 * 8);
                 }
             }
             if (offset11)
             {
-                const bytes11:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 4);
+                as3flatbuffers.Pack.prepareVector(context, 4, source.texts.length, 4);
                 const vector11:uint = as3flatbuffers.Pack.startVector(context, source.texts.length);
                 as3flatbuffers.Pack.patchOffset(context, offset11, vector11);
-                const data11:uint = bytes11.position;
-                for (var reserve11:uint = 0; reserve11 < source.texts.length; reserve11++)
-                    bytes11.writeUnsignedInt(0);
+                const data11:uint = as3flatbuffers.Pack.reserve(context, source.texts.length * 4);
                 for (var index11:uint = 0; index11 < source.texts.length; index11++)
                 {
                     if (source.texts[index11] == null)
@@ -291,36 +301,43 @@ package fixtures.vectors
             }
             if (offset12)
             {
-                const bytes12:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 4);
+                as3flatbuffers.Pack.prepareVector(context, 4, source.points.length, 8);
                 const vector12:uint = as3flatbuffers.Pack.startVector(context, source.points.length);
                 as3flatbuffers.Pack.patchOffset(context, offset12, vector12);
+                const data12:uint = as3flatbuffers.Pack.reserve(context, source.points.length * 8);
                 for (var index12:uint = 0; index12 < source.points.length; index12++)
                 {
                     if (source.points[index12] == null)
                         throw new ArgumentError("points elements must be non-null");
-                    fixtures.vectors.Pair.packInto(source.points[index12], context);
+                    const element12:uint = data12 + index12 * 8;
+                    si32(source.points[index12].x, element12 + 0);
+                    si32(source.points[index12].y, element12 + 4);
                 }
             }
             if (offset13)
             {
-                const bytes13:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 16);
+                as3flatbuffers.Pack.prepareVector(context, 16, source.aligned.length, 16);
                 const vector13:uint = as3flatbuffers.Pack.startVector(context, source.aligned.length);
                 as3flatbuffers.Pack.patchOffset(context, offset13, vector13);
+                const data13:uint = as3flatbuffers.Pack.reserve(context, source.aligned.length * 16);
                 for (var index13:uint = 0; index13 < source.aligned.length; index13++)
                 {
                     if (source.aligned[index13] == null)
                         throw new ArgumentError("aligned elements must be non-null");
-                    fixtures.vectors.Aligned.packInto(source.aligned[index13], context);
+                    const element13:uint = data13 + index13 * 16;
+                    if (!source.aligned[index13].point)
+                        throw new ArgumentError("source.aligned[index13].point must be non-null");
+                    si32(source.aligned[index13].point.x, element13 + 0);
+                    si32(source.aligned[index13].point.y, element13 + 4);
+                    sf64(source.aligned[index13].weight, element13 + 8);
                 }
             }
             if (offset14)
             {
-                const bytes14:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 4);
+                as3flatbuffers.Pack.prepareVector(context, 4, source.entries.length, 4);
                 const vector14:uint = as3flatbuffers.Pack.startVector(context, source.entries.length);
                 as3flatbuffers.Pack.patchOffset(context, offset14, vector14);
-                const data14:uint = bytes14.position;
-                for (var reserve14:uint = 0; reserve14 < source.entries.length; reserve14++)
-                    bytes14.writeUnsignedInt(0);
+                const data14:uint = as3flatbuffers.Pack.reserve(context, source.entries.length * 4);
                 for (var index14:uint = 0; index14 < source.entries.length; index14++)
                 {
                     if (source.entries[index14] == null)

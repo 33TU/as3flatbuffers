@@ -55,21 +55,35 @@ position to the relative root offset. Struct views bind directly to their inline
 position.
 
 `Point.pack(source, dst)` writes forwards directly into `dst`, replaces its contents,
-returns that same ByteArray, and leaves its position at zero. Set `dst.endian` to
-`Endian.LITTLE_ENDIAN` before packing; packing neither changes nor checks it.
-There is no scratch ByteArray or final byte copy. Repacking the same destination
-invalidates views into its previous contents; bind them again afterward. A packing
-error may leave partial output in `dst`.
+returns that same ByteArray, and leaves its position at zero. Intrinsic stores
+write little-endian bytes without changing `dst.endian`. Select
+`Endian.LITTLE_ENDIAN` when reading the root offset with ByteArray methods.
+There is no scratch output buffer or final byte copy. Repacking the destination
+invalidates views into its previous contents; bind them again afterward.
 
 Each generated class caches a `PackContext` in `private static const PACK`.
 `Pack` provides static operations taking that context as their first argument.
-The context owns the destination reference, reusable field vector, table/vtable
-positions, and root flag; its fields are package-internal. `pack()` calls
-`Pack.begin(context, dst, reserveRoot)` to initialize output,
-then `Pack.reset(context)` in `finally` to clear state and detach the destination,
-including on failure.
-Packing is synchronous; nested tables and structs share the parent's context via
-`packInto(source, context)`.
+The context holds an integer write cursor, destination reference, reusable field
+vector, table/vtable positions, root flag, and saved domain-memory binding.
+Its fields are package-internal. `pack()` calls `Pack.begin()` to bind the
+caller destination as `ApplicationDomain.domainMemory`. The destination is
+expanded to the minimum domain-memory size when necessary, and capacity grows
+before stores. Generated tables reserve a conservative maximum body size;
+structs and vectors reserve their complete payloads.
+
+Scalars, structs, vectors, padding, vtables, and references use intrinsic stores
+at explicit offsets. String encoding still uses native `writeUTFBytes()`, with
+its ByteArray cursor synchronized to the packer's cursor. During packing,
+`dst.length` represents writable capacity, not the final encoded length.
+`Pack.finish()` restores the caller's domain memory before trimming the output
+and positioning it at zero. `Pack.reset()` in `finally` restores unfinished
+bindings and clears the context on failure too. A packing error may leave partial
+output and unused capacity in `dst`.
+
+A destination already installed as the caller's active domain memory is rejected
+before changing its contents. Packing is synchronous; nested tables and structs
+share the parent's binding and context via `packInto(source, context)`.
+Packing and owned unpacking require the ASC2 compiler used by the AIR builds here.
 
 The forward builder reserves vtable space before writing each table, then patches
 field offsets and the root offset. It reserves slots for all schema fields, including
@@ -104,7 +118,8 @@ Schema defaults are still range-checked by the generator.
 Generated table packers omit scalar schema defaults before calling the builder.
 They emit `Pack.prepare(context, alignment)` only where alignment is not already
 guaranteed on both present and absent field paths. Scalar add methods write the
-value and record its offset without adding padding.
+value and record its offset without adding padding. Intrinsic stores use the
+context cursor instead of advancing `ByteArray.position`.
 Optional scalars are written whenever present, including zero and false.
 `Pack` is internal support for generated packers, not a manual construction API.
 Generated code guarantees valid slots, alignment, call order, and reference patches.
@@ -172,8 +187,10 @@ a vector drops removed elements. `clone()` copies vector storage and mutable
 elements deeply, while `reset()` clears vectors in place.
 
 Packing writes contiguous elements after the table, aligned for their element
-type. Generated packers call `prepareVector()` for alignment, `startVector()`
-to write the count, and `patchOffset()` to update the parent reference.
+type. Generated packers call `prepareVector()` for capacity and alignment,
+`startVector()` to write the count, and `patchOffset()` to update the parent
+reference. `reserve()` advances the context cursor over the payload and returns
+its starting offset for generated intrinsic stores.
 String/table vectors reserve all element references before writing their
 children. Owned decoding validates vector extents against the original input
 length before allocating storage, then uses the shared domain-memory context.
@@ -211,9 +228,10 @@ padding and `force_align`. A struct's static `pack(source, dst)` writes raw stru
 bytes starting at zero, without a root-offset word. Its `packInto(source, context)`
 writes inline at the current aligned builder position and returns the absolute
 struct offset. Generated table packing records it immediately with `addStruct`.
-Struct packers prepare their size and alignment once, then write scalar fields
-and zero padding directly into the destination ByteArray. Nested struct writes
-are expanded into the containing struct's packer, sharing that preparation.
+Struct packers reserve their size and alignment once, then write scalar fields
+and zero padding at fixed domain-memory offsets. Nested struct writes are
+expanded into the containing packer, sharing that reservation. Struct-vector
+elements are also expanded into the vector loop, using the reserved payload.
 Null checks for nested structs and 64-bit values remain.
 Generated table packers select the maximum field alignment and record each struct
 inside its containing table. Struct offsets cannot be reused elsewhere. Root struct

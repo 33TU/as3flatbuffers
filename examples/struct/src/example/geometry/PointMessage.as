@@ -32,7 +32,7 @@ package example.geometry
             return destination;
         }
 
-        /** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */
+        /** Replace dst with packed bytes. Writes little-endian without changing dst.endian. Returns dst at position zero. */
         public static function pack(source:PointMessage, dst:flash.utils.ByteArray):flash.utils.ByteArray
         {
             if (!source || !dst)
@@ -57,6 +57,7 @@ package example.geometry
             if (!source || !context)
                 throw new ArgumentError("Source and context must be non-null");
 
+            as3flatbuffers.Pack.ensure(context, 25);
             as3flatbuffers.Pack.prepare(context, 2);
             as3flatbuffers.Pack.reserveVtable(context, 1);
             as3flatbuffers.Pack.prepare(context, 4);

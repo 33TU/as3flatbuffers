@@ -38,7 +38,7 @@ package fixtures.geometry
             return destination;
         }
 
-        /** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */
+        /** Replace dst with packed bytes. Writes little-endian without changing dst.endian. Returns dst at position zero. */
         public static function pack(source:Envelope, dst:flash.utils.ByteArray):flash.utils.ByteArray
         {
             if (!source || !dst)
@@ -63,46 +63,40 @@ package fixtures.geometry
             if (!source || !context)
                 throw new ArgumentError("Source and context must be non-null");
 
-            const bytes:flash.utils.ByteArray = as3flatbuffers.Pack.prepareStruct(context, 72, 8);
-            const start:uint = bytes.position;
-
-            bytes.writeByte(source.lead);
-            bytes.writeUnsignedInt(0);
-            bytes.writeShort(0);
-            bytes.writeByte(0);
+            const start:uint = as3flatbuffers.Pack.prepareStruct(context, 72, 8);
+            si8(source.lead, start + 0);
+            si32(0, start + 1);
+            si16(0, start + 5);
+            si8(0, start + 7);
             if (!source.frame)
-                throw new ArgumentError("frame must be non-null");
-
-            bytes.writeByte(source.frame.tag);
-            bytes.writeShort(0);
-            bytes.writeByte(0);
+                throw new ArgumentError("source.frame must be non-null");
+            si8(source.frame.tag, start + 8);
+            si16(0, start + 9);
+            si8(0, start + 11);
             if (!source.frame.point)
-                throw new ArgumentError("frame.point must be non-null");
-
-            bytes.writeFloat(source.frame.point.x);
-            bytes.writeFloat(source.frame.point.y);
-            bytes.writeShort(source.frame.count);
-            bytes.writeShort(0);
+                throw new ArgumentError("source.frame.point must be non-null");
+            sf32(source.frame.point.x, start + 12);
+            sf32(source.frame.point.y, start + 16);
+            si16(source.frame.count, start + 20);
+            si16(0, start + 22);
             if (!source.frame.signedValue)
-                throw new ArgumentError("frame.signedValue must be non-null");
-
-            bytes.writeUnsignedInt(source.frame.signedValue.low);
-            bytes.writeUnsignedInt(uint(source.frame.signedValue.high));
+                throw new ArgumentError("source.frame.signedValue must be non-null");
+            si32(source.frame.signedValue.low, start + 24);
+            si32(source.frame.signedValue.high, start + 24 + 4);
             if (!source.frame.unsignedValue)
-                throw new ArgumentError("frame.unsignedValue must be non-null");
-
-            bytes.writeUnsignedInt(source.frame.unsignedValue.low);
-            bytes.writeUnsignedInt(uint(source.frame.unsignedValue.high));
-            bytes.writeDouble(source.frame.weight);
-            bytes.writeBoolean(source.frame.enabled);
-            bytes.writeByte(source.frame.tiny);
-            bytes.writeShort(source.frame.small);
-            bytes.writeInt(source.frame.number);
-            bytes.writeUnsignedInt(source.frame.unsignedNumber);
-            bytes.writeFloat(source.frame.fraction);
-            bytes.writeShort(source.tail);
-            bytes.writeUnsignedInt(0);
-            bytes.writeShort(0);
+                throw new ArgumentError("source.frame.unsignedValue must be non-null");
+            si32(source.frame.unsignedValue.low, start + 32);
+            si32(source.frame.unsignedValue.high, start + 32 + 4);
+            sf64(source.frame.weight, start + 40);
+            si8((source.frame.enabled ? 1 : 0), start + 48);
+            si8(source.frame.tiny, start + 49);
+            si16(source.frame.small, start + 50);
+            si32(source.frame.number, start + 52);
+            si32(source.frame.unsignedNumber, start + 56);
+            sf32(source.frame.fraction, start + 60);
+            si16(source.tail, start + 64);
+            si32(0, start + 66);
+            si16(0, start + 70);
             return start;
         }
 

@@ -48,8 +48,8 @@ package
             Pack.startTable(builder);
             Pack.prepare(builder, 4);
             Pack.addFloat32(builder, 0, 42);
-            const end:uint = dst.position;
-            check(dst.length == end && end > 4, "Pack writes directly into dst before finish");
+            const end:uint = Pack.reserve(builder, 0);
+            check(dst.length >= end && end > 4, "Pack writes directly into dst before finish");
             dst.position = end - 4;
             check(dst.readFloat() == 42, "Scalar bytes already reside in dst");
             check(Pack.finish(builder, Pack.endTable(builder)) === dst, "Finish returns the same buffer without copying");
@@ -58,7 +58,7 @@ package
             check(dst.length == length && dst.position == 0, "Detaching leaves finished bytes untouched");
             rejects(function():void
                 {
-                    Pack.prepareStruct(builder, 4, 4).writeInt(7);
+                    Pack.prepareStruct(builder, 4, 4);
                 }, check, "Detached builder cannot write");
 
             const other:ByteArray = FixtureBuffer.create();
@@ -203,6 +203,7 @@ package
             dst.endian = Endian.BIG_ENDIAN;
             Point.pack(point, dst);
             check(dst.endian == Endian.BIG_ENDIAN, "Packing does not change the caller's endian setting");
+            check(Point.unpack(dst).x == point.x, "Intrinsic packing remains little-endian regardless of ByteArray endian");
             dst.endian = Endian.LITTLE_ENDIAN;
             Point.pack(point, dst);
             check(FixtureBuffer.bindRoot(view, dst).x == 7, "Caller-selected little-endian works after builder reuse");

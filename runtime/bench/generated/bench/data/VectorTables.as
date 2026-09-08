@@ -39,7 +39,7 @@ package bench.data
             return destination;
         }
 
-        /** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */
+        /** Replace dst with packed bytes. Writes little-endian without changing dst.endian. Returns dst at position zero. */
         public static function pack(source:VectorTables, dst:flash.utils.ByteArray):flash.utils.ByteArray
         {
             if (!source || !dst)
@@ -64,6 +64,7 @@ package bench.data
             if (!source || !context)
                 throw new ArgumentError("Source and context must be non-null");
 
+            as3flatbuffers.Pack.ensure(context, 30);
             as3flatbuffers.Pack.prepare(context, 2);
             as3flatbuffers.Pack.reserveVtable(context, 2);
             as3flatbuffers.Pack.prepare(context, 4);
@@ -76,12 +77,10 @@ package bench.data
             const table:uint = as3flatbuffers.Pack.endTable(context);
             if (offset1)
             {
-                const bytes1:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 4);
+                as3flatbuffers.Pack.prepareVector(context, 4, source.points.length, 4);
                 const vector1:uint = as3flatbuffers.Pack.startVector(context, source.points.length);
                 as3flatbuffers.Pack.patchOffset(context, offset1, vector1);
-                const data1:uint = bytes1.position;
-                for (var reserve1:uint = 0; reserve1 < source.points.length; reserve1++)
-                    bytes1.writeUnsignedInt(0);
+                const data1:uint = as3flatbuffers.Pack.reserve(context, source.points.length * 4);
                 for (var index1:uint = 0; index1 < source.points.length; index1++)
                 {
                     if (source.points[index1] == null)

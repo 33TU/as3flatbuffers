@@ -265,6 +265,7 @@ package
                 StringTests.run(directory, check, read, write);
                 VectorTests.run(directory, check, read, write);
                 UnpackTests.run(check);
+                DomainPackTests.run(check);
                 result.ok = true;
                 result.checks = checks;
                 status = 0;

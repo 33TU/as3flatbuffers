@@ -50,7 +50,7 @@ package example.inventory
             return destination;
         }
 
-        /** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */
+        /** Replace dst with packed bytes. Writes little-endian without changing dst.endian. Returns dst at position zero. */
         public static function pack(source:Inventory, dst:flash.utils.ByteArray):flash.utils.ByteArray
         {
             if (!source || !dst)
@@ -75,6 +75,7 @@ package example.inventory
             if (!source || !context)
                 throw new ArgumentError("Source and context must be non-null");
 
+            as3flatbuffers.Pack.ensure(context, 48);
             as3flatbuffers.Pack.prepare(context, 2);
             as3flatbuffers.Pack.reserveVtable(context, 4);
             as3flatbuffers.Pack.prepare(context, 4);
@@ -86,12 +87,10 @@ package example.inventory
             const table:uint = as3flatbuffers.Pack.endTable(context);
             if (offset0)
             {
-                const bytes0:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 4);
+                as3flatbuffers.Pack.prepareVector(context, 4, source.items.length, 4);
                 const vector0:uint = as3flatbuffers.Pack.startVector(context, source.items.length);
                 as3flatbuffers.Pack.patchOffset(context, offset0, vector0);
-                const data0:uint = bytes0.position;
-                for (var reserve0:uint = 0; reserve0 < source.items.length; reserve0++)
-                    bytes0.writeUnsignedInt(0);
+                const data0:uint = as3flatbuffers.Pack.reserve(context, source.items.length * 4);
                 for (var index0:uint = 0; index0 < source.items.length; index0++)
                 {
                     if (source.items[index0] == null)
@@ -102,24 +101,25 @@ package example.inventory
             }
             if (offset1)
             {
-                const bytes1:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 4);
+                as3flatbuffers.Pack.prepareVector(context, 4, source.path.length, 8);
                 const vector1:uint = as3flatbuffers.Pack.startVector(context, source.path.length);
                 as3flatbuffers.Pack.patchOffset(context, offset1, vector1);
+                const data1:uint = as3flatbuffers.Pack.reserve(context, source.path.length * 8);
                 for (var index1:uint = 0; index1 < source.path.length; index1++)
                 {
                     if (source.path[index1] == null)
                         throw new ArgumentError("path elements must be non-null");
-                    example.inventory.Position.packInto(source.path[index1], context);
+                    const element1:uint = data1 + index1 * 8;
+                    sf32(source.path[index1].x, element1 + 0);
+                    sf32(source.path[index1].y, element1 + 4);
                 }
             }
             if (offset2)
             {
-                const bytes2:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 4);
+                as3flatbuffers.Pack.prepareVector(context, 4, source.tags.length, 4);
                 const vector2:uint = as3flatbuffers.Pack.startVector(context, source.tags.length);
                 as3flatbuffers.Pack.patchOffset(context, offset2, vector2);
-                const data2:uint = bytes2.position;
-                for (var reserve2:uint = 0; reserve2 < source.tags.length; reserve2++)
-                    bytes2.writeUnsignedInt(0);
+                const data2:uint = as3flatbuffers.Pack.reserve(context, source.tags.length * 4);
                 for (var index2:uint = 0; index2 < source.tags.length; index2++)
                 {
                     if (source.tags[index2] == null)
@@ -130,12 +130,13 @@ package example.inventory
             }
             if (offset3)
             {
-                const bytes3:flash.utils.ByteArray = as3flatbuffers.Pack.prepareVector(context, 4);
+                as3flatbuffers.Pack.prepareVector(context, 4, source.scores.length, 4);
                 const vector3:uint = as3flatbuffers.Pack.startVector(context, source.scores.length);
                 as3flatbuffers.Pack.patchOffset(context, offset3, vector3);
+                const data3:uint = as3flatbuffers.Pack.reserve(context, source.scores.length * 4);
                 for (var index3:uint = 0; index3 < source.scores.length; index3++)
                 {
-                    bytes3.writeInt(source.scores[index3]);
+                    si32(source.scores[index3], data3 + index3 * 4);
                 }
             }
             return table;

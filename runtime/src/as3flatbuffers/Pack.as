@@ -2,355 +2,332 @@ package as3flatbuffers
 {
     import as3flatbuffers.types.Int64;
     import as3flatbuffers.types.UInt64;
+    import avm2.intrinsics.memory.*;
+    import flash.system.ApplicationDomain;
     import flash.utils.ByteArray;
 
-    /** Internal support for generated packers; writes forwards into a little-endian ByteArray. */
+    /** Internal generated packing support; writes little-endian bytes directly into the destination. */
     public final class Pack
     {
-        /** Clear construction state and detach the destination without changing its bytes. */
+        private static const DOMAIN:ApplicationDomain = ApplicationDomain.currentDomain;
+
+        /** Restore an unfinished binding, clear state, and detach without trimming partial output. */
         [Inline]
         public static function reset(context:PackContext):void
         {
+            if (context.bound)
+            {
+                DOMAIN.domainMemory = context.previous;
+                context.bound = false;
+            }
+            context.previous = null;
             context.bytes = null;
+            context.position = 0;
             context.fields.length = 0;
             context.tableStart = 0;
             context.vtableStart = 0;
             context.rootReserved = false;
         }
 
-        /** Start packing into a non-null destination, replacing its contents. Endian is unchanged. */
-        [Inline]
+        /** Bind dst as domain memory. Generated callers always reset in finally. */
         public static function begin(context:PackContext, dst:ByteArray, reserveRoot:Boolean):void
         {
-            dst.length = 0;
+            reset(context);
+            if (DOMAIN.domainMemory === dst)
+                throw new ArgumentError("Destination is already active domain memory");
+            if (dst.length < ApplicationDomain.MIN_DOMAIN_MEMORY_LENGTH)
+                dst.length = ApplicationDomain.MIN_DOMAIN_MEMORY_LENGTH;
             dst.position = 0;
-
-            context.fields.length = 0;
-            context.tableStart = 0;
-            context.vtableStart = 0;
             context.bytes = dst;
+            context.previous = DOMAIN.domainMemory;
+            DOMAIN.domainMemory = dst;
+            context.bound = true;
             context.rootReserved = reserveRoot;
-
+            context.position = reserveRoot ? 4 : 0;
             if (reserveRoot)
-                dst.writeUnsignedInt(0);
+                si32(0, 0);
         }
 
-        /** Patch the root offset and return dst itself, positioned at zero. No copy. */
+        /** Restore the caller binding before trimming dst to its encoded length. No copy. */
         [Inline]
         public static function finish(context:PackContext, root:uint):ByteArray
         {
             const bytes:ByteArray = context.bytes;
-
-            bytes.position = 0;
             if (context.rootReserved)
-                bytes.writeUnsignedInt(root);
+                si32(root, 0);
+            DOMAIN.domainMemory = context.previous;
+            context.bound = false;
+            bytes.length = context.position;
             bytes.position = 0;
             return bytes;
+        }
+
+        /** Grow writable capacity before intrinsic stores; position tracks the encoded length. */
+        [Inline]
+        public static function ensure(context:PackContext, additional:Number):void
+        {
+            const needed:Number = Number(context.position) + additional;
+            const bytes:ByteArray = context.bytes;
+            if (needed > bytes.length)
+            {
+                if (needed > uint.MAX_VALUE)
+                    throw new RangeError("Buffer is too large");
+                bytes.length = Math.max(needed, Math.min(uint.MAX_VALUE, Number(bytes.length) * 2));
+            }
+        }
+
+        /** Reserve an already capacity-checked payload for generated intrinsic writes. */
+        [Inline]
+        public static function reserve(context:PackContext, count:uint):uint
+        {
+            const start:uint = context.position;
+            context.position = start + count;
+            return start;
         }
 
         [Inline]
         public static function reserveVtable(context:PackContext, fieldCount:uint):void
         {
-            const bytes:ByteArray = context.bytes;
-
             context.fields.length = fieldCount;
-            const vtableBytes:uint = (fieldCount + 2) * 2;
-            context.vtableStart = bytes.position;
-            // endTable writes every reserved byte, including absent field entries.
-            bytes.position += vtableBytes;
+            context.vtableStart = context.position;
+            context.position += (fieldCount + 2) * 2;
         }
 
         [Inline]
         public static function startTable(context:PackContext):void
         {
-            const bytes:ByteArray = context.bytes;
-
-            context.tableStart = bytes.position;
-            bytes.writeInt(int(context.tableStart - context.vtableStart));
+            const start:uint = context.position;
+            context.tableStart = start;
+            si32(start - context.vtableStart, start);
+            context.position = start + 4;
         }
 
         [Inline]
         public static function endTable(context:PackContext):uint
         {
-            const bytes:ByteArray = context.bytes;
-            const tableStart:uint = context.tableStart;
-            const end:uint = bytes.position;
-            const objectSize:uint = end - tableStart;
-            if (objectSize > 65535)
+            const start:uint = context.tableStart;
+            const size:uint = context.position - start;
+            if (size > 65535)
                 throw new RangeError("Table is too large");
-
             const fields:Vector.<uint> = context.fields;
             const count:uint = fields.length;
-
-            bytes.position = context.vtableStart;
-            bytes.writeShort((count + 2) * 2);
-            bytes.writeShort(objectSize);
+            const vtable:uint = context.vtableStart;
+            si16((count + 2) * 2, vtable);
+            si16(size, vtable + 2);
             for (var i:uint = 0; i < count; i++)
             {
                 const field:uint = fields[i];
-                bytes.writeShort(field ? field - tableStart : 0);
+                si16(field ? field - start : 0, vtable + 4 + i * 2);
             }
-
-            bytes.position = end;
             fields.length = 0;
-            return tableStart;
+            return start;
         }
 
         [Inline]
         public static function prepare(context:PackContext, alignment:uint):void
         {
-            const bytes:ByteArray = context.bytes;
-
-            // All accepted alignments are powers of two.
-            var padding:uint = (0 - bytes.position) & (alignment - 1);
-            while (padding >= 16)
-            {
-                bytes.writeDouble(0);
-                bytes.writeDouble(0);
-                padding -= 16;
-            }
-            if (padding & 8)
-                bytes.writeDouble(0);
-            if (padding & 4)
-                bytes.writeUnsignedInt(0);
-            if (padding & 2)
-                bytes.writeShort(0);
-            if (padding & 1)
-                bytes.writeByte(0);
+            pad(context, (0 - context.position) & (alignment - 1));
         }
 
         [Inline]
         public static function pad(context:PackContext, count:uint):void
         {
-            const bytes:ByteArray = context.bytes;
-
-            // Buffer growth can expose old bytes after reuse, so write zeros explicitly.
+            ensure(context, count);
+            var position:uint = context.position;
+            context.position = position + count;
             while (count >= 16)
             {
-                bytes.writeDouble(0);
-                bytes.writeDouble(0);
+                sf64(0, position);
+                sf64(0, position + 8);
+                position += 16;
                 count -= 16;
             }
             if (count & 8)
-                bytes.writeDouble(0);
+            {
+                sf64(0, position);
+                position += 8;
+            }
             if (count & 4)
-                bytes.writeUnsignedInt(0);
+            {
+                si32(0, position);
+                position += 4;
+            }
             if (count & 2)
-                bytes.writeShort(0);
+            {
+                si16(0, position);
+                position += 2;
+            }
             if (count & 1)
-                bytes.writeByte(0);
+                si8(0, position);
         }
 
         [Inline]
         public static function addBool(context:PackContext, slot:uint, value:Boolean):void
         {
-            const bytes:ByteArray = context.bytes;
-
-            bytes.writeBoolean(value);
-            context.fields[slot] = bytes.position - 1;
+            const position:uint = context.position;
+            si8(value ? 1 : 0, position);
+            context.fields[slot] = position;
+            context.position = position + 1;
         }
 
         [Inline]
         public static function addInt8(context:PackContext, slot:uint, value:int):void
         {
-            const bytes:ByteArray = context.bytes;
-
-            bytes.writeByte(value);
-            context.fields[slot] = bytes.position - 1;
+            const position:uint = context.position;
+            si8(value, position);
+            context.fields[slot] = position;
+            context.position = position + 1;
         }
 
         [Inline]
         public static function addUint8(context:PackContext, slot:uint, value:uint):void
         {
-            const bytes:ByteArray = context.bytes;
-
-            bytes.writeByte(value);
-            context.fields[slot] = bytes.position - 1;
+            const position:uint = context.position;
+            si8(value, position);
+            context.fields[slot] = position;
+            context.position = position + 1;
         }
 
         [Inline]
         public static function addInt16(context:PackContext, slot:uint, value:int):void
         {
-            const bytes:ByteArray = context.bytes;
-
-            bytes.writeShort(value);
-            context.fields[slot] = bytes.position - 2;
+            const position:uint = context.position;
+            si16(value, position);
+            context.fields[slot] = position;
+            context.position = position + 2;
         }
 
         [Inline]
         public static function addUint16(context:PackContext, slot:uint, value:uint):void
         {
-            const bytes:ByteArray = context.bytes;
-
-            bytes.writeShort(value);
-            context.fields[slot] = bytes.position - 2;
+            const position:uint = context.position;
+            si16(value, position);
+            context.fields[slot] = position;
+            context.position = position + 2;
         }
 
         [Inline]
         public static function addInt32(context:PackContext, slot:uint, value:int):void
         {
-            const bytes:ByteArray = context.bytes;
-
-            bytes.writeInt(value);
-            context.fields[slot] = bytes.position - 4;
+            const position:uint = context.position;
+            si32(value, position);
+            context.fields[slot] = position;
+            context.position = position + 4;
         }
 
         [Inline]
         public static function addUint32(context:PackContext, slot:uint, value:uint):void
         {
-            const bytes:ByteArray = context.bytes;
-
-            bytes.writeUnsignedInt(value);
-            context.fields[slot] = bytes.position - 4;
+            const position:uint = context.position;
+            si32(value, position);
+            context.fields[slot] = position;
+            context.position = position + 4;
         }
 
         [Inline]
         public static function addInt64(context:PackContext, slot:uint, value:Int64):void
         {
-            const bytes:ByteArray = context.bytes;
-
-            bytes.writeUnsignedInt(value.low);
-            bytes.writeUnsignedInt(uint(value.high));
-            context.fields[slot] = bytes.position - 8;
+            const position:uint = context.position;
+            si32(value.low, position);
+            si32(value.high, position + 4);
+            context.fields[slot] = position;
+            context.position = position + 8;
         }
 
         [Inline]
         public static function addUint64(context:PackContext, slot:uint, value:UInt64):void
         {
-            const bytes:ByteArray = context.bytes;
-
-            bytes.writeUnsignedInt(value.low);
-            bytes.writeUnsignedInt(uint(value.high));
-            context.fields[slot] = bytes.position - 8;
+            const position:uint = context.position;
+            si32(value.low, position);
+            si32(value.high, position + 4);
+            context.fields[slot] = position;
+            context.position = position + 8;
         }
 
         [Inline]
         public static function addFloat32(context:PackContext, slot:uint, value:Number):void
         {
-            const bytes:ByteArray = context.bytes;
-
-            bytes.writeFloat(value);
-            context.fields[slot] = bytes.position - 4;
+            const position:uint = context.position;
+            sf32(value, position);
+            context.fields[slot] = position;
+            context.position = position + 4;
         }
 
         [Inline]
         public static function addFloat64(context:PackContext, slot:uint, value:Number):void
         {
-            const bytes:ByteArray = context.bytes;
-
-            bytes.writeDouble(value);
-            context.fields[slot] = bytes.position - 8;
+            const position:uint = context.position;
+            sf64(value, position);
+            context.fields[slot] = position;
+            context.position = position + 8;
         }
 
-        /**
-         * Align a complete struct, then lend the destination for direct writes.
-         * Generated code must write exactly size bytes, including zero padding.
-         */
+        /** Align and reserve a complete struct; generated code writes every field and padding byte. */
         [Inline]
-        public static function prepareStruct(context:PackContext, size:uint, alignment:uint):ByteArray
+        public static function prepareStruct(context:PackContext, size:uint, alignment:uint):uint
         {
-            const bytes:ByteArray = context.bytes;
-
-            // All accepted alignments are powers of two.
-            var padding:uint = (0 - bytes.position) & (alignment - 1);
-            while (padding >= 16)
-            {
-                bytes.writeDouble(0);
-                bytes.writeDouble(0);
-                padding -= 16;
-            }
-            if (padding & 8)
-                bytes.writeDouble(0);
-            if (padding & 4)
-                bytes.writeUnsignedInt(0);
-            if (padding & 2)
-                bytes.writeShort(0);
-            if (padding & 1)
-                bytes.writeByte(0);
-            return bytes;
+            ensure(context, Number(size) + alignment - 1);
+            prepare(context, alignment);
+            const start:uint = context.position;
+            context.position = start + size;
+            return start;
         }
 
-        /** Record an inline struct immediately after its packInto() call. */
         [Inline]
         public static function addStruct(context:PackContext, slot:uint, structOffset:uint):void
         {
             context.fields[slot] = structOffset;
         }
 
-        /** Reserve a present table or string reference for a later forward-offset patch. */
         [Inline]
         public static function reserveOffset(context:PackContext, slot:uint):uint
         {
-            const bytes:ByteArray = context.bytes;
-
-            const position:uint = bytes.position;
-            bytes.writeUnsignedInt(0);
+            const position:uint = context.position;
+            si32(0, position);
             context.fields[slot] = position;
+            context.position = position + 4;
             return position;
         }
 
         [Inline]
         public static function patchOffset(context:PackContext, position:uint, target:uint):void
         {
-            const bytes:ByteArray = context.bytes;
-
-            const end:uint = bytes.position;
-            bytes.position = position;
-            bytes.writeUnsignedInt(target - position);
-            bytes.position = end;
+            si32(target - position, position);
         }
 
-        /** Write a UTF-8 string and patch its reserved reference after closing the table. */
+        /** Use native UTF-8 encoding, then patch the byte count and reserved reference. */
         [Inline]
         public static function writeString(context:PackContext, position:uint, value:String):void
         {
             const bytes:ByteArray = context.bytes;
-
-            const start:uint = bytes.position;
-            bytes.writeUnsignedInt(0);
+            const start:uint = context.position;
+            bytes.position = start + 4;
             bytes.writeUTFBytes(value);
-            const length:uint = bytes.position - start - 4;
-            bytes.writeByte(0);
-            const end:uint = bytes.position;
-            bytes.position = start;
-            bytes.writeUnsignedInt(length);
-            bytes.position = position;
-            bytes.writeUnsignedInt(start - position);
-            bytes.position = end;
+            context.position = bytes.position;
+            ensure(context, 1);
+            si8(0, context.position);
+            si32(context.position - start - 4, start);
+            si32(start - position, position);
+            context.position++;
         }
 
-        /** Align the vector header to four bytes and its elements to their required alignment. */
+        /** Ensure the complete payload fits and align elements after the four-byte count. */
         [Inline]
-        public static function prepareVector(context:PackContext, alignment:uint):ByteArray
+        public static function prepareVector(context:PackContext, alignment:uint, count:uint, width:uint):void
         {
-            const bytes:ByteArray = context.bytes;
             if (alignment < 4)
                 alignment = 4;
-            var padding:uint = (0 - bytes.position - 4) & (alignment - 1);
-            while (padding >= 16)
-            {
-                bytes.writeDouble(0);
-                bytes.writeDouble(0);
-                padding -= 16;
-            }
-            if (padding & 8)
-                bytes.writeDouble(0);
-            if (padding & 4)
-                bytes.writeUnsignedInt(0);
-            if (padding & 2)
-                bytes.writeShort(0);
-            if (padding & 1)
-                bytes.writeByte(0);
-            return bytes;
+            ensure(context, Number(count) * width + alignment + 3);
+            pad(context, (0 - context.position - 4) & (alignment - 1));
         }
 
         /** Write the count at a prepared vector position and return its header offset. */
         [Inline]
         public static function startVector(context:PackContext, count:uint):uint
         {
-            const bytes:ByteArray = context.bytes;
-            const start:uint = bytes.position;
-            bytes.writeUnsignedInt(count);
+            const start:uint = context.position;
+            si32(count, start);
+            context.position = start + 4;
             return start;
         }
     }

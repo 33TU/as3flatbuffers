@@ -10,6 +10,11 @@ type TableNames struct {
 }
 
 var tableMembers = map[string]struct{}{
+	"si8":          {},
+	"si16":         {},
+	"si32":         {},
+	"sf32":         {},
+	"sf64":         {},
 	"vectorOffset": {},
 	"referenceAt":  {},
 	"stringAt":     {},

@@ -67,7 +67,7 @@ package fixtures.geometry
             return destination;
         }
 
-        /** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */
+        /** Replace dst with packed bytes. Writes little-endian without changing dst.endian. Returns dst at position zero. */
         public static function pack(source:Frame, dst:flash.utils.ByteArray):flash.utils.ByteArray
         {
             if (!source || !dst)
@@ -92,36 +92,31 @@ package fixtures.geometry
             if (!source || !context)
                 throw new ArgumentError("Source and context must be non-null");
 
-            const bytes:flash.utils.ByteArray = as3flatbuffers.Pack.prepareStruct(context, 56, 8);
-            const start:uint = bytes.position;
-
-            bytes.writeByte(source.tag);
-            bytes.writeShort(0);
-            bytes.writeByte(0);
+            const start:uint = as3flatbuffers.Pack.prepareStruct(context, 56, 8);
+            si8(source.tag, start + 0);
+            si16(0, start + 1);
+            si8(0, start + 3);
             if (!source.point)
-                throw new ArgumentError("point must be non-null");
-
-            bytes.writeFloat(source.point.x);
-            bytes.writeFloat(source.point.y);
-            bytes.writeShort(source.count);
-            bytes.writeShort(0);
+                throw new ArgumentError("source.point must be non-null");
+            sf32(source.point.x, start + 4);
+            sf32(source.point.y, start + 8);
+            si16(source.count, start + 12);
+            si16(0, start + 14);
             if (!source.signedValue)
-                throw new ArgumentError("signedValue must be non-null");
-
-            bytes.writeUnsignedInt(source.signedValue.low);
-            bytes.writeUnsignedInt(uint(source.signedValue.high));
+                throw new ArgumentError("source.signedValue must be non-null");
+            si32(source.signedValue.low, start + 16);
+            si32(source.signedValue.high, start + 16 + 4);
             if (!source.unsignedValue)
-                throw new ArgumentError("unsignedValue must be non-null");
-
-            bytes.writeUnsignedInt(source.unsignedValue.low);
-            bytes.writeUnsignedInt(uint(source.unsignedValue.high));
-            bytes.writeDouble(source.weight);
-            bytes.writeBoolean(source.enabled);
-            bytes.writeByte(source.tiny);
-            bytes.writeShort(source.small);
-            bytes.writeInt(source.number);
-            bytes.writeUnsignedInt(source.unsignedNumber);
-            bytes.writeFloat(source.fraction);
+                throw new ArgumentError("source.unsignedValue must be non-null");
+            si32(source.unsignedValue.low, start + 24);
+            si32(source.unsignedValue.high, start + 24 + 4);
+            sf64(source.weight, start + 32);
+            si8((source.enabled ? 1 : 0), start + 40);
+            si8(source.tiny, start + 41);
+            si16(source.small, start + 42);
+            si32(source.number, start + 44);
+            si32(source.unsignedNumber, start + 48);
+            sf32(source.fraction, start + 52);
             return start;
         }
 

@@ -3,7 +3,7 @@ package internal
 import "strings"
 
 func generatePack(w *IndentWriter, o object, objects map[string]object) {
-	w.Line("/** Replace dst with packed bytes. Caller must select little-endian. Returns dst at position zero. */")
+	w.Line("/** Replace dst with packed bytes. Writes little-endian without changing dst.endian. Returns dst at position zero. */")
 	w.Line("public static function pack(source:%s, dst:flash.utils.ByteArray):flash.utils.ByteArray", o.Name)
 	w.Line("{")
 	w.Indent()
@@ -46,6 +46,12 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 			alignment = f.Alignment
 		}
 	}
+	// Reserve the vtable and largest possible table body before any intrinsic stores.
+	maximum := uint32((o.Count+2)*2) + 4 + alignment
+	for _, f := range o.Fields {
+		maximum += f.Width + f.Alignment - 1
+	}
+	w.Line("as3flatbuffers.Pack.ensure(context, %d);", maximum)
 	w.Line("as3flatbuffers.Pack.prepare(context, 2);")
 	w.Line("as3flatbuffers.Pack.reserveVtable(context, %d);", o.Count)
 	w.Line("as3flatbuffers.Pack.prepare(context, %d);", alignment)
@@ -97,7 +103,7 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 		w.Line("const table:uint = as3flatbuffers.Pack.endTable(context);")
 		for _, f := range o.Fields {
 			if f.Element != nil {
-				generateVectorPack(w, f)
+				generateVectorPack(w, f, objects)
 				continue
 			}
 			if f.Table || f.String {
