@@ -44,49 +44,56 @@ package as3flatbuffers
             bytes.writeInt(int(tableStart - vtableStart));
         }
 
-        public function addBool(slot:uint, value:Boolean):void
+        [Inline]
+        public final function addBool(slot:uint, value:Boolean):void
         {
             prepare(1, 0);
             bytes.writeBoolean(value);
             fields[slot] = bytes.position - 1;
         }
 
-        public function addInt8(slot:uint, value:int):void
+        [Inline]
+        public final function addInt8(slot:uint, value:int):void
         {
             prepare(1, 0);
             bytes.writeByte(value);
             fields[slot] = bytes.position - 1;
         }
 
-        public function addUint8(slot:uint, value:uint):void
+        [Inline]
+        public final function addUint8(slot:uint, value:uint):void
         {
             prepare(1, 0);
             bytes.writeByte(value);
             fields[slot] = bytes.position - 1;
         }
 
-        public function addInt16(slot:uint, value:int):void
+        [Inline]
+        public final function addInt16(slot:uint, value:int):void
         {
             prepare(2, 0);
             bytes.writeShort(value);
             fields[slot] = bytes.position - 2;
         }
 
-        public function addUint16(slot:uint, value:uint):void
+        [Inline]
+        public final function addUint16(slot:uint, value:uint):void
         {
             prepare(2, 0);
             bytes.writeShort(value);
             fields[slot] = bytes.position - 2;
         }
 
-        public function addFloat64(slot:uint, value:Number):void
+        [Inline]
+        public final function addFloat64(slot:uint, value:Number):void
         {
             prepare(8, 0);
             bytes.writeDouble(value);
             fields[slot] = bytes.position - 8;
         }
 
-        public function addInt64(slot:uint, value:Int64):void
+        [Inline]
+        public final function addInt64(slot:uint, value:Int64):void
         {
             prepare(8, 0);
             bytes.writeUnsignedInt(value.low);
@@ -94,7 +101,8 @@ package as3flatbuffers
             fields[slot] = bytes.position - 8;
         }
 
-        public function addUint64(slot:uint, value:UInt64):void
+        [Inline]
+        public final function addUint64(slot:uint, value:UInt64):void
         {
             prepare(8, 0);
             bytes.writeUnsignedInt(value.low);
@@ -102,21 +110,24 @@ package as3flatbuffers
             fields[slot] = bytes.position - 8;
         }
 
-        public function addFloat32(slot:uint, value:Number):void
+        [Inline]
+        public final function addFloat32(slot:uint, value:Number):void
         {
             prepare(4, 0);
             bytes.writeFloat(value);
             fields[slot] = bytes.position - 4;
         }
 
-        public function addInt32(slot:uint, value:int):void
+        [Inline]
+        public final function addInt32(slot:uint, value:int):void
         {
             prepare(4, 0);
             bytes.writeInt(value);
             fields[slot] = bytes.position - 4;
         }
 
-        public function addUint32(slot:uint, value:uint):void
+        [Inline]
+        public final function addUint32(slot:uint, value:uint):void
         {
             prepare(4, 0);
             bytes.writeUnsignedInt(value);
