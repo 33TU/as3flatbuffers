@@ -36,10 +36,11 @@ package
                     check(borrowed.next === borrowed.next, "Recursive getter reuses its lazy view");
                     SceneView.unpack(view, value);
                     check(value.head === head && head.next === next && head.position === position,
-                        "Nested unpack deeply reuses destination tables and structs");
+                            "Nested unpack deeply reuses destination tables and structs");
                     const cloned:Scene = Scene.clone(value);
                     check(cloned.head !== head && cloned.head.position !== position, "Clone owns nested tables and structs");
-                    if (next) check(cloned.head.next !== next, "Clone deeply owns recursive nodes");
+                    if (next)
+                        check(cloned.head.next !== next, "Clone deeply owns recursive nodes");
                     cloned.head.value = 9999;
                     verify(value, cases[i], check);
                 }
@@ -59,7 +60,7 @@ package
             Node.pack(chain, dst);
             const nodeView:NodeView = FixtureBuffer.bindRoot(new NodeView(), dst);
             check(nodeView.value == 1 && nodeView.next.value == 2 && nodeView.branch.value == 2,
-                "Standalone recursive root and repeated sibling references pack correctly");
+                    "Standalone recursive root and repeated sibling references pack correctly");
             const snapshot:Node = NodeView.unpack(nodeView);
             check(snapshot.next !== snapshot.branch, "Shared source children are serialized as independent values");
             const oldChild:NodeView = nodeView.next;
@@ -88,8 +89,14 @@ package
                 dst.position = nextSlot;
                 dst.writeUnsignedInt(invalid);
                 FixtureBuffer.bindRoot(nodeView, dst);
-                rejects(function():void { NodeView.unpack(nodeView); }, check, "Malformed child offset rejected by unpack");
-                rejects(function():void { var child:NodeView = nodeView.next; }, check, "Malformed child offset rejected by getter");
+                rejects(function():void
+                    {
+                        NodeView.unpack(nodeView);
+                    }, check, "Malformed child offset rejected by unpack");
+                rejects(function():void
+                    {
+                        var child:NodeView = nodeView.next;
+                    }, check, "Malformed child offset rejected by getter");
             }
             Node.pack(chain, dst);
             const prefixed:ByteArray = FixtureBuffer.create();
@@ -128,7 +135,8 @@ package
         private static function verifyNode(value:Node, expected:Object, check:Function):void
         {
             check((value == null) == (expected == null), "Recursive node presence");
-            if (!value) return;
+            if (!value)
+                return;
             check(value.value == expected.value, "Recursive node value");
             check(value.position.x == expected.position[0] && value.position.y == expected.position[1], "Struct inside nested table");
             verifyNode(value.next, expected.next, check);
@@ -138,7 +146,8 @@ package
         private static function verifyLeft(value:Left, expected:Object, check:Function):void
         {
             check((value == null) == (expected == null), "Mutually recursive table presence");
-            if (!value) return;
+            if (!value)
+                return;
             check(value.code == expected.code && (value.right == null) == (expected.right == null), "Mutually recursive table values");
             if (value.right)
             {
@@ -150,7 +159,14 @@ package
         private static function rejects(action:Function, check:Function, message:String):void
         {
             var caught:Boolean = false;
-            try { action(); } catch (error:Error) { caught = true; }
+            try
+            {
+                action();
+            }
+            catch (error:Error)
+            {
+                caught = true;
+            }
             check(caught, message);
         }
     }

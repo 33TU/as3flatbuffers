@@ -33,7 +33,7 @@ package
                 verify(value, expected, check);
                 const copy:Primitives = Primitives.clone(value);
                 check(copy.i64 !== value.i64 && copy.i64.eq(value.i64) &&
-                    copy.u64 !== value.u64 && copy.u64.eq(value.u64), "Clone deeply owns 64-bit words");
+                        copy.u64 !== value.u64 && copy.u64.eq(value.u64), "Clone deeply owns 64-bit words");
                 const getter:Int64 = view.i64;
                 getter.low ^= 1;
                 check(view.i64.eq(value.i64), "64-bit getter returns independent words");
@@ -58,16 +58,16 @@ package
             verify(value, cases[0], check);
             // Omitted fields overwrite reused words, including nonzero defaults.
             FixtureBuffer.bindRoot(view, read(directory.resolvePath("primitive-python-0.bin")));
-            value.i64.set(1, 2);
-            value.u64.set(3, 4);
+            value.i64.set (1, 2);
+            value.u64.set (3, 4);
             PrimitivesView.unpack(view, value);
             verify(value, cases[0], check);
             value.i64 = null;
             value.u64 = null;
             PrimitivesView.unpack(view, value);
             verify(value, cases[0], check);
-            value.i64.set(1, 2);
-            value.u64.set(3, 4);
+            value.i64.set (1, 2);
+            value.u64.set (3, 4);
             Primitives.reset(value);
             verify(value, cases[0], check);
             const defaultClone:Primitives = Primitives.clone(PrimitivesView.unpack(view));
@@ -77,7 +77,7 @@ package
             Builder.begin(builder, FixtureBuffer.create(), true);
             const specialView:SpecialFloatsView = FixtureBuffer.bindRoot(new SpecialFloatsView(), SpecialFloats.pack(special, FixtureBuffer.create()));
             check(isNaN(specialView.f32) && specialView.f64 == Number.POSITIVE_INFINITY &&
-                specialView.negative == Number.NEGATIVE_INFINITY, "Nonfinite schema defaults");
+                    specialView.negative == Number.NEGATIVE_INFINITY, "Nonfinite schema defaults");
 
             // A single 8-byte field exposes root-alignment bugs hidden by larger tables.
             for (var slots:uint = 1; slots <= 10; slots++)
@@ -88,7 +88,8 @@ package
                 Builder.reserveVtable(small, slots);
                 Builder.prepare(small, 8);
                 Builder.startTable(small);
-                Builder.prepare(small, 8); Builder.addFloat64(small, 0, Math.PI);
+                Builder.prepare(small, 8);
+                Builder.addFloat64(small, 0, Math.PI);
                 const aligned:ByteArray = Builder.finish(small, Builder.endTable(small));
                 aligned.position = 0;
                 const root:uint = aligned.readUnsignedInt();
@@ -101,10 +102,10 @@ package
             }
 
             for each (var test:Array in [
-                ["addInt8", -129, "readByte", 127], ["addInt8", 128, "readByte", -128],
-                ["addUint8", 256, "readUnsignedByte", 0],
-                ["addInt16", -32769, "readShort", 32767], ["addInt16", 32768, "readShort", -32768],
-                ["addUint16", 65536, "readUnsignedShort", 0]])
+                        ["addInt8", -129, "readByte", 127], ["addInt8", 128, "readByte", -128],
+                        ["addUint8", 256, "readUnsignedByte", 0],
+                        ["addInt16", -32769, "readShort", 32767], ["addInt16", 32768, "readShort", -32768],
+                        ["addUint16", 65536, "readUnsignedShort", 0]])
             {
                 Builder.begin(builder, FixtureBuffer.create(), true);
                 Builder.prepare(builder, 2);
@@ -130,24 +131,32 @@ package
             value.u16 = 65536;
             FixtureBuffer.bindRoot(view, Primitives.pack(value, FixtureBuffer.create()));
             check(view.i8 == -128 && view.u8 == 0 && view.i16 == 32767 && view.u16 == 0,
-                "Generated table writes truncate narrow integers");
+                    "Generated table writes truncate narrow integers");
             Builder.begin(builder, FixtureBuffer.create(), true);
             Builder.prepare(builder, 2);
             Builder.reserveVtable(builder, 1);
             Builder.prepare(builder, 8);
             Builder.startTable(builder);
             var rejected:Boolean = false;
-            try { Builder.prepare(builder, 8); Builder.addInt64(builder, 0, null); } catch (missing:Error) { rejected = true; }
+            try
+            {
+                Builder.prepare(builder, 8);
+                Builder.addInt64(builder, 0, null);
+            }
+            catch (missing:Error)
+            {
+                rejected = true;
+            }
             check(rejected, "Reject missing 64-bit value");
         }
 
         private static function verify(value:Primitives, expected:Array, check:Function):void
         {
             check(value.enabled == expected[0] && value.i8 == expected[1] && value.u8 == expected[2] &&
-                value.i16 == expected[3] && value.u16 == expected[4] && value.i32 == expected[5] &&
-                value.u32 == expected[6], "Primitive bool and integer values");
+                    value.i16 == expected[3] && value.u16 == expected[4] && value.i32 == expected[5] &&
+                    value.u32 == expected[6], "Primitive bool and integer values");
             check(value.i64.low == expected[7][0] && value.i64.high == expected[7][1] &&
-                value.u64.low == expected[8][0] && value.u64.high == expected[8][1], "Exact 64-bit primitive values: got " + value.i64.low + "," + value.i64.high + ";" + value.u64.low + "," + value.u64.high + " expected " + expected[7] + ";" + expected[8]);
+                    value.u64.low == expected[8][0] && value.u64.high == expected[8][1], "Exact 64-bit primitive values: got " + value.i64.low + "," + value.i64.high + ";" + value.u64.low + "," + value.u64.high + " expected " + expected[7] + ";" + expected[8]);
             check(sameNumber(value.f32, expected[9]) && sameNumber(value.f64, expected[10]), "Float and double values: got " + value.f32 + ";" + value.f64 + " expected " + expected[9] + ";" + expected[10]);
         }
 
@@ -159,8 +168,10 @@ package
             bits.writeUnsignedInt(words[1]);
             bits.position = 0;
             const expected:Number = bits.readDouble();
-            if (isNaN(expected)) return isNaN(actual);
-            if (expected == 0) return actual == 0 && 1 / actual == 1 / expected;
+            if (isNaN(expected))
+                return isNaN(actual);
+            if (expected == 0)
+                return actual == 0 && 1 / actual == 1 / expected;
             return actual == expected;
         }
     }

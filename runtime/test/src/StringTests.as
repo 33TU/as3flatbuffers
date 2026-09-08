@@ -27,11 +27,12 @@ package
                 const oldChild:Text = value.child;
                 check(StringsView.unpack(view, value) === value, "String unpack reuses destination");
                 check(value.text === expected && value.child.value === expected && value.next.text === expected,
-                    "String unpack preserves nested values case " + i);
-                if (oldChild) check(value.child === oldChild, "String unpack retains nested destination");
+                        "String unpack preserves nested values case " + i);
+                if (oldChild)
+                    check(value.child === oldChild, "String unpack retains nested destination");
                 const copy:Strings = Strings.clone(value);
                 check(copy.text === value.text && copy.child !== value.child && copy.child.value === value.child.value,
-                    "String clone preserves immutable values and owns child tables");
+                        "String clone preserves immutable values and owns child tables");
                 // Pack the original values to check UTF-8 encoding independently of native decoding.
                 copy.text = cases[i];
                 copy.child.value = cases[i];
@@ -63,8 +64,14 @@ package
                 dst.position = slot;
                 dst.writeUnsignedInt(bad);
                 FixtureBuffer.bindRoot(textView, dst);
-                rejects(function():void { var s:String = textView.value; }, check, "Malformed string offset rejected");
-                rejects(function():void { TextView.unpack(textView); }, check, "Malformed string offset rejected by unpack");
+                rejects(function():void
+                    {
+                        var s:String = textView.value;
+                    }, check, "Malformed string offset rejected");
+                rejects(function():void
+                    {
+                        TextView.unpack(textView);
+                    }, check, "Malformed string offset rejected by unpack");
             }
             for each (bad in [6, uint.MAX_VALUE])
             {
@@ -72,20 +79,29 @@ package
                 dst.position = start;
                 dst.writeUnsignedInt(bad);
                 FixtureBuffer.bindRoot(textView, dst);
-                rejects(function():void { TextView.unpack(textView); }, check, "Malformed string length rejected");
+                rejects(function():void
+                    {
+                        TextView.unpack(textView);
+                    }, check, "Malformed string length rejected");
             }
             Text.pack(text, dst);
             dst[originalLength - 1] = 1;
             FixtureBuffer.bindRoot(textView, dst);
-            rejects(function():void { TextView.unpack(textView); }, check, "Missing zero terminator rejected");
+            rejects(function():void
+                {
+                    TextView.unpack(textView);
+                }, check, "Missing zero terminator rejected");
             Text.pack(text, dst);
             dst.length = originalLength - 1;
             FixtureBuffer.bindRoot(textView, dst);
-            rejects(function():void { TextView.unpack(textView); }, check, "Truncated string terminator rejected");
+            rejects(function():void
+                {
+                    TextView.unpack(textView);
+                }, check, "Truncated string terminator rejected");
 
             for each (var malformed:Array in [[0x80], [0xC0, 0xAF], [0xE0, 0x80, 0x80],
-                [0xED, 0xA0, 0x80], [0xF0, 0x80, 0x80, 0x80], [0xF4, 0x90, 0x80, 0x80],
-                [0xF5, 0x80, 0x80, 0x80], [0xE2, 0x82], [0xC2, 0x41]])
+                        [0xED, 0xA0, 0x80], [0xF0, 0x80, 0x80, 0x80], [0xF4, 0x90, 0x80, 0x80],
+                        [0xF5, 0x80, 0x80, 0x80], [0xE2, 0x82], [0xC2, 0x41]])
             {
                 Text.pack(text, dst);
                 dst.position = start;
@@ -98,7 +114,7 @@ package
                 const nativeDecoded:String = dst.readUTFBytes(malformed.length);
                 FixtureBuffer.bindRoot(textView, dst);
                 check(textView.value === nativeDecoded && TextView.unpack(textView).value === nativeDecoded,
-                    "Malformed UTF-8 follows native decoding without extra validation");
+                        "Malformed UTF-8 follows native decoding without extra validation");
             }
             for each (var invalid:String in ["\uD800", "\uDC00", "\uD800x"])
             {
@@ -148,7 +164,14 @@ package
         private static function rejects(action:Function, check:Function, message:String):void
         {
             var caught:Boolean = false;
-            try { action(); } catch (error:Error) { caught = true; }
+            try
+            {
+                action();
+            }
+            catch (error:Error)
+            {
+                caught = true;
+            }
             check(caught, message);
         }
     }

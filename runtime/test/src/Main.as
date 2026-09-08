@@ -34,7 +34,7 @@ package
         {
             NativeApplication.nativeApplication.removeEventListener(InvokeEvent.INVOKE, run);
             const directory:File = new File(event.arguments[0]);
-            const result:Object = {ok:false};
+            const result:Object = {ok: false};
             var status:int = 1;
             try
             {
@@ -52,7 +52,7 @@ package
                     FixtureBuffer.bindRoot(view, input);
                     check(view.x == item.x && view.y == item.y, "Official builder -> AS3 view");
                     check(PointView.unpack(view, owned) === owned && owned.x == item.x && owned.y == item.y,
-                        "Unpack reuses and overwrites destination");
+                            "Unpack reuses and overwrites destination");
                     const cloned:Point = Point.clone(owned);
                     check(cloned !== owned && cloned.x == owned.x && cloned.y == owned.y, "Owned clone");
                     check(PointView.unpack(view) !== owned, "Fresh unpack");
@@ -65,17 +65,18 @@ package
                     const absoluteTable:uint = output.readUnsignedInt();
                     view.bind(output, absoluteTable);
                     check(view.x == item.x && view.y == item.y,
-                        "Direct binding uses the absolute table position");
+                            "Direct binding uses the absolute table position");
                     check(owned.x == cloned.x && owned.y == cloned.y, "Pack leaves owned values unchanged");
                     const prefixed:ByteArray = new ByteArray();
                     prefixed.writeUnsignedInt(0);
                     prefixed.writeBytes(output);
                     check(FixtureBuffer.bindRoot(view, prefixed, 4).x == item.x && view.y == item.y, "Root at nonzero offset");
-                    if (i == 0) retained = output;
+                    if (i == 0)
+                        retained = output;
                 }
                 FixtureBuffer.bindRoot(view, retained);
                 check(view.x == manifest[0].x && view.y == manifest[0].y,
-                    "Static builder reuse leaves other destinations unchanged");
+                        "Static builder reuse leaves other destinations unchanged");
 
                 // Borrowing is observable; unpacked values remain independent.
                 const pointBytes:ByteArray = read(directory.resolvePath("as3-0.bin"));
@@ -91,34 +92,92 @@ package
                 check(view.x == 42 && owned.x == manifest[0].x, "View borrows; object owns");
 
                 var caught:Boolean = false;
-                try { view.bind(new ByteArray(), 0); } catch (e:RangeError) { caught = true; }
+                try
+                {
+                    view.bind(new ByteArray(), 0);
+                }
+                catch (e:RangeError)
+                {
+                    caught = true;
+                }
                 check(caught, "Truncated table rejected");
                 caught = false;
-                try { owned.x = view.x; } catch (unbound:Error) { caught = true; }
+                try
+                {
+                    owned.x = view.x;
+                }
+                catch (unbound:Error)
+                {
+                    caught = true;
+                }
                 check(caught, "Failed bind invalidates old view");
                 caught = false;
-                try { PointView.unpack(view, owned); } catch (unboundSource:Error) { caught = true; }
+                try
+                {
+                    PointView.unpack(view, owned);
+                }
+                catch (unboundSource:Error)
+                {
+                    caught = true;
+                }
                 check(caught, "Static unpack rejects an unbound source view");
                 caught = false;
-                try { PointView.unpack(null, owned); } catch (nullSource:Error) { caught = true; }
+                try
+                {
+                    PointView.unpack(null, owned);
+                }
+                catch (nullSource:Error)
+                {
+                    caught = true;
+                }
                 check(caught, "Static unpack rejects a null source view");
                 FixtureBuffer.bindRoot(view, retained);
                 caught = false;
-                try { view.bind(retained, uint.MAX_VALUE); } catch (directError:RangeError) { caught = true; }
+                try
+                {
+                    view.bind(retained, uint.MAX_VALUE);
+                }
+                catch (directError:RangeError)
+                {
+                    caught = true;
+                }
                 check(caught, "Direct binding rejects an invalid table position");
                 caught = false;
-                try { owned.x = view.x; } catch (directUnbound:Error) { caught = true; }
+                try
+                {
+                    owned.x = view.x;
+                }
+                catch (directUnbound:Error)
+                {
+                    caught = true;
+                }
                 check(caught, "Failed direct bind invalidates old view");
 
                 const broken:ByteArray = read(directory.resolvePath("as3-0.bin"));
-                broken.position = 0; broken.writeUnsignedInt(0xffffffff);
+                broken.position = 0;
+                broken.writeUnsignedInt(0xffffffff);
                 caught = false;
-                try { FixtureBuffer.bindRoot(view, broken); } catch (rootError:RangeError) { caught = true; }
+                try
+                {
+                    FixtureBuffer.bindRoot(view, broken);
+                }
+                catch (rootError:RangeError)
+                {
+                    caught = true;
+                }
                 check(caught, "Out-of-range root rejected");
                 const badField:ByteArray = read(directory.resolvePath("as3-0.bin"));
-                badField.position = vtable + 4; badField.writeShort(65535);
+                badField.position = vtable + 4;
+                badField.writeShort(65535);
                 caught = false;
-                try { owned.x = FixtureBuffer.bindRoot(view, badField).x; } catch (fieldError:RangeError) { caught = true; }
+                try
+                {
+                    owned.x = FixtureBuffer.bindRoot(view, badField).x;
+                }
+                catch (fieldError:RangeError)
+                {
+                    caught = true;
+                }
                 check(caught, "Field outside table rejected");
 
                 // Integers preserve high bits rather than passing through Number.
@@ -127,7 +186,10 @@ package
                 Builder.reserveVtable(builder, 2);
                 Builder.prepare(builder, 8);
                 Builder.startTable(builder);
-                Builder.prepare(builder, 4); Builder.addInt32(builder, 0, int.MIN_VALUE); Builder.prepare(builder, 4); Builder.addUint32(builder, 1, uint.MAX_VALUE);
+                Builder.prepare(builder, 4);
+                Builder.addInt32(builder, 0, int.MIN_VALUE);
+                Builder.prepare(builder, 4);
+                Builder.addUint32(builder, 1, uint.MAX_VALUE);
                 write(directory.resolvePath("integers.bin"), Builder.finish(builder, Builder.endTable(builder)));
                 const signed:Int64 = new Int64(0xffffffff, -1);
                 check(signed.toString() == "-1" && signed.clone().eq(signed), "Signed 64-bit words");
@@ -143,14 +205,14 @@ package
                 // integer fields all pass through the same public object API.
                 const scalar:ScalarDefaults = new ScalarDefaults();
                 check(scalar.xAxis == 1.25 && scalar.signedValue == -7 &&
-                    scalar.unsignedValue == uint.MAX_VALUE && scalar.reset_ == 9,
-                    "Generated owned defaults");
+                        scalar.unsignedValue == uint.MAX_VALUE && scalar.reset_ == 9,
+                        "Generated owned defaults");
                 Builder.begin(builder, FixtureBuffer.create(), true);
                 const scalarView:ScalarDefaultsView = new ScalarDefaultsView();
                 FixtureBuffer.bindRoot(scalarView, ScalarDefaults.pack(scalar, FixtureBuffer.create()));
                 check(scalarView.xAxis == 1.25 && scalarView.signedValue == -7 &&
-                    scalarView.unsignedValue == uint.MAX_VALUE && scalarView.reset_ == 9,
-                    "Generated view omitted defaults");
+                        scalarView.unsignedValue == uint.MAX_VALUE && scalarView.reset_ == 9,
+                        "Generated view omitted defaults");
                 scalar.xAxis = -2.5;
                 scalar.signedValue = int.MIN_VALUE;
                 scalar.unsignedValue = 0;
@@ -161,19 +223,19 @@ package
                 FixtureBuffer.bindRoot(scalarView, scalarBytes);
                 const scalarCopy:ScalarDefaults = ScalarDefaultsView.unpack(scalarView);
                 check(scalarCopy.xAxis == -2.5 && scalarCopy.signedValue == int.MIN_VALUE &&
-                    scalarCopy.unsignedValue == 0 && scalarCopy.reset_ == 42,
-                    "Generated full scalar unpack");
+                        scalarCopy.unsignedValue == 0 && scalarCopy.reset_ == 42,
+                        "Generated full scalar unpack");
                 check(ScalarDefaultsView.unpack(scalarView, scalarCopy) === scalarCopy, "Generated scalar reuse");
                 ScalarDefaults.reset(scalarCopy);
                 check(scalarCopy.xAxis == 1.25 && scalarCopy.signedValue == -7 &&
-                    scalarCopy.unsignedValue == uint.MAX_VALUE && scalarCopy.reset_ == 9,
-                    "Generated reset uses schema defaults");
+                        scalarCopy.unsignedValue == uint.MAX_VALUE && scalarCopy.reset_ == 9,
+                        "Generated reset uses schema defaults");
                 const naming:Naming = new Naming();
                 check(naming.snakeCase == 11 && naming.snakeCase_ == 22 &&
-                    naming.reset_ == 33 && naming.reset__ == 44 && naming.reset___ == 55 &&
-                    naming.bind_ == 66 && naming.bind_2 == 77 && naming.__leadingName == 88 &&
-                    naming.trailingName_ == 99 && naming.value_Name == 111 &&
-                    naming.bytes_ == 122 && naming.class_ == 133, "Generated naming defaults");
+                        naming.reset_ == 33 && naming.reset__ == 44 && naming.reset___ == 55 &&
+                        naming.bind_ == 66 && naming.bind_2 == 77 && naming.__leadingName == 88 &&
+                        naming.trailingName_ == 99 && naming.value_Name == 111 &&
+                        naming.bytes_ == 122 && naming.class_ == 133, "Generated naming defaults");
                 naming.snakeCase = -1;
                 naming.snakeCase_ = -2;
                 naming.bind_ = 123;
@@ -185,10 +247,10 @@ package
                 write(directory.resolvePath("naming.bin"), namingBytes);
                 const namingView:NamingView = FixtureBuffer.bindRoot(new NamingView(), namingBytes);
                 check(namingView.snakeCase == -1 && namingView.snakeCase_ == -2 &&
-                    namingView.bind_ == 123 && namingView.bind_2 == 456 &&
-                    namingView.bytes_ == -9 && namingView.class_ == 17 &&
-                    namingView.__leadingName == 88 && namingView.trailingName_ == 99 &&
-                    namingView.value_Name == 111, "Generated view uses identical allocated names");
+                        namingView.bind_ == 123 && namingView.bind_2 == 456 &&
+                        namingView.bytes_ == -9 && namingView.class_ == 17 &&
+                        namingView.__leadingName == 88 && namingView.trailingName_ == 99 &&
+                        namingView.value_Name == 111, "Generated view uses identical allocated names");
                 const namingCopy:Naming = NamingView.unpack(namingView);
                 check(namingCopy.snakeCase_ == -2 && namingCopy.bind_2 == 456, "Named unpack");
                 Naming.reset(namingCopy);
@@ -217,7 +279,8 @@ package
 
         private function check(condition:Boolean, message:String):void
         {
-            if (!condition) throw new Error(message);
+            if (!condition)
+                throw new Error(message);
             checks++;
         }
 

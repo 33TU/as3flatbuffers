@@ -55,9 +55,12 @@ package
                 write(directory.resolvePath("optional-as3-" + i + ".bin"), output);
                 FixtureBuffer.bindRoot(view, output);
                 verify(OptionalScalarsView.unpack(view), cases[i], check);
-                if (copy.i64) copy.i64.low ^= 1;
-                if (copy.u64) copy.u64.high ^= 1;
-                if (copy.i32) copy.i32.value ^= 1;
+                if (copy.i64)
+                    copy.i64.low ^= 1;
+                if (copy.u64)
+                    copy.u64.high ^= 1;
+                if (copy.i32)
+                    copy.i32.value ^= 1;
                 verify(value, cases[i], check);
                 OptionalScalars.reset(copy);
                 verify(copy, cases[0], check);
@@ -76,11 +79,11 @@ package
         private static function verifyAlignmentCombinations(check:Function):void
         {
             const values:Array = [new as3flatbuffers.types.OptionalBoolean(),
-                new as3flatbuffers.types.OptionalInt(), new as3flatbuffers.types.OptionalUint(),
-                new as3flatbuffers.types.OptionalInt(), new as3flatbuffers.types.OptionalUint(),
-                new as3flatbuffers.types.OptionalInt(), new as3flatbuffers.types.OptionalUint(),
-                new as3flatbuffers.types.Int64(), new as3flatbuffers.types.UInt64(),
-                new as3flatbuffers.types.OptionalNumber(), new as3flatbuffers.types.OptionalNumber()];
+                    new as3flatbuffers.types.OptionalInt(), new as3flatbuffers.types.OptionalUint(),
+                    new as3flatbuffers.types.OptionalInt(), new as3flatbuffers.types.OptionalUint(),
+                    new as3flatbuffers.types.OptionalInt(), new as3flatbuffers.types.OptionalUint(),
+                    new as3flatbuffers.types.Int64(), new as3flatbuffers.types.UInt64(),
+                    new as3flatbuffers.types.OptionalNumber(), new as3flatbuffers.types.OptionalNumber()];
             const widths:Array = [1, 1, 1, 2, 2, 4, 4, 8, 8, 4, 8];
             const value:OptionalScalars = new OptionalScalars();
             const view:OptionalScalarsView = new OptionalScalarsView();
@@ -102,7 +105,8 @@ package
                     const relative:uint = bytes.readUnsignedShort();
                     const present:Boolean = (mask & (1 << slot)) != 0;
                     valid = valid && ((relative != 0) == present);
-                    if (present) valid = valid && ((root + relative) % widths[slot] == 0);
+                    if (present)
+                        valid = valid && ((root + relative) % widths[slot] == 0);
                     valid = valid && ((view[FIELDS[slot]] != null) == present);
                 }
                 check(valid, "Optional scalar alignment and presence mask " + mask);
@@ -116,7 +120,8 @@ package
                 const name:String = FIELDS[slot];
                 const actual:Object = value[name];
                 check((actual != null) == (expected[slot] != null), "Optional presence: " + name);
-                if (!actual) continue;
+                if (!actual)
+                    continue;
                 if (slot == 7 || slot == 8)
                     check(actual.low == expected[slot][0] && actual.high == expected[slot][1], "Optional words: " + name);
                 else if (slot >= 9)
