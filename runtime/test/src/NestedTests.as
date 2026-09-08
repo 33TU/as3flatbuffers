@@ -100,7 +100,7 @@ package
             check(nodeView.next.value == chain.next.value, "Nested references work at a nonzero root position");
 
             const builder:BuilderContext = new BuilderContext();
-            Builder.reset(builder, dst);
+            Builder.begin(builder, dst, true);
             Builder.startTable(builder, 1, 4);
             Builder.prepare(builder, 4);
             const slot:uint = Builder.reserveOffset(builder, 0);

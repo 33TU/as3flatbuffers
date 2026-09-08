@@ -69,7 +69,7 @@ package bench.data
             const context:as3flatbuffers.BuilderContext = BUILDER;
             try
             {
-                as3flatbuffers.Builder.reset(context, dst, true);
+                as3flatbuffers.Builder.begin(context, dst, true);
                 as3flatbuffers.Builder.finish(context, packInto(source, context));
             }
             finally

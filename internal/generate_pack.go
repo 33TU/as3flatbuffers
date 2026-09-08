@@ -16,7 +16,7 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 	w.Line("try")
 	w.Line("{")
 	w.Indent()
-	w.Line("as3flatbuffers.Builder.reset(context, dst, %t);", !o.Struct)
+	w.Line("as3flatbuffers.Builder.begin(context, dst, %t);", !o.Struct)
 	w.Line("as3flatbuffers.Builder.finish(context, packInto(source, context));")
 	w.Dedent()
 	w.Line("}")

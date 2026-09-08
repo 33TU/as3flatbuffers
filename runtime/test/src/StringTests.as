@@ -113,7 +113,7 @@ package
             check(textView.value == "recovered", "String builder reuse after native encoding cases");
 
             const builder:BuilderContext = new BuilderContext();
-            Builder.reset(builder, dst);
+            Builder.begin(builder, dst, true);
             Builder.startTable(builder, 1, 4);
             Builder.prepare(builder, 4);
             const reference:uint = Builder.reserveOffset(builder, 0);

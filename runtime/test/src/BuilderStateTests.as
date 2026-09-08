@@ -10,7 +10,7 @@ package
         public static function run(check:Function):void
         {
             const builder:BuilderContext = new BuilderContext();
-            Builder.reset(builder, FixtureBuffer.create());
+            Builder.begin(builder, FixtureBuffer.create(), true);
             const view:PointView = new PointView();
             // Consecutive tables reuse field storage without resetting the buffer.
             Builder.startTable(builder, 4, 8);
@@ -22,7 +22,7 @@ package
             FixtureBuffer.bindRoot(view, Builder.finish(builder, Builder.endTable(builder)));
             check(view.x == 0 && view.y == 7, "Reused field storage clears previous table offsets");
 
-            Builder.reset(builder, FixtureBuffer.create());
+            Builder.begin(builder, FixtureBuffer.create(), true);
             Builder.startTable(builder, 0, 8);
             Builder.endTable(builder);
             Builder.startTable(builder, 0, 8);
@@ -34,11 +34,11 @@ package
             check(view.x == 11 && view.y == 12, "Field storage grows after an empty table");
 
             // Reset must also discard an unfinished table's slots and state.
-            Builder.reset(builder, FixtureBuffer.create());
+            Builder.begin(builder, FixtureBuffer.create(), true);
             Builder.startTable(builder, 4, 8);
             Builder.prepare(builder, 4); Builder.addFloat32(builder, 0, 55);
             Builder.prepare(builder, 4); Builder.addFloat32(builder, 3, 66);
-            Builder.reset(builder, FixtureBuffer.create());
+            Builder.begin(builder, FixtureBuffer.create(), true);
             Builder.startTable(builder, 2, 8);
             Builder.prepare(builder, 4); Builder.addFloat32(builder, 1, 3);
             FixtureBuffer.bindRoot(view, Builder.finish(builder, Builder.endTable(builder)));
@@ -50,7 +50,7 @@ package
                 bytes.length = 128;
                 bytes.position = 0;
                 for (var i:uint = 0; i < 128; i++) bytes.writeByte(255);
-                Builder.reset(builder, bytes, false);
+                Builder.begin(builder, bytes, false);
                 Builder.prepareStruct(builder, 1, 1).writeByte(42);
                 Builder.pad(builder, count);
                 check(bytes.length == count + 1 && bytes.position == count + 1 && bytes[0] == 42,
@@ -58,7 +58,7 @@ package
                 for (i = 1; i < bytes.length; i++)
                     check(bytes[i] == 0, "Padding after buffer reuse contains only zero bytes");
             }
-            Builder.reset(builder, bytes, false);
+            Builder.begin(builder, bytes, false);
             for (i = 0; i < 16; i++) bytes.writeByte(255);
             bytes.position = 4;
             Builder.pad(builder, 7);
@@ -68,7 +68,7 @@ package
             for each (var alignment:uint in [4, 8, 16, 32, 64, 128, 256])
                 for each (var prefix:uint in [0, 1, 7])
                 {
-                    Builder.reset(builder, bytes);
+                    Builder.begin(builder, bytes, true);
                     Builder.pad(builder, prefix);
                     Builder.startTable(builder, 1, alignment);
                     Builder.prepare(builder, 4); Builder.addFloat32(builder, 0, 42);
@@ -82,7 +82,7 @@ package
             {
                 bytes.position = 0;
                 for (i = 0; i < 256; i++) bytes.writeByte(255);
-                Builder.reset(builder, bytes);
+                Builder.begin(builder, bytes, true);
                 Builder.startTable(builder, 8, 4);
                 for (i = 0; i < present; i++)
                 {
@@ -101,12 +101,12 @@ package
                         "Every reserved vtable entry overwrites dirty storage");
             }
             // The table body size must still fit its 16-bit wire field.
-            Builder.reset(builder, bytes);
+            Builder.begin(builder, bytes, true);
             Builder.startTable(builder, 0, 4);
             Builder.pad(builder, 65531);
             Builder.finish(builder, Builder.endTable(builder));
             check(bytes.length > 65535, "Maximum table body size is accepted");
-            Builder.reset(builder, bytes);
+            Builder.begin(builder, bytes, true);
             Builder.startTable(builder, 0, 4);
             Builder.pad(builder, 65532);
             var rejected:Boolean = false;

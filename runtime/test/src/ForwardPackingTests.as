@@ -41,7 +41,7 @@ package
 
             // Output appears in dst during construction, before finish patches the root.
             const builder:BuilderContext = new BuilderContext();
-            Builder.reset(builder, dst);
+            Builder.begin(builder, dst, true);
             Builder.startTable(builder, 2, 4);
             Builder.prepare(builder, 4); Builder.addFloat32(builder, 0, 42);
             const end:uint = dst.position;
@@ -55,7 +55,7 @@ package
             rejects(function():void { Builder.prepareStruct(builder, 4, 4).writeInt(7); }, check, "Detached builder cannot write");
 
             const other:ByteArray = FixtureBuffer.create();
-            Builder.reset(builder, other);
+            Builder.begin(builder, other, true);
             Builder.startTable(builder, 1, 4);
             Builder.prepare(builder, 4); Builder.addInt32(builder, 0, 99);
             Builder.finish(builder, Builder.endTable(builder));

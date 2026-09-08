@@ -7,22 +7,32 @@ package as3flatbuffers
     /** Internal support for generated packers; writes forwards into a little-endian ByteArray. */
     public final class Builder
     {
-        /** Replace dst's contents, or detach when dst is null. Endian is unchanged. */
+        /** Clear construction state and detach the destination without changing its bytes. */
         [Inline]
-        public static function reset(context:BuilderContext, dst:ByteArray = null, reserveRoot:Boolean = true):void
+        public static function reset(context:BuilderContext):void
         {
-            context.bytes = dst;
+            context.bytes = null;
             context.fields.length = 0;
             context.tableStart = 0;
             context.vtableStart = 0;
+            context.rootReserved = false;
+        }
+
+        /** Start packing into a non-null destination, replacing its contents. Endian is unchanged. */
+        [Inline]
+        public static function begin(context:BuilderContext, dst:ByteArray, reserveRoot:Boolean):void
+        {
+            dst.length = 0;
+            dst.position = 0;
+
+            context.fields.length = 0;
+            context.tableStart = 0;
+            context.vtableStart = 0;
+            context.bytes = dst;
             context.rootReserved = reserveRoot;
-            if (dst)
-            {
-                dst.length = 0;
-                dst.position = 0;
-                if (reserveRoot)
-                    dst.writeUnsignedInt(0);
-            }
+
+            if (reserveRoot)
+                dst.writeUnsignedInt(0);
         }
 
         /** Patch the root offset and return dst itself, positioned at zero. No copy. */

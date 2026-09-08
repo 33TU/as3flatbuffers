@@ -40,7 +40,7 @@ package
                 const unsignedGetter:UInt64 = view.u64;
                 unsignedGetter.high ^= 1;
                 check(view.u64.eq(value.u64), "Unsigned getter returns independent words");
-                Builder.reset(builder, FixtureBuffer.create());
+                Builder.begin(builder, FixtureBuffer.create(), true);
                 const output:ByteArray = Primitives.pack(copy, FixtureBuffer.create());
                 write(directory.resolvePath("primitive-as3-" + i + ".bin"), output);
                 FixtureBuffer.bindRoot(view, output);
@@ -74,7 +74,7 @@ package
             verify(defaultClone, cases[0], check);
 
             const special:SpecialFloats = new SpecialFloats();
-            Builder.reset(builder, FixtureBuffer.create());
+            Builder.begin(builder, FixtureBuffer.create(), true);
             const specialView:SpecialFloatsView = FixtureBuffer.bindRoot(new SpecialFloatsView(), SpecialFloats.pack(special, FixtureBuffer.create()));
             check(isNaN(specialView.f32) && specialView.f64 == Number.POSITIVE_INFINITY &&
                 specialView.negative == Number.NEGATIVE_INFINITY, "Nonfinite schema defaults");
@@ -83,7 +83,7 @@ package
             for (var slots:uint = 1; slots <= 10; slots++)
             {
                 const small:BuilderContext = new BuilderContext();
-                Builder.reset(small, FixtureBuffer.create());
+                Builder.begin(small, FixtureBuffer.create(), true);
                 Builder.startTable(small, slots, 8);
                 Builder.prepare(small, 8); Builder.addFloat64(small, 0, Math.PI);
                 const aligned:ByteArray = Builder.finish(small, Builder.endTable(small));
@@ -103,7 +103,7 @@ package
                 ["addInt16", -32769, "readShort", 32767], ["addInt16", 32768, "readShort", -32768],
                 ["addUint16", 65536, "readUnsignedShort", 0]])
             {
-                Builder.reset(builder, FixtureBuffer.create());
+                Builder.begin(builder, FixtureBuffer.create(), true);
                 Builder.startTable(builder, 1, 8);
                 Builder.prepare(builder, test[0] == "addInt8" || test[0] == "addUint8" ? 1 : 2);
                 Builder[test[0]](builder, 0, test[1]);
@@ -125,7 +125,7 @@ package
             FixtureBuffer.bindRoot(view, Primitives.pack(value, FixtureBuffer.create()));
             check(view.i8 == -128 && view.u8 == 0 && view.i16 == 32767 && view.u16 == 0,
                 "Generated table writes truncate narrow integers");
-            Builder.reset(builder, FixtureBuffer.create());
+            Builder.begin(builder, FixtureBuffer.create(), true);
             Builder.startTable(builder, 1, 8);
             var rejected:Boolean = false;
             try { Builder.prepare(builder, 8); Builder.addInt64(builder, 0, null); } catch (missing:Error) { rejected = true; }

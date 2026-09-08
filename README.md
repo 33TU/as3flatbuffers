@@ -64,8 +64,10 @@ error may leave partial output in `dst`.
 Each generated class caches a `BuilderContext` in `private static const BUILDER`.
 `Builder` provides static operations taking that context as their first argument.
 The context owns the destination reference, reusable field vector, table/vtable
-positions, and root flag; its fields are package-internal. `pack()` resets the
-context for `dst` and detaches the destination in `finally`, including on failure.
+positions, and root flag; its fields are package-internal. `pack()` calls
+`Builder.begin(context, dst, reserveRoot)` to initialize output,
+then `Builder.reset(context)` in `finally` to clear state and detach the destination,
+including on failure.
 Packing is synchronous; nested tables and structs share the parent's context via
 `packInto(source, context)`.
 

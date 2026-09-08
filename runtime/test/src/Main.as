@@ -56,7 +56,7 @@ package
                     const cloned:Point = Point.clone(owned);
                     check(cloned !== owned && cloned.x == owned.x && cloned.y == owned.y, "Owned clone");
                     check(PointView.unpack(view) !== owned, "Fresh unpack");
-                    Builder.reset(builder, FixtureBuffer.create());
+                    Builder.begin(builder, FixtureBuffer.create(), true);
                     const output:ByteArray = Point.pack(owned, FixtureBuffer.create());
                     write(directory.resolvePath("as3-" + i + ".bin"), output);
                     FixtureBuffer.bindRoot(view, output);
@@ -122,7 +122,7 @@ package
                 check(caught, "Field outside table rejected");
 
                 // Integers preserve high bits rather than passing through Number.
-                Builder.reset(builder, FixtureBuffer.create()); Builder.startTable(builder, 2, 8);
+                Builder.begin(builder, FixtureBuffer.create(), true); Builder.startTable(builder, 2, 8);
                 Builder.prepare(builder, 4); Builder.addInt32(builder, 0, int.MIN_VALUE); Builder.prepare(builder, 4); Builder.addUint32(builder, 1, uint.MAX_VALUE);
                 write(directory.resolvePath("integers.bin"), Builder.finish(builder, Builder.endTable(builder)));
                 const signed:Int64 = new Int64(0xffffffff, -1);
@@ -141,7 +141,7 @@ package
                 check(scalar.xAxis == 1.25 && scalar.signedValue == -7 &&
                     scalar.unsignedValue == uint.MAX_VALUE && scalar.reset_ == 9,
                     "Generated owned defaults");
-                Builder.reset(builder, FixtureBuffer.create());
+                Builder.begin(builder, FixtureBuffer.create(), true);
                 const scalarView:ScalarDefaultsView = new ScalarDefaultsView();
                 FixtureBuffer.bindRoot(scalarView, ScalarDefaults.pack(scalar, FixtureBuffer.create()));
                 check(scalarView.xAxis == 1.25 && scalarView.signedValue == -7 &&
@@ -151,7 +151,7 @@ package
                 scalar.signedValue = int.MIN_VALUE;
                 scalar.unsignedValue = 0;
                 scalar.reset_ = 42;
-                Builder.reset(builder, FixtureBuffer.create());
+                Builder.begin(builder, FixtureBuffer.create(), true);
                 const scalarBytes:ByteArray = ScalarDefaults.pack(scalar, FixtureBuffer.create());
                 write(directory.resolvePath("scalars.bin"), scalarBytes);
                 FixtureBuffer.bindRoot(scalarView, scalarBytes);
@@ -176,7 +176,7 @@ package
                 naming.bind_2 = 456;
                 naming.bytes_ = -9;
                 naming.class_ = 17;
-                Builder.reset(builder, FixtureBuffer.create());
+                Builder.begin(builder, FixtureBuffer.create(), true);
                 const namingBytes:ByteArray = Naming.pack(naming, FixtureBuffer.create());
                 write(directory.resolvePath("naming.bin"), namingBytes);
                 const namingView:NamingView = FixtureBuffer.bindRoot(new NamingView(), namingBytes);

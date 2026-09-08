@@ -55,7 +55,7 @@ package
                 }
                 else
                     check(!value.frame && !value.envelope && !value.aligned, "Absent structs clear reused destination");
-                Builder.reset(builder, FixtureBuffer.create());
+                Builder.begin(builder, FixtureBuffer.create(), true);
                 const output:ByteArray = InlineRoot.pack(value, FixtureBuffer.create());
                 write(directory.resolvePath("struct-as3-" + i + ".bin"), output);
                 const roundTrip:InlineRoot = InlineRootView.unpack(FixtureBuffer.bindRoot(new InlineRootView(), output));
