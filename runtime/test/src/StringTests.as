@@ -114,7 +114,10 @@ package
 
             const builder:BuilderContext = new BuilderContext();
             Builder.begin(builder, dst, true);
-            Builder.startTable(builder, 1, 4);
+            Builder.prepare(builder, 2);
+            Builder.reserveVtable(builder, 1);
+            Builder.prepare(builder, 4);
+            Builder.startTable(builder);
             Builder.prepare(builder, 4);
             const reference:uint = Builder.reserveOffset(builder, 0);
             const table:uint = Builder.endTable(builder);

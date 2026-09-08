@@ -49,17 +49,22 @@ package as3flatbuffers
         }
 
         [Inline]
-        public static function startTable(context:BuilderContext, fieldCount:uint, alignment:uint):void
+        public static function reserveVtable(context:BuilderContext, fieldCount:uint):void
         {
             const bytes:ByteArray = context.bytes;
 
             context.fields.length = fieldCount;
             const vtableBytes:uint = (fieldCount + 2) * 2;
-            prepare(context, 2);
             context.vtableStart = bytes.position;
             // endTable writes every reserved byte, including absent field entries.
             bytes.position += vtableBytes;
-            prepare(context, alignment);
+        }
+
+        [Inline]
+        public static function startTable(context:BuilderContext):void
+        {
+            const bytes:ByteArray = context.bytes;
+
             context.tableStart = bytes.position;
             bytes.writeInt(int(context.tableStart - context.vtableStart));
         }

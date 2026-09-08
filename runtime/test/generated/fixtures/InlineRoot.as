@@ -71,7 +71,10 @@ package fixtures
             if (!source || !context)
                 throw new ArgumentError("Source and context must be non-null");
 
-            as3flatbuffers.Builder.startTable(context, 6, 16);
+            as3flatbuffers.Builder.prepare(context, 2);
+            as3flatbuffers.Builder.reserveVtable(context, 6);
+            as3flatbuffers.Builder.prepare(context, 16);
+            as3flatbuffers.Builder.startTable(context);
             if (source.point)
                 as3flatbuffers.Builder.addStruct(context, 0, fixtures.geometry.Point.packInto(source.point, context));
             if (source.frame)

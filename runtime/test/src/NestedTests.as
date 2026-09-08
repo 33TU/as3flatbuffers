@@ -101,11 +101,17 @@ package
 
             const builder:BuilderContext = new BuilderContext();
             Builder.begin(builder, dst, true);
-            Builder.startTable(builder, 1, 4);
+            Builder.prepare(builder, 2);
+            Builder.reserveVtable(builder, 1);
+            Builder.prepare(builder, 4);
+            Builder.startTable(builder);
             Builder.prepare(builder, 4);
             const slot:uint = Builder.reserveOffset(builder, 0);
             const parent:uint = Builder.endTable(builder);
-            Builder.startTable(builder, 0, 4);
+            Builder.prepare(builder, 2);
+            Builder.reserveVtable(builder, 0);
+            Builder.prepare(builder, 4);
+            Builder.startTable(builder);
             const childTable:uint = Builder.endTable(builder);
             Builder.patchOffset(builder, slot, childTable);
             check(Builder.finish(builder, parent) === dst, "Root may precede the last completed child table");

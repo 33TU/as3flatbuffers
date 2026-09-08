@@ -63,7 +63,10 @@ package fixtures.nested
             if (!source || !context)
                 throw new ArgumentError("Source and context must be non-null");
 
-            as3flatbuffers.Builder.startTable(context, 4, 16);
+            as3flatbuffers.Builder.prepare(context, 2);
+            as3flatbuffers.Builder.reserveVtable(context, 4);
+            as3flatbuffers.Builder.prepare(context, 16);
+            as3flatbuffers.Builder.startTable(context);
             if (source.value != 0)
             {
                 as3flatbuffers.Builder.addInt32(context, 0, source.value);

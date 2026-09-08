@@ -85,7 +85,10 @@ package fixtures
             if (!source || !context)
                 throw new ArgumentError("Source and context must be non-null");
 
-            as3flatbuffers.Builder.startTable(context, 12, 4);
+            as3flatbuffers.Builder.prepare(context, 2);
+            as3flatbuffers.Builder.reserveVtable(context, 12);
+            as3flatbuffers.Builder.prepare(context, 4);
+            as3flatbuffers.Builder.startTable(context);
             if (source.snakeCase != 11)
             {
                 as3flatbuffers.Builder.addInt32(context, 0, source.snakeCase);

@@ -122,7 +122,11 @@ package
                 check(caught, "Field outside table rejected");
 
                 // Integers preserve high bits rather than passing through Number.
-                Builder.begin(builder, FixtureBuffer.create(), true); Builder.startTable(builder, 2, 8);
+                Builder.begin(builder, FixtureBuffer.create(), true);
+                Builder.prepare(builder, 2);
+                Builder.reserveVtable(builder, 2);
+                Builder.prepare(builder, 8);
+                Builder.startTable(builder);
                 Builder.prepare(builder, 4); Builder.addInt32(builder, 0, int.MIN_VALUE); Builder.prepare(builder, 4); Builder.addUint32(builder, 1, uint.MAX_VALUE);
                 write(directory.resolvePath("integers.bin"), Builder.finish(builder, Builder.endTable(builder)));
                 const signed:Int64 = new Int64(0xffffffff, -1);

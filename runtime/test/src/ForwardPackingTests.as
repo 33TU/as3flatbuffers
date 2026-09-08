@@ -42,7 +42,10 @@ package
             // Output appears in dst during construction, before finish patches the root.
             const builder:BuilderContext = new BuilderContext();
             Builder.begin(builder, dst, true);
-            Builder.startTable(builder, 2, 4);
+            Builder.prepare(builder, 2);
+            Builder.reserveVtable(builder, 2);
+            Builder.prepare(builder, 4);
+            Builder.startTable(builder);
             Builder.prepare(builder, 4); Builder.addFloat32(builder, 0, 42);
             const end:uint = dst.position;
             check(dst.length == end && end > 4, "Builder writes directly into dst before finish");
@@ -56,7 +59,10 @@ package
 
             const other:ByteArray = FixtureBuffer.create();
             Builder.begin(builder, other, true);
-            Builder.startTable(builder, 1, 4);
+            Builder.prepare(builder, 2);
+            Builder.reserveVtable(builder, 1);
+            Builder.prepare(builder, 4);
+            Builder.startTable(builder);
             Builder.prepare(builder, 4); Builder.addInt32(builder, 0, 99);
             Builder.finish(builder, Builder.endTable(builder));
             Builder.reset(builder);

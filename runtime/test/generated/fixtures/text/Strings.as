@@ -66,7 +66,10 @@ package fixtures.text
             if (!source || !context)
                 throw new ArgumentError("Source and context must be non-null");
 
-            as3flatbuffers.Builder.startTable(context, 5, 4);
+            as3flatbuffers.Builder.prepare(context, 2);
+            as3flatbuffers.Builder.reserveVtable(context, 5);
+            as3flatbuffers.Builder.prepare(context, 4);
+            as3flatbuffers.Builder.startTable(context);
             const offset0:uint = source.text != null ? as3flatbuffers.Builder.reserveOffset(context, 0) : 0;
             const offset1:uint = source.label_ != null ? as3flatbuffers.Builder.reserveOffset(context, 1) : 0;
             const offset2:uint = source.stringValue_ != null ? as3flatbuffers.Builder.reserveOffset(context, 2) : 0;

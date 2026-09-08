@@ -46,7 +46,10 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 			alignment = f.Alignment
 		}
 	}
-	w.Line("as3flatbuffers.Builder.startTable(context, %d, %d);", o.Count, alignment)
+	w.Line("as3flatbuffers.Builder.prepare(context, 2);")
+	w.Line("as3flatbuffers.Builder.reserveVtable(context, %d);", o.Count)
+	w.Line("as3flatbuffers.Builder.prepare(context, %d);", alignment)
+	w.Line("as3flatbuffers.Builder.startTable(context);")
 	// The table header leaves the first field at a four-byte boundary.
 	guaranteedAlignment := uint32(4)
 	for _, f := range o.Fields {

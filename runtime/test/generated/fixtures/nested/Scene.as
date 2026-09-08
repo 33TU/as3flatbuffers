@@ -63,7 +63,10 @@ package fixtures.nested
             if (!source || !context)
                 throw new ArgumentError("Source and context must be non-null");
 
-            as3flatbuffers.Builder.startTable(context, 4, 4);
+            as3flatbuffers.Builder.prepare(context, 2);
+            as3flatbuffers.Builder.reserveVtable(context, 4);
+            as3flatbuffers.Builder.prepare(context, 4);
+            as3flatbuffers.Builder.startTable(context);
             const offset0:uint = source.head ? as3flatbuffers.Builder.reserveOffset(context, 0) : 0;
             const offset1:uint = source.alternate ? as3flatbuffers.Builder.reserveOffset(context, 1) : 0;
             const offset2:uint = source.pair ? as3flatbuffers.Builder.reserveOffset(context, 2) : 0;

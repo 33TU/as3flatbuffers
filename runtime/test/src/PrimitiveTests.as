@@ -84,7 +84,10 @@ package
             {
                 const small:BuilderContext = new BuilderContext();
                 Builder.begin(small, FixtureBuffer.create(), true);
-                Builder.startTable(small, slots, 8);
+                Builder.prepare(small, 2);
+                Builder.reserveVtable(small, slots);
+                Builder.prepare(small, 8);
+                Builder.startTable(small);
                 Builder.prepare(small, 8); Builder.addFloat64(small, 0, Math.PI);
                 const aligned:ByteArray = Builder.finish(small, Builder.endTable(small));
                 aligned.position = 0;
@@ -104,7 +107,10 @@ package
                 ["addUint16", 65536, "readUnsignedShort", 0]])
             {
                 Builder.begin(builder, FixtureBuffer.create(), true);
-                Builder.startTable(builder, 1, 8);
+                Builder.prepare(builder, 2);
+                Builder.reserveVtable(builder, 1);
+                Builder.prepare(builder, 8);
+                Builder.startTable(builder);
                 Builder.prepare(builder, test[0] == "addInt8" || test[0] == "addUint8" ? 1 : 2);
                 Builder[test[0]](builder, 0, test[1]);
                 const truncated:ByteArray = Builder.finish(builder, Builder.endTable(builder));
@@ -126,7 +132,10 @@ package
             check(view.i8 == -128 && view.u8 == 0 && view.i16 == 32767 && view.u16 == 0,
                 "Generated table writes truncate narrow integers");
             Builder.begin(builder, FixtureBuffer.create(), true);
-            Builder.startTable(builder, 1, 8);
+            Builder.prepare(builder, 2);
+            Builder.reserveVtable(builder, 1);
+            Builder.prepare(builder, 8);
+            Builder.startTable(builder);
             var rejected:Boolean = false;
             try { Builder.prepare(builder, 8); Builder.addInt64(builder, 0, null); } catch (missing:Error) { rejected = true; }
             check(rejected, "Reject missing 64-bit value");

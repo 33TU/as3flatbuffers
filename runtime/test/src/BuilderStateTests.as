@@ -13,21 +13,36 @@ package
             Builder.begin(builder, FixtureBuffer.create(), true);
             const view:PointView = new PointView();
             // Consecutive tables reuse field storage without resetting the buffer.
-            Builder.startTable(builder, 4, 8);
+            Builder.prepare(builder, 2);
+            Builder.reserveVtable(builder, 4);
+            Builder.prepare(builder, 8);
+            Builder.startTable(builder);
             Builder.prepare(builder, 4); Builder.addFloat32(builder, 0, 42);
             Builder.prepare(builder, 4); Builder.addFloat32(builder, 3, 99);
             Builder.endTable(builder);
-            Builder.startTable(builder, 2, 8);
+            Builder.prepare(builder, 2);
+            Builder.reserveVtable(builder, 2);
+            Builder.prepare(builder, 8);
+            Builder.startTable(builder);
             Builder.prepare(builder, 4); Builder.addFloat32(builder, 1, 7);
             FixtureBuffer.bindRoot(view, Builder.finish(builder, Builder.endTable(builder)));
             check(view.x == 0 && view.y == 7, "Reused field storage clears previous table offsets");
 
             Builder.begin(builder, FixtureBuffer.create(), true);
-            Builder.startTable(builder, 0, 8);
+            Builder.prepare(builder, 2);
+            Builder.reserveVtable(builder, 0);
+            Builder.prepare(builder, 8);
+            Builder.startTable(builder);
             Builder.endTable(builder);
-            Builder.startTable(builder, 0, 8);
+            Builder.prepare(builder, 2);
+            Builder.reserveVtable(builder, 0);
+            Builder.prepare(builder, 8);
+            Builder.startTable(builder);
             Builder.endTable(builder);
-            Builder.startTable(builder, 4, 8);
+            Builder.prepare(builder, 2);
+            Builder.reserveVtable(builder, 4);
+            Builder.prepare(builder, 8);
+            Builder.startTable(builder);
             Builder.prepare(builder, 4); Builder.addFloat32(builder, 0, 11);
             Builder.prepare(builder, 4); Builder.addFloat32(builder, 1, 12);
             FixtureBuffer.bindRoot(view, Builder.finish(builder, Builder.endTable(builder)));
@@ -35,11 +50,17 @@ package
 
             // Reset must also discard an unfinished table's slots and state.
             Builder.begin(builder, FixtureBuffer.create(), true);
-            Builder.startTable(builder, 4, 8);
+            Builder.prepare(builder, 2);
+            Builder.reserveVtable(builder, 4);
+            Builder.prepare(builder, 8);
+            Builder.startTable(builder);
             Builder.prepare(builder, 4); Builder.addFloat32(builder, 0, 55);
             Builder.prepare(builder, 4); Builder.addFloat32(builder, 3, 66);
             Builder.begin(builder, FixtureBuffer.create(), true);
-            Builder.startTable(builder, 2, 8);
+            Builder.prepare(builder, 2);
+            Builder.reserveVtable(builder, 2);
+            Builder.prepare(builder, 8);
+            Builder.startTable(builder);
             Builder.prepare(builder, 4); Builder.addFloat32(builder, 1, 3);
             FixtureBuffer.bindRoot(view, Builder.finish(builder, Builder.endTable(builder)));
             check(view.x == 0 && view.y == 3, "Reset clears offsets before reuse");
@@ -70,7 +91,10 @@ package
                 {
                     Builder.begin(builder, bytes, true);
                     Builder.pad(builder, prefix);
-                    Builder.startTable(builder, 1, alignment);
+                    Builder.prepare(builder, 2);
+                    Builder.reserveVtable(builder, 1);
+                    Builder.prepare(builder, alignment);
+                    Builder.startTable(builder);
                     Builder.prepare(builder, 4); Builder.addFloat32(builder, 0, 42);
                     const alignedTable:uint = Builder.endTable(builder);
                     Builder.finish(builder, alignedTable);
@@ -83,7 +107,10 @@ package
                 bytes.position = 0;
                 for (i = 0; i < 256; i++) bytes.writeByte(255);
                 Builder.begin(builder, bytes, true);
-                Builder.startTable(builder, 8, 4);
+                Builder.prepare(builder, 2);
+                Builder.reserveVtable(builder, 8);
+                Builder.prepare(builder, 4);
+                Builder.startTable(builder);
                 for (i = 0; i < present; i++)
                 {
                     Builder.prepare(builder, 4);
@@ -102,12 +129,18 @@ package
             }
             // The table body size must still fit its 16-bit wire field.
             Builder.begin(builder, bytes, true);
-            Builder.startTable(builder, 0, 4);
+            Builder.prepare(builder, 2);
+            Builder.reserveVtable(builder, 0);
+            Builder.prepare(builder, 4);
+            Builder.startTable(builder);
             Builder.pad(builder, 65531);
             Builder.finish(builder, Builder.endTable(builder));
             check(bytes.length > 65535, "Maximum table body size is accepted");
             Builder.begin(builder, bytes, true);
-            Builder.startTable(builder, 0, 4);
+            Builder.prepare(builder, 2);
+            Builder.reserveVtable(builder, 0);
+            Builder.prepare(builder, 4);
+            Builder.startTable(builder);
             Builder.pad(builder, 65532);
             var rejected:Boolean = false;
             try { Builder.endTable(builder); } catch (largeTable:RangeError) { rejected = true; }

@@ -53,7 +53,10 @@ package example.geometry
             if (!source || !context)
                 throw new ArgumentError("Source and context must be non-null");
 
-            as3flatbuffers.Builder.startTable(context, 1, 4);
+            as3flatbuffers.Builder.prepare(context, 2);
+            as3flatbuffers.Builder.reserveVtable(context, 1);
+            as3flatbuffers.Builder.prepare(context, 4);
+            as3flatbuffers.Builder.startTable(context);
             if (source.point)
                 as3flatbuffers.Builder.addStruct(context, 0, example.geometry.Point.packInto(source.point, context));
             return as3flatbuffers.Builder.endTable(context);
