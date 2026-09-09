@@ -98,6 +98,7 @@ func parseSchema(data []byte) ([]object, error) {
 	if err := validateStructs(objects); err != nil {
 		return nil, err
 	}
+	resolveKeys(objects)
 	return objects, nil
 }
 
@@ -125,6 +126,7 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, unions ma
 	if source.FieldsLength() > 32765 || source.FieldsLength() > dataLength/4 {
 		return o, fmt.Errorf("%s: invalid or excessive field count", fullName)
 	}
+	keyCount := 0
 	ids := make(map[uint16]bool)
 	type unionPair struct {
 		index    int32
@@ -151,6 +153,15 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, unions ma
 		if f.Required() && (o.Struct || f.Deprecated() || f.Optional()) {
 			return o, fmt.Errorf("%s: invalid required field", fullName)
 		}
+		if err := validateKey(&f); err != nil {
+			return o, fmt.Errorf("%s.%s: %w", fullName, f.Name(), err)
+		}
+		if f.Key() {
+			keyCount++
+			if keyCount > 1 {
+				return o, fmt.Errorf("%s: only one key is allowed", fullName)
+			}
+		}
 		if f.Deprecated() {
 			continue
 		}
@@ -158,8 +169,8 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, unions ma
 		if !identifier.MatchString(name) {
 			return o, fmt.Errorf("%s: invalid field name %q", fullName, name)
 		}
-		if f.Key() || f.Offset64() {
-			return o, fmt.Errorf("%s.%s: key or offset64 fields are not supported yet", fullName, name)
+		if f.Offset64() {
+			return o, fmt.Errorf("%s.%s: offset64 fields are not supported yet", fullName, name)
 		}
 		fType := f.Type(nil)
 		if fType == nil {
@@ -258,6 +269,7 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, unions ma
 				}
 			}
 		}
+		out.Key = f.Key()
 		out.Required = f.Required()
 		out.Offset = uint32(f.Offset())
 		o.Fields = append(o.Fields, out)
@@ -283,6 +295,12 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, unions ma
 	for i := range o.Fields {
 		if o.Fields[i].Element != nil {
 			o.Fields[i].LengthName = uniqueName(o.Fields[i].Name+"Length", names.used)
+		}
+	}
+	for i := range o.Fields {
+		f := &o.Fields[i]
+		if f.Element != nil && f.Element.KeyField != nil {
+			f.ByKeyName = uniqueName(f.Name+"ByKey", names.used)
 		}
 	}
 	return o, nil

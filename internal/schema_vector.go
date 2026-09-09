@@ -21,6 +21,13 @@ func parseVector(source *reflection.Field, schema *reflection.Schema) (field, er
 		if element.Struct {
 			element.Width, element.Alignment = uint32(target.Bytesize()), uint32(target.Minalign())
 		}
+		for i := 0; i < target.FieldsLength(); i++ {
+			var key reflection.Field
+			target.Fields(&key, i)
+			if key.Key() {
+				element.KeyField = &field{}
+			}
+		}
 	case reflection.BaseTypeString:
 		if typ.Index() != -1 {
 			return field{}, fmt.Errorf("invalid string vector type")

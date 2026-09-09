@@ -27,12 +27,15 @@ inventory.scores = new <int>[]; // Empty vectors are omitted when packing.
 
 const bytes:ByteArray = new ByteArray();
 bytes.endian = Endian.LITTLE_ENDIAN;
+Item.sortByKey(inventory.items); // Explicitly sort the owned vector in place.
 Inventory.pack(inventory, bytes);
 
 const view:InventoryView = new InventoryView();
 view.bind(bytes, bytes.readUnsignedInt());
 trace(view.itemsLength, view.items(0).quantity); // 1, 3
 trace(view.items(0).rarity == Rarity.RARE);      // true
+trace(view.itemsByKey(42).quantity);           // 3
+trace(view.itemsByKey(99));                    // null
 trace(view.tags(1));                            // rare
 trace(view.scoresLength);                      // 0
 
@@ -65,3 +68,9 @@ must be acyclic.
 
 `Rarity` provides named constants; `Item.rarity` remains a `uint` field. Unknown
 numeric enum values are preserved for compatibility with newer schemas.
+
+
+`Item.id` is a schema key. `Item.sortByKey` sorts the owned vector in place;
+packing preserves its supplied order. `itemsByKey` performs binary search in
+serialized bytes and returns the same cached view used by `items(index)`.
+Any lookup may rebind that view, including an unsuccessful search.

@@ -2,6 +2,7 @@ package internal
 
 func generateMessage(w *IndentWriter, o object, objects map[string]object) {
 	generatePackage(w, o)
+	generateKeyImports(w, o)
 	w.Line("import as3flatbuffers.Pack;")
 	w.Line("import as3flatbuffers.Unpack;")
 	w.Line("import as3flatbuffers.UnpackContext;")
@@ -22,6 +23,7 @@ func generateMessage(w *IndentWriter, o object, objects map[string]object) {
 	w.Line("private static const UNPACK:as3flatbuffers.UnpackContext = new as3flatbuffers.UnpackContext();")
 	w.BlankLine()
 	generateIdentifier(w, o)
+	generateOwnedKey(w, o)
 	generateFields(w, o)
 	generateArrayConstructor(w, o)
 	w.BlankLine()

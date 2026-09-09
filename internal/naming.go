@@ -88,6 +88,7 @@ var typeNames = map[string]struct{}{
 	"UnpackContext": {},
 	"UNPACK":        {},
 	"PackContext":   {},
+	"Keys":          {},
 	"Unpack":        {},
 	"Pack":          {},
 	"ByteArray":     {},

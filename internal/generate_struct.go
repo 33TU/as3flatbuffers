@@ -48,6 +48,7 @@ func generateViewCaches(w *IndentWriter, o object) {
 
 func generateStructView(w *IndentWriter, o object) {
 	generatePackage(w, o)
+	generateKeyImports(w, o)
 	w.Line("import flash.utils.Endian;")
 	w.Line("import flash.utils.ByteArray;")
 	generateScalarImports(w, o)
@@ -90,6 +91,7 @@ func generateStructView(w *IndentWriter, o object) {
 		w.Dedent()
 		w.Line("}")
 	}
+	generateKeyView(w, o)
 	w.Dedent()
 	w.Line("}")
 	endPackage(w)

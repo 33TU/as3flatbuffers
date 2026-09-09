@@ -8,7 +8,7 @@ struct Position {
 }
 
 table Item {
-    id:uint;
+    id:uint (key);
     quantity:uint = 1;
     rarity:Rarity = Common;
 }

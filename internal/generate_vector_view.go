@@ -61,4 +61,8 @@ func generateVectorView(w *IndentWriter, f field) {
 	}
 	w.Dedent()
 	w.Line("}")
+	if e.KeyField != nil {
+		w.BlankLine()
+		generateVectorByKey(w, f)
+	}
 }

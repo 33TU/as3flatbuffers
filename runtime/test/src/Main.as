@@ -270,6 +270,7 @@ package
                 UnionVectorTests.run(directory, check, read, write);
                 RequiredTests.run(directory, check, read, write);
                 FramingTests.run(directory, check, read, write);
+                KeyTests.run(directory, check, read, write);
                 UnpackTests.run(check);
                 DomainPackTests.run(check);
                 result.ok = true;

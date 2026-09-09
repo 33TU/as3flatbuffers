@@ -15,6 +15,9 @@ type field struct {
 	Name, Type, Default, Reader, Writer string
 	ID                                  uint16
 	WordDefault                         string
+	Key                                 bool
+	KeyField                            *field
+	ByKeyName                           string
 	Optional                            bool
 	Required                            bool
 	Width, Alignment                    uint32

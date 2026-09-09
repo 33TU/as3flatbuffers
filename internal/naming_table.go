@@ -10,6 +10,7 @@ type TableNames struct {
 }
 
 var tableMembers = map[string]struct{}{
+	"sortByKey": {}, "compareKeys": {}, "compareKey": {},
 	"FILE_IDENTIFIER": {}, "hasIdentifier": {}, "packSizePrefixed": {}, "unpackSizePrefixed": {},
 	"si8":          {},
 	"si16":         {},

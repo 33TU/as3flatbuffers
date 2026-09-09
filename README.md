@@ -461,13 +461,43 @@ still rejected.
 Schema validation completes before any output files are written. The CLI overwrites
 matching generated files, but does not remove stale files after schema renames.
 
-Key fields and services are currently unsupported.
+Services are currently unsupported.
 The CLI reports an error for unsupported features instead of emitting partial APIs.
 
 Go tests use checked-in `.bfbs` fixtures, so `just test-go` does not require an AIR
 SDK or `flatc`. Run `just generate-test-schemas` to regenerate those fixtures and
 `just generate-reflection` to regenerate the vendored Go reflection bindings,
 using the pinned compiler version.
+
+## Keys and sorted-vector lookup
+
+A table or struct may declare one non-optional scalar or string key:
+
+```fbs
+table Item { id:uint (key); quantity:uint; }
+table Inventory { items:[Item]; }
+```
+
+The owned type gets `Item.sortByKey(items)` and `Item.compareKeys(left, right)`.
+The view gets `itemsByKey(key)`, which searches the serialized vector in
+O(log n) comparisons and returns a cached `ItemView` or `null`. See the
+[vector example](examples/vector/README.md).
+
+Sorting is explicit and changes the supplied vector in place. Packing does not
+sort or validate ordering. The caller must provide ascending key order before
+using binary search; duplicate keys may return any matching element. Lookup and
+indexed access share a view cache, which can be rebound even when a lookup fails.
+
+Keys support scalar primitives (including enums and exact `Int64` / `UInt64`
+values) and strings. Narrow integer comparisons use the packed representation;
+float32 comparisons round to float32 precision. Sorting and lookup reject NaN
+keys. Null vector elements and null string/64-bit keys are rejected by sorting.
+
+String keys are required by the schema and compare lexicographically by UTF-8
+bytes, matching the Go backend. Lookup encodes its query once and compares raw
+buffer bytes without decoding candidate strings. Owned string decoding and
+ordinary view getters retain native AIR `readUTFBytes` behavior, including
+truncation at embedded NULs; query those wire keys with their original strings.
 
 ## File identifiers and size-prefixed buffers
 

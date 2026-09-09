@@ -42,6 +42,38 @@ package example.inventory
             return this.itemsView;
         }
 
+        /** Binary search of an ascending key-sorted vector. Returns the same cached view as indexed access, or null. */
+        public function itemsByKey(key:uint):example.inventory.ItemView
+        {
+            const vector:uint = vectorOffset(4, 4);
+            if (!vector)
+                return null;
+            if (!this.itemsView)
+                this.itemsView = new example.inventory.ItemView();
+
+            bytes.position = vector;
+            var span:uint = bytes.readUnsignedInt();
+            var start:uint = 0;
+            while (span)
+            {
+                const middle:uint = span >>> 1;
+                const position:uint = vector + 4 + (start + middle) * 4;
+                const child:uint = referenceAt(position);
+                this.itemsView.bind(bytes, child);
+                const comparison:int = this.itemsView.compareKey(key);
+                if (comparison < 0)
+                {
+                    start += middle + 1;
+                    span -= middle + 1;
+                }
+                else if (comparison > 0)
+                    span = middle;
+                else
+                    return this.itemsView;
+            }
+            return null;
+        }
+
         public function get pathLength():uint
         {
             const position:uint = vectorOffset(6, 8);

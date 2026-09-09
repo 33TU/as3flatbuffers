@@ -6,6 +6,7 @@ func generateView(w *IndentWriter, o object) {
 		return
 	}
 	generatePackage(w, o)
+	generateKeyImports(w, o)
 	w.Line("import as3flatbuffers.TableView;")
 	w.Line("import flash.utils.ByteArray;")
 	generateScalarImports(w, o)
@@ -17,6 +18,7 @@ func generateView(w *IndentWriter, o object) {
 	w.Indent()
 	generateViewCaches(w, o)
 	generateViewAccessors(w, o)
+	generateKeyView(w, o)
 	w.Dedent()
 	w.Line("}")
 	endPackage(w)
