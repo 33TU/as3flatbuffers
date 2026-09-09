@@ -5,6 +5,11 @@ struct Point {
   y:float;
 }
 
+// A fixed array occupies exactly sixteen consecutive float32 values.
+struct Transform {
+  matrix:[float:16];
+}
+
 // A FlatBuffer root must be a table; Point is stored inline inside it.
 table PointMessage {
   point:Point;

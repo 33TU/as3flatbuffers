@@ -49,7 +49,27 @@ order when bound.
 stores both coordinates, including zeros. `PointMessage.pack(message, dst)` places
 it inside the table automatically, sharing the parent’s builder through `Point.packInto()`.
 `Point.pack(point, dst)` writes a standalone raw Point at offset zero, with no root
-word. Both public pack methods require a caller-selected little-endian destination,
+word. Both public pack methods write little-endian bytes without changing `dst.endian`,
 replace its contents, and return it positioned at zero.
 
 For standalone struct bytes, use `Point.unpack(bytes, destination, structOffset)`.
+
+The same schema includes a `Transform` with `matrix:[float:16]`:
+
+```as3
+import example.geometry.Transform;
+import example.geometry.TransformView;
+
+const transform:Transform = new Transform(); // Sixteen zeros, fixed length.
+transform.matrix[0] = transform.matrix[5] = transform.matrix[10] = transform.matrix[15] = 1;
+Transform.pack(transform, bytes); // 64 raw struct bytes.
+const transformView:TransformView = new TransformView().bind(bytes, 0);
+trace(transformView.matrixLength, transformView.matrix(5)); // 16, 1
+Transform.unpack(bytes, transform); // Reuses the matrix vector.
+Transform.reset(transform);         // Zeros its elements; length stays 16.
+```
+
+Fixed arrays support scalars, enums, and inline structs. Struct and 64-bit word
+elements are initialized eagerly and reused by reset and unpack. Packing requires
+the declared length and non-null struct/word elements. Indexed view access checks
+bounds; struct elements use a cached child view, rebound on each access.

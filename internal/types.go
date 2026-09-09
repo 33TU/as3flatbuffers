@@ -22,6 +22,7 @@ type field struct {
 	ViewCache                           string
 	Element                             *field
 	LengthName                          string
+	FixedLength                         uint32
 }
 
 type enumDefinition struct {

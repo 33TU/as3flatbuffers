@@ -22,6 +22,7 @@ func generateMessage(w *IndentWriter, o object, objects map[string]object) {
 	w.Line("private static const UNPACK:as3flatbuffers.UnpackContext = new as3flatbuffers.UnpackContext();")
 	w.BlankLine()
 	generateFields(w, o)
+	generateArrayConstructor(w, o)
 	w.BlankLine()
 	generateReset(w, o)
 	w.BlankLine()
@@ -46,7 +47,9 @@ func generateReset(w *IndentWriter, o object) {
 	w.Line("{")
 	w.Indent()
 	for _, f := range o.Fields {
-		if f.Element != nil {
+		if f.FixedLength != 0 {
+			generateArrayReset(w, f, "msg", false)
+		} else if f.Element != nil {
 			w.Line("msg.%s.length = 0;", f.Name)
 		} else if f.Struct && o.Struct {
 			w.Line("%s.reset(msg.%s);", f.Type, f.Name)
@@ -77,7 +80,9 @@ func generateClone(w *IndentWriter, o object) {
 	w.BlankLine()
 	w.Line("const destination:%s = new %s();", o.Name, o.Name)
 	for _, f := range o.Fields {
-		if f.Element != nil {
+		if f.FixedLength != 0 {
+			generateArrayClone(w, f)
+		} else if f.Element != nil {
 			generateVectorClone(w, f)
 		} else if f.Struct || f.Table {
 			w.Line("destination.%s = %s.clone(source.%s);", f.Name, f.Type, f.Name)

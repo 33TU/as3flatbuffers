@@ -64,6 +64,10 @@ func generateStructView(w *IndentWriter, o object) {
 	generateStructBind(w, o)
 	for _, f := range o.Fields {
 		w.BlankLine()
+		if f.FixedLength != 0 {
+			generateArrayView(w, f)
+			continue
+		}
 		typ := f.Type
 		if f.Struct {
 			typ += "View"
@@ -118,7 +122,9 @@ func generateStructUnpackFields(w *IndentWriter, o object) {
 		if i > 0 {
 			w.BlankLine()
 		}
-		if f.Struct {
+		if f.FixedLength != 0 {
+			generateArrayUnpack(w, f)
+		} else if f.Struct {
 			generateStructFieldUnpack(w, f, true)
 		} else if f.WordDefault != "" {
 			w.Line("if (!destination.%s)", f.Name)

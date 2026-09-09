@@ -28,10 +28,14 @@ func validateStructs(objects []object) error {
 		state[name] = 1
 		var end uint32
 		for i, f := range o.Fields {
-			alignment := f.Width
-			if f.Struct {
-				target, ok := byName[f.Type]
-				if !ok || !target.Struct || target.Size != f.Width {
+			element := f
+			if f.Element != nil {
+				element = *f.Element
+			}
+			alignment := element.Alignment
+			if element.Struct {
+				target, ok := byName[element.Type]
+				if !ok || !target.Struct || target.Size != element.Width {
 					return fmt.Errorf("%s.%s: invalid struct reference", name, f.Name)
 				}
 				alignment = target.Alignment

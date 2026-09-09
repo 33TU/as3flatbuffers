@@ -98,7 +98,7 @@ func TestMalformedSchema(t *testing.T) {
 }
 
 func FuzzGenerate(f *testing.F) {
-	for _, name := range []string{"point", "scalars", "unsupported", "vectors", "enums", "enum_only"} {
+	for _, name := range []string{"point", "scalars", "unsupported", "vectors", "enums", "enum_only", "arrays"} {
 		data, err := os.ReadFile(filepath.Join("testdata", name+".bfbs"))
 		if err != nil {
 			f.Fatal(err)

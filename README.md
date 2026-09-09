@@ -7,7 +7,9 @@ This initial branch includes a Go code generator and a working runtime for
 tables and inline structs with scalar fields (`bool`, `byte`, `ubyte`, `short`,
 `ushort`, `int`, `uint`, `long`, `ulong`, `float`, and `double` in `.fbs` schemas).
 Tables support UTF-8 strings and vectors of scalars, strings, structs, and tables.
-Enums use their underlying integer type in fields and vectors. Tables and structs can also contain inline structs.
+Enums use their underlying integer type in fields, vectors, and fixed arrays.
+Structs support fixed arrays of scalars, enums, and structs. Tables and structs
+can also contain inline structs.
 Tables may reference other tables, including recursive and mutually recursive types. The runtime provides
 a reusable forward builder, borrowed views, and 64-bit word helpers.
 `Point` / `PointView` are generated from the example schema. This is not yet a
@@ -261,7 +263,16 @@ Generated table packers select the maximum field alignment and record each struc
 inside its containing table. Struct offsets cannot be reused elsewhere. Root struct
 packing omits the root-offset word; root table packing reserves and patches that
 word before returning the destination without a copy.
-Fixed-size arrays inside structs are not supported yet.
+Fixed-size arrays inside structs support scalar, enum, and struct elements:
+`matrix:[float:16]` becomes a fixed `Vector.<Number>(16, true)`, initialized to zero.
+Struct and 64-bit word elements are initialized eagerly. Reset clears elements
+in place, keeping the declared length; unpack reuses the vectors and their owned
+elements. Clone creates independent fixed vectors and deep-copies owned elements.
+Packing checks array lengths and rejects null struct/word elements. Array views
+expose a length getter and an indexed accessor, with bounds checks and cached
+struct views. Arrays have no length prefix in the wire layout; packing and
+unpacking access their elements directly through domain memory.
+See [the matrix example](examples/struct/README.md).
 
 ## Nested and recursive tables
 
@@ -386,7 +397,7 @@ still rejected.
 Schema validation completes before any output files are written. The CLI overwrites
 matching generated files, but does not remove stale files after schema renames.
 
-Fixed-size arrays, unions, required/key
+Unions, required/key
 fields, services, and file identifiers are currently unsupported.
 The CLI reports an error for unsupported features instead of emitting partial APIs.
 
@@ -423,13 +434,13 @@ runtime/test/               AIR tests
 runtime/bench/              AIR benchmark schemas, generated classes, and harness
 examples/point/schema/      Reference .fbs schema
 examples/point/src/         Generated owned object and view
-examples/struct/            Inline Point schema, generated classes, and usage
+examples/struct/            Inline Point and fixed-array Transform examples
 examples/string/            UTF-8 chat schema, generated classes, and usage
 examples/vector/            Inventory schema with scalar, string, struct, and table vectors
 tools/                      Reference-runtime interoperability harness
 ```
 
-The next milestones are fixed-size arrays and unions. Schema-specific verification, file identifiers,
+The next milestone is unions. Schema-specific verification, file identifiers,
 size-prefixed roots, and vtable deduplication are also not implemented yet.
 No Royale compatibility layer is included.
 

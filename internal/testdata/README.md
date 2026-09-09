@@ -34,9 +34,13 @@ BOMs, Unicode boundaries, and 70KB values.
 
 `vectors.fbs` covers every scalar vector element type, strings, aligned structs,
 recursive tables, and generated helper-name collisions. `unsupported.fbs` uses
-a fixed-size struct array, which remains unsupported.
+a required string field, which remains unsupported.
 
 `enums.fbs` covers all eight integral underlying types, bit flags, symbol-name
 collisions, nonzero defaults, vectors, structs and nullable enum fields.
 `enum_only.fbs` has no table or struct; `enum_collision.fbs` deliberately collides
 with a generated view. `union.fbs` verifies unions remain rejected.
+
+`arrays.fbs` covers every scalar array type, enum arrays, aligned struct arrays,
+nested arrays, and vectors of array-containing structs. Python interoperability
+also compares raw struct bytes, including all padding.

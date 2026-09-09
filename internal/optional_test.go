@@ -34,7 +34,7 @@ func TestOptionalScalars(t *testing.T) {
 func TestOtherAdvancedFeaturesStillRejected(t *testing.T) {
 	data := fixture(t, "optional")
 	schema := reflection.GetRootAsSchema(data, 0)
-	if !schema.MutateAdvancedFeatures(schema.AdvancedFeatures() | reflection.AdvancedFeaturesAdvancedArrayFeatures) {
+	if !schema.MutateAdvancedFeatures(schema.AdvancedFeatures() | reflection.AdvancedFeaturesAdvancedUnionFeatures) {
 		t.Fatal("advanced features not stored")
 	}
 	if files, err := Generate(data); err == nil || len(files) != 0 {

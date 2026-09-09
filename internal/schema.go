@@ -14,7 +14,7 @@ func parseSchema(data []byte) ([]object, error) {
 		return nil, fmt.Errorf("expected a .bfbs binary schema (create it with flatc -b --schema)")
 	}
 	schema := reflection.GetRootAsSchema(data, 0)
-	if schema.AdvancedFeatures() & ^reflection.AdvancedFeaturesOptionalScalars != 0 {
+	if schema.AdvancedFeatures() & ^(reflection.AdvancedFeaturesOptionalScalars|reflection.AdvancedFeaturesAdvancedArrayFeatures) != 0 {
 		return nil, fmt.Errorf("advanced schema features are not supported yet")
 	}
 	if schema.EnumsLength() > len(data)/4 {
@@ -131,7 +131,16 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, dataLengt
 			return o, fmt.Errorf("%s.%s: missing type", fullName, name)
 		}
 		var out field
-		if fType.BaseType() == reflection.BaseTypeVector {
+		if fType.BaseType() == reflection.BaseTypeArray {
+			if !o.Struct {
+				return o, fmt.Errorf("%s.%s: arrays are supported only in structs", fullName, name)
+			}
+			var err error
+			out, err = parseArray(&f, schema)
+			if err != nil {
+				return o, fmt.Errorf("%s.%s: %w", fullName, name, err)
+			}
+		} else if fType.BaseType() == reflection.BaseTypeVector {
 			if o.Struct {
 				return o, fmt.Errorf("%s.%s: structs cannot contain vectors", fullName, name)
 			}
