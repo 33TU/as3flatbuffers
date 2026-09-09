@@ -11,6 +11,8 @@ package example.protocol
     {
         private var payloadView:example.protocol.PayloadView;
 
+        private var payloadsView:example.protocol.PayloadView;
+
         public function get payload():example.protocol.PayloadView
         {
             if (!this.payloadView)
@@ -25,6 +27,56 @@ package example.protocol
             }
             const reference:uint = fieldOffset(6, 4);
             return this.payloadView.bind(bytes, type, reference);
+        }
+
+        public function get payloadsLength():uint
+        {
+            const tags:uint = vectorOffset(8, 1);
+            const vector:uint = vectorOffset(10, 4);
+            var tagCount:uint = 0;
+            var count:uint = 0;
+            if (tags)
+            {
+                bytes.position = tags;
+                tagCount = bytes.readUnsignedInt();
+            }
+            if (vector)
+            {
+                bytes.position = vector;
+                count = bytes.readUnsignedInt();
+            }
+            if ((tags == 0) != (vector == 0) || tagCount != count)
+                throw new RangeError("Union tag and payload vectors must match");
+            return count;
+        }
+
+        /** Returns a cached union view rebound on each access. */
+        public function payloads(index:uint):example.protocol.PayloadView
+        {
+            const tags:uint = vectorOffset(8, 1);
+            const vector:uint = vectorOffset(10, 4);
+            var tagCount:uint = 0;
+            var count:uint = 0;
+            if (tags)
+            {
+                bytes.position = tags;
+                tagCount = bytes.readUnsignedInt();
+            }
+            if (vector)
+            {
+                bytes.position = vector;
+                count = bytes.readUnsignedInt();
+            }
+            if ((tags == 0) != (vector == 0) || tagCount != count)
+                throw new RangeError("Union tag and payload vectors must match");
+            if (index >= count)
+                throw new RangeError("Union vector index is out of range");
+            if (!this.payloadsView)
+                this.payloadsView = new example.protocol.PayloadView();
+
+            bytes.position = tags + 4 + index;
+            const tag:uint = bytes.readUnsignedByte();
+            return this.payloadsView.bind(bytes, tag, vector + 4 + index * 4);
         }
     }
 }

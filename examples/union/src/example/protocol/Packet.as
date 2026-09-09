@@ -15,10 +15,12 @@ package example.protocol
         private static const UNPACK:as3flatbuffers.UnpackContext = new as3flatbuffers.UnpackContext();
 
         public var payload:example.protocol.Payload = new example.protocol.Payload();
+        public var payloads:Vector.<example.protocol.Payload> = new Vector.<example.protocol.Payload>();
 
         public static function reset(msg:Packet):void
         {
             example.protocol.Payload.reset(msg.payload);
+            msg.payloads.length = 0;
         }
 
         public static function clone(source:Packet):Packet
@@ -28,6 +30,11 @@ package example.protocol
 
             const destination:Packet = new Packet();
             destination.payload = example.protocol.Payload.clone(source.payload);
+            destination.payloads.length = source.payloads.length;
+            for (var index3:uint = 0; index3 < source.payloads.length; index3++)
+            {
+                destination.payloads[index3] = example.protocol.Payload.clone(source.payloads[index3]);
+            }
 
             return destination;
         }
@@ -57,9 +64,9 @@ package example.protocol
             if (!source || !context)
                 throw new ArgumentError("Source and context must be non-null");
 
-            as3flatbuffers.Pack.ensure(context, 24);
+            as3flatbuffers.Pack.ensure(context, 39);
             as3flatbuffers.Pack.prepare(context, 2);
-            as3flatbuffers.Pack.reserveVtable(context, 2);
+            as3flatbuffers.Pack.reserveVtable(context, 4);
             as3flatbuffers.Pack.prepare(context, 4);
             as3flatbuffers.Pack.startTable(context);
             example.protocol.Payload.validate(source.payload);
@@ -70,10 +77,42 @@ package example.protocol
                 as3flatbuffers.Pack.prepare(context, 4);
                 offset1 = as3flatbuffers.Pack.reserveOffset(context, 1);
             }
+            var tagsOffset3:uint = 0;
+            var offset3:uint = 0;
+            if (source.payloads.length)
+            {
+                as3flatbuffers.Pack.prepare(context, 4);
+                tagsOffset3 = as3flatbuffers.Pack.reserveOffset(context, 2);
+                offset3 = as3flatbuffers.Pack.reserveOffset(context, 3);
+            }
             const table:uint = as3flatbuffers.Pack.endTable(context);
             if (offset1)
             {
                 example.protocol.Payload.packInto(source.payload, context, offset1);
+            }
+            if (offset3)
+            {
+                const count3:uint = source.payloads.length;
+                as3flatbuffers.Pack.prepareVector(context, 1, count3, 1);
+                const tags3:uint = as3flatbuffers.Pack.startVector(context, count3);
+                as3flatbuffers.Pack.patchOffset(context, tagsOffset3, tags3);
+                const tagData3:uint = as3flatbuffers.Pack.reserve(context, count3);
+                for (var tagIndex3:uint = 0; tagIndex3 < count3; tagIndex3++)
+                {
+                    example.protocol.Payload.validate(source.payloads[tagIndex3]);
+                    si8(source.payloads[tagIndex3].type, tagData3 + tagIndex3);
+                }
+                as3flatbuffers.Pack.prepareVector(context, 4, count3, 4);
+                const vector3:uint = as3flatbuffers.Pack.startVector(context, count3);
+                as3flatbuffers.Pack.patchOffset(context, offset3, vector3);
+                const data3:uint = as3flatbuffers.Pack.reserve(context, count3 * 4);
+                for (var index3:uint = 0; index3 < count3; index3++)
+                {
+                    const reference3:uint = data3 + index3 * 4;
+                    si32(0, reference3);
+                    if (source.payloads[index3].type)
+                        example.protocol.Payload.packInto(source.payloads[index3], context, reference3);
+                }
             }
             return table;
         }
@@ -106,6 +145,20 @@ package example.protocol
             const tag1:uint = as3flatbuffers.Unpack.fieldOffset(vtable, vtableSize, objectSize, base, 4, 1);
             const field1:uint = as3flatbuffers.Unpack.fieldOffset(vtable, vtableSize, objectSize, base, 6, 4);
             destination.payload = example.protocol.Payload.unpackFrom(context, tag1 ? li8(tag1) : 0, field1, destination.payload);
+
+            const tagsField3:uint = as3flatbuffers.Unpack.fieldOffset(vtable, vtableSize, objectSize, base, 8, 4);
+            const field3:uint = as3flatbuffers.Unpack.fieldOffset(vtable, vtableSize, objectSize, base, 10, 4);
+            const tags3:uint = as3flatbuffers.Unpack.vector(context, tagsField3, 1);
+            const vector3:uint = as3flatbuffers.Unpack.vector(context, field3, 4);
+            const tagCount3:uint = tags3 ? uint(li32(tags3)) : 0;
+            const count3:uint = vector3 ? uint(li32(vector3)) : 0;
+            if ((tags3 == 0) != (vector3 == 0) || tagCount3 != count3)
+                throw new RangeError("Union tag and payload vectors must match");
+            destination.payloads.length = count3;
+            for (var index3:uint = 0; index3 < count3; index3++)
+            {
+                destination.payloads[index3] = example.protocol.Payload.unpackFrom(context, li8(tags3 + 4 + index3), vector3 + 4 + index3 * 4, destination.payloads[index3]);
+            }
             return destination;
         }
     }

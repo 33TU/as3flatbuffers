@@ -267,6 +267,7 @@ package
                 EnumTests.run(directory, check, read, write);
                 ArrayTests.run(directory, check, read, write);
                 UnionTests.run(directory, check, read, write);
+                UnionVectorTests.run(directory, check, read, write);
                 UnpackTests.run(check);
                 DomainPackTests.run(check);
                 result.ok = true;

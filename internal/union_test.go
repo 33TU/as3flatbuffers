@@ -88,7 +88,7 @@ func unionField(t *testing.T, data []byte, name string) *reflection.Field {
 }
 
 func TestInvalidUnionSchemas(t *testing.T) {
-	for _, tc := range []struct{ name, want string }{{"union_vectors", "union vectors"}, {"union_collision", "class name collision"}} {
+	for _, tc := range []struct{ name, want string }{{"union_collision", "class name collision"}} {
 		files, err := Generate(fixture(t, tc.name))
 		if err == nil || len(files) != 0 || !strings.Contains(err.Error(), tc.want) {
 			t.Fatalf("%s: %v", tc.name, err)

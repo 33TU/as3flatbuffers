@@ -109,8 +109,12 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, unions ma
 		return o, fmt.Errorf("%s: invalid or excessive field count", fullName)
 	}
 	ids := make(map[uint16]bool)
-	tags := make(map[uint16]int32)
-	unionFields := make(map[uint16]int32)
+	type unionPair struct {
+		index  int32
+		vector bool
+	}
+	tags := make(map[uint16]unionPair)
+	unionFields := make(map[uint16]unionPair)
 	for i := 0; i < source.FieldsLength(); i++ {
 		var f reflection.Field
 		if !source.Fields(&f, i) {
@@ -145,14 +149,14 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, unions ma
 			if o.Struct || unions[fType.Index()].Union == nil || f.DefaultInteger() != 0 {
 				return o, fmt.Errorf("%s.%s: invalid union tag", fullName, name)
 			}
-			tags[f.Id()] = fType.Index()
+			tags[f.Id()] = unionPair{index: fType.Index()}
 			continue
 		} else if fType.BaseType() == reflection.BaseTypeUnion {
 			target := unions[fType.Index()]
 			if o.Struct || target.Union == nil || f.Id() == 0 {
 				return o, fmt.Errorf("%s.%s: invalid union reference", fullName, name)
 			}
-			unionFields[f.Id()-1] = fType.Index()
+			unionFields[f.Id()-1] = unionPair{index: fType.Index()}
 			out = field{Name: name, ID: f.Id(), Type: objectType(target), Union: target.Union, Width: 4, Alignment: 4, Default: "new " + objectType(target) + "()"}
 		} else if fType.BaseType() == reflection.BaseTypeArray {
 			if !o.Struct {
@@ -167,10 +171,27 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, unions ma
 			if o.Struct {
 				return o, fmt.Errorf("%s.%s: structs cannot contain vectors", fullName, name)
 			}
-			var err error
-			out, err = parseVector(&f, schema)
-			if err != nil {
-				return o, fmt.Errorf("%s.%s: %w", fullName, name, err)
+			if fType.Element() == reflection.BaseTypeUType || fType.Element() == reflection.BaseTypeUnion {
+				target := unions[fType.Index()]
+				if target.Union == nil {
+					return o, fmt.Errorf("%s.%s: invalid union vector reference", fullName, name)
+				}
+				if fType.Element() == reflection.BaseTypeUType {
+					tags[f.Id()] = unionPair{index: fType.Index(), vector: true}
+					continue
+				}
+				if f.Id() == 0 {
+					return o, fmt.Errorf("%s.%s: missing union vector tag", fullName, name)
+				}
+				unionFields[f.Id()-1] = unionPair{index: fType.Index(), vector: true}
+				element := field{Type: objectType(target), Union: target.Union, Width: 4, Alignment: 4}
+				out = field{Name: name, ID: f.Id(), Type: "Vector.<" + element.Type + ">", Default: "new Vector.<" + element.Type + ">()", Width: 4, Alignment: 4, Element: &element}
+			} else {
+				var err error
+				out, err = parseVector(&f, schema)
+				if err != nil {
+					return o, fmt.Errorf("%s.%s: %w", fullName, name, err)
+				}
 			}
 		} else if fType.BaseType() == reflection.BaseTypeObj {
 			var target reflection.Object
@@ -230,7 +251,7 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, unions ma
 		o.Fields[i].Name = names.Field(o.Fields[i].ID, o.Fields[i].Name)
 	}
 	for i := range o.Fields {
-		if o.Fields[i].Union != nil || o.Fields[i].Struct || o.Fields[i].Table || (o.Fields[i].Element != nil && (o.Fields[i].Element.Struct || o.Fields[i].Element.Table)) {
+		if o.Fields[i].Union != nil || o.Fields[i].Struct || o.Fields[i].Table || (o.Fields[i].Element != nil && (o.Fields[i].Element.Struct || o.Fields[i].Element.Table || o.Fields[i].Element.Union != nil)) {
 			o.Fields[i].ViewCache = uniqueName(o.Fields[i].Name+"View", names.used)
 		}
 	}

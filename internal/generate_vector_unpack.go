@@ -4,6 +4,10 @@ import "fmt"
 
 func generateVectorUnpack(w *IndentWriter, f field) {
 	e := *f.Element
+	if e.Union != nil {
+		generateUnionVectorUnpack(w, f)
+		return
+	}
 	w.Line("const field%d:uint = as3flatbuffers.Unpack.fieldOffset(vtable, vtableSize, objectSize, base, %d, 4);", f.ID, 4+uint32(f.ID)*2)
 	w.Line("const vector%d:uint = as3flatbuffers.Unpack.vector(context, field%d, %d);", f.ID, f.ID, e.Width)
 	w.Line("const count%d:uint = vector%d ? uint(li32(vector%d)) : 0;", f.ID, f.ID, f.ID)

@@ -2,6 +2,10 @@ package internal
 
 func generateVectorView(w *IndentWriter, f field) {
 	e := *f.Element
+	if e.Union != nil {
+		generateUnionVectorView(w, f)
+		return
+	}
 	slot := 4 + uint32(f.ID)*2
 	w.Line("public function get %s():uint", f.LengthName)
 	w.Line("{")

@@ -60,6 +60,9 @@ generate: build-generator
     {{ FLATC }} -b --schema -o bin internal/testdata/union_names.fbs
     bin/as3flatc -o runtime/test/generated bin/union_names.bfbs
 
+    {{ FLATC }} -b --schema -o bin internal/testdata/union_vectors.fbs
+    bin/as3flatc -o runtime/test/generated bin/union_vectors.bfbs
+
 generate-reflection:
     {{ FLATC }} --go --gen-onefile --go-namespace reflection -o internal/reflection internal/reflection/upstream/reflection.fbs
 

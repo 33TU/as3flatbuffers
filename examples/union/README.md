@@ -62,6 +62,36 @@ getters return null. Each alias has its own field and cache, even when aliases u
 the same underlying type.
 
 Unknown tags, missing active payloads, and nonzero payload references tagged NONE
-are rejected. Union vectors are not implemented yet. Python's generator supports
+are rejected. Python's generator supports
 table union members; the mixed-member tests use official `flatc` binary/JSON
 conversion instead.
+
+## Union vectors
+
+`Packet.payloads:[Payload]` uses an ordinary resizable `Vector.<Payload>`:
+
+```as3
+const text:Payload = new Payload();
+text.type = Payload.TEXT;
+text.text = "hello";
+packet.payloads.push(text);
+packet.payloads.push(new Payload()); // NONE entry, not a null wrapper.
+
+Packet.pack(packet, bytes);
+Packet.unpack(bytes, decoded); // Reuses surviving indices and their member caches.
+bytes.position = 0;
+view.bind(bytes, bytes.readUnsignedInt());
+trace(view.payloadsLength);        // 2
+trace(view.payloads(0).text);       // hello
+trace(view.payloads(1).type);       // Payload.NONE
+trace(view.payloads(0) === view.payloads(1)); // Same borrowed union view, rebound.
+```
+
+The tag vector and payload vector are managed by generated code. Their wire
+lengths must match. Empty vectors are omitted, and absent vectors decode as empty.
+Reset empties the vector; shrinking releases removed wrappers and their caches.
+Clone creates independent wrappers, including copies of inactive member objects.
+
+`flatc` 25.12.19 cannot convert NONE entries through JSON. Their zero-tag,
+zero-reference wire encoding is accepted by its generated C++ verifier; the test
+suite checks raw NONE entries separately from JSON interoperability.

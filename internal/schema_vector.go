@@ -11,7 +11,7 @@ func parseVector(source *reflection.Field, schema *reflection.Schema) (field, er
 	var element field
 	switch typ.Element() {
 	case reflection.BaseTypeUnion, reflection.BaseTypeUType:
-		return field{}, fmt.Errorf("union vectors are not supported yet")
+		return field{}, fmt.Errorf("union elements require paired table vectors")
 	case reflection.BaseTypeObj:
 		var target reflection.Object
 		if typ.Index() < 0 || int(typ.Index()) >= schema.ObjectsLength() || !schema.Objects(&target, int(typ.Index())) {

@@ -189,8 +189,23 @@ Aliases of the same underlying type get separate typed fields and caches.
 
 Borrowed union views expose the tag and typed getters. Inactive getters return
 null; active table/struct getters reuse cached views. Unknown tags, missing active
-payloads, and nonzero references tagged NONE are rejected. Union vectors are not
-yet supported. See [the union example](examples/union/README.md).
+payloads, and nonzero references tagged NONE are rejected.
+
+Union vectors such as `payloads:[Payload]` generate `Vector.<Payload>`. Each
+non-null wrapper selects its own member; use a wrapper tagged NONE for an empty
+entry. Unpacking reuses wrappers and cached members by index. Shrinking drops
+removed wrappers; reset sets the vector length to zero. Clone deep-copies the
+wrappers and their member caches. Absent and empty vectors both decode as empty.
+
+The standard wire representation has separate tag and payload-offset vectors.
+Readers require both to be present or both absent, with matching lengths.
+Borrowed views expose `payloadsLength` and `payloads(index)`, returning a single
+cached union view rebound on each access. See [the union example](examples/union/README.md).
+
+`flatc` 25.12.19's JSON conversion rejects NONE entries inside union vectors.
+Our NONE encoding uses a zero tag and zero reference and is accepted by the
+flatc-generated C++ verifier. The interoperability tests use raw NONE fixtures
+alongside flatc-generated active-member fixtures.
 
 ## Strings
 
@@ -416,7 +431,7 @@ still rejected.
 Schema validation completes before any output files are written. The CLI overwrites
 matching generated files, but does not remove stale files after schema renames.
 
-Union vectors, required/key
+Required/key
 fields, services, and file identifiers are currently unsupported.
 The CLI reports an error for unsupported features instead of emitting partial APIs.
 
@@ -460,7 +475,7 @@ examples/union/             Typed table, struct, and string union payloads
 tools/                      Reference-runtime interoperability harness
 ```
 
-The next milestones are union vectors and required fields. Schema-specific verification, file identifiers,
+The next milestone is required fields. Schema-specific verification, file identifiers,
 size-prefixed roots, and vtable deduplication are also not implemented yet.
 No Royale compatibility layer is included.
 

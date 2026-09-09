@@ -4,6 +4,10 @@ import "fmt"
 
 func generateVectorPack(w *IndentWriter, f field, objects map[string]object) {
 	e := *f.Element
+	if e.Union != nil {
+		generateUnionVectorPack(w, f)
+		return
+	}
 	w.Line("if (offset%d)", f.ID)
 	w.Line("{")
 	w.Indent()
@@ -42,7 +46,7 @@ func generateVectorPack(w *IndentWriter, f field, objects map[string]object) {
 
 func generateVectorClone(w *IndentWriter, f field) {
 	e := *f.Element
-	if !e.Struct && !e.Table && e.WordDefault == "" {
+	if !e.Struct && !e.Table && e.Union == nil && e.WordDefault == "" {
 		w.Line("destination.%s = source.%s.concat();", f.Name, f.Name)
 		return
 	}
@@ -51,7 +55,7 @@ func generateVectorClone(w *IndentWriter, f field) {
 	w.Line("{")
 	w.Indent()
 	value := fmt.Sprintf("source.%s[index%d]", f.Name, f.ID)
-	if e.Struct || e.Table {
+	if e.Struct || e.Table || e.Union != nil {
 		w.Line("destination.%s[index%d] = %s.clone(%s);", f.Name, f.ID, e.Type, value)
 	} else {
 		w.Line("destination.%s[index%d] = %s ? %s.clone() : null;", f.Name, f.ID, value, value)

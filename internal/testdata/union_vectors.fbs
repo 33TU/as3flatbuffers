@@ -1,5 +1,14 @@
 namespace fixtures.unionvectors;
-table Value { x:int; }
-union Item { Value }
-table Root { items:[Item]; }
-root_type Root;
+
+table Value { x:int; next:Batch; }
+struct Point { x:float; y:float; }
+struct Tiny { value:ubyte; }
+union Item { Value, Point, Text:string, Tiny, Alternate:Value }
+table Batch {
+  id:uint;
+  items:[Item];
+  mirror:[Item];
+  single:Item;
+  tail:bool;
+}
+root_type Batch;

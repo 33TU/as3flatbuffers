@@ -53,6 +53,9 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 		if f.Union != nil {
 			maximum++
 		}
+		if f.Element != nil && f.Element.Union != nil {
+			maximum += 4
+		}
 	}
 	w.Line("as3flatbuffers.Pack.ensure(context, %d);", maximum)
 	w.Line("as3flatbuffers.Pack.prepare(context, 2);")
@@ -68,6 +71,10 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 		if f.Union != nil {
 			generateUnionFieldPack(w, f)
 			guaranteedAlignment = 1
+			continue
+		}
+		if f.Element != nil && f.Element.Union != nil {
+			generateUnionVectorReserve(w, f, before)
 			continue
 		}
 		if f.String || f.Table || f.Element != nil {

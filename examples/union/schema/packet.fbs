@@ -13,6 +13,7 @@ union Payload { Move, Damage, Text:string }
 
 table Packet {
   payload:Payload;
+  payloads:[Payload];
 }
 
 root_type Packet;

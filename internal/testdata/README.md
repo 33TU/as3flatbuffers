@@ -49,5 +49,11 @@ also compares raw struct bytes, including all padding.
 multiple union fields, tiny structs, and structs containing arrays. The mixed
 cases use flatc binary/JSON interoperability because its Python generator only
 accepts table members. `union_names.fbs` covers union-only schemas and naming
-collisions; `union_vectors.fbs` remains explicitly rejected, and
-`union_collision.fbs` checks output class collisions.
+collisions, and `union_collision.fbs` checks output class collisions.
+
+`union_vectors.fbs` covers mixed and aliased members, NONE entries, recursive
+union vectors, separate union fields, empty/absent vectors, and resizing. Tests
+compare active members through flatc binary/JSON conversion and independently
+check raw NONE entries, which flatc 25.12.19's JSON parser cannot express.
+Malformed-pair tests reject differing tag/payload lengths, missing halves,
+unknown tags, and invalid references.
