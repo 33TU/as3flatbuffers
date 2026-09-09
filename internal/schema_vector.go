@@ -25,8 +25,8 @@ func parseVector(source *reflection.Field, schema *reflection.Schema) (field, er
 		}
 		element = field{Type: "String", String: true, Width: 4, Alignment: 4}
 	default:
-		if typ.Index() != -1 {
-			return field{}, fmt.Errorf("referenced vector element types are not supported yet")
+		if err := validateEnumReference(schema, typ.Element(), typ.Index()); err != nil {
+			return field{}, err
 		}
 		var err error
 		element, err = parseScalarType(typ.Element(), 0, 0)

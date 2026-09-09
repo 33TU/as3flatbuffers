@@ -15,10 +15,15 @@ func generateFiles(objects []object) ([]File, error) {
 	emitMessage := func(w *IndentWriter, o object) { generateMessage(w, o, byName) }
 	var files []File
 	for _, o := range objects {
-		for _, spec := range []struct {
+		specs := []struct {
 			suffix string
 			emit   func(*IndentWriter, object)
-		}{{"", emitMessage}, {"View", generateView}} {
+		}{{"", emitMessage}, {"View", generateView}}
+		if o.Enum != nil {
+			specs = specs[:1]
+			specs[0].emit = generateEnum
+		}
+		for _, spec := range specs {
 			var output bytes.Buffer
 			writer := NewIndentWriter(&output, DefaultIndent)
 			spec.emit(&writer, o)

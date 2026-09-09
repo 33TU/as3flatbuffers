@@ -4,6 +4,7 @@ package
     import example.inventory.InventoryView;
     import example.inventory.Item;
     import example.inventory.Position;
+    import example.inventory.Rarity;
     import fixtures.vectors.Vectors;
     import fixtures.vectors.VectorsView;
     import fixtures.vectors.Pair;
@@ -163,6 +164,7 @@ package
             const item:Item = new Item();
             item.id = 42;
             item.quantity = 3;
+            item.rarity = Rarity.RARE;
             inventory.items = new <Item>[item];
             const point:Position = new Position();
             point.x = 1.5;
@@ -176,6 +178,7 @@ package
             view.bind(bytes, bytes.readUnsignedInt());
             check(view.itemsLength == 1 && view.items(0).quantity == 3 && view.tags(1) == "rare",
                     "Vector example packs manually constructed values");
+            check(view.items(0).rarity == Rarity.RARE, "Inventory example uses generated enum constants");
             check(view.scoresLength == 0 && view.path(0).x == 1.5,
                     "Vector example preserves empty vectors and inline structs");
             const owned:Inventory = Inventory.unpack(bytes);

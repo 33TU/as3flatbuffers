@@ -26,5 +26,15 @@ package example.inventory
             bytes.position = position;
             return bytes.readUnsignedInt();
         }
+
+        public function get rarity():uint
+        {
+            const position:uint = fieldOffset(8, 1);
+            if (!position)
+                return 0;
+
+            bytes.position = position;
+            return bytes.readUnsignedByte();
+        }
     }
 }

@@ -1,5 +1,7 @@
 namespace example.inventory;
 
+enum Rarity:ubyte { Common = 0, Rare = 1, Epic = 2 }
+
 struct Position {
     x:float;
     y:float;
@@ -8,6 +10,7 @@ struct Position {
 table Item {
     id:uint;
     quantity:uint = 1;
+    rarity:Rarity = Common;
 }
 
 table Inventory {

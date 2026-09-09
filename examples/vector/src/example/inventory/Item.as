@@ -15,11 +15,13 @@ package example.inventory
 
         public var id:uint = 0;
         public var quantity:uint = 1;
+        public var rarity:uint = 0;
 
         public static function reset(msg:Item):void
         {
             msg.id = 0;
             msg.quantity = 1;
+            msg.rarity = 0;
         }
 
         public static function clone(source:Item):Item
@@ -30,6 +32,7 @@ package example.inventory
             const destination:Item = new Item();
             destination.id = source.id;
             destination.quantity = source.quantity;
+            destination.rarity = source.rarity;
 
             return destination;
         }
@@ -59,9 +62,9 @@ package example.inventory
             if (!source || !context)
                 throw new ArgumentError("Source and context must be non-null");
 
-            as3flatbuffers.Pack.ensure(context, 30);
+            as3flatbuffers.Pack.ensure(context, 33);
             as3flatbuffers.Pack.prepare(context, 2);
-            as3flatbuffers.Pack.reserveVtable(context, 2);
+            as3flatbuffers.Pack.reserveVtable(context, 3);
             as3flatbuffers.Pack.prepare(context, 4);
             as3flatbuffers.Pack.startTable(context);
             if (source.id != 0)
@@ -71,6 +74,10 @@ package example.inventory
             if (source.quantity != 1)
             {
                 as3flatbuffers.Pack.addUint32(context, 1, source.quantity);
+            }
+            if (source.rarity != 0)
+            {
+                as3flatbuffers.Pack.addUint8(context, 2, source.rarity);
             }
             return as3flatbuffers.Pack.endTable(context);
         }
@@ -118,6 +125,16 @@ package example.inventory
             else
             {
                 destination.quantity = uint(li32(position1));
+            }
+
+            const position2:uint = as3flatbuffers.Unpack.fieldOffset(vtable, vtableSize, objectSize, base, 8, 1);
+            if (!position2)
+            {
+                destination.rarity = 0;
+            }
+            else
+            {
+                destination.rarity = li8(position2);
             }
             return destination;
         }

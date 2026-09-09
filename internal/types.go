@@ -24,7 +24,12 @@ type field struct {
 	LengthName                          string
 }
 
+type enumDefinition struct {
+	Values []field
+}
+
 type object struct {
+	Enum            *enumDefinition
 	Name, Package   string
 	Count           int
 	Fields          []field

@@ -264,6 +264,7 @@ package
                 NestedTests.run(directory, check, read, write);
                 StringTests.run(directory, check, read, write);
                 VectorTests.run(directory, check, read, write);
+                EnumTests.run(directory, check, read, write);
                 UnpackTests.run(check);
                 DomainPackTests.run(check);
                 result.ok = true;

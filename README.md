@@ -6,7 +6,8 @@ around owned objects and reusable views into binary data.
 This initial branch includes a Go code generator and a working runtime for
 tables and inline structs with scalar fields (`bool`, `byte`, `ubyte`, `short`,
 `ushort`, `int`, `uint`, `long`, `ulong`, `float`, and `double` in `.fbs` schemas).
-Tables support UTF-8 strings and vectors of scalars, strings, structs, and tables. Tables and structs can also contain inline structs.
+Tables support UTF-8 strings and vectors of scalars, strings, structs, and tables.
+Enums use their underlying integer type in fields and vectors. Tables and structs can also contain inline structs.
 Tables may reference other tables, including recursive and mutually recursive types. The runtime provides
 a reusable forward builder, borrowed views, and 64-bit word helpers.
 `Point` / `PointView` are generated from the example schema. This is not yet a
@@ -146,6 +147,29 @@ defaults also preserve the full range.
 
 The Point example above uses a FlatBuffers **table**, so fields can be omitted
 and defaults read correctly.
+
+## Enums
+
+Enums generate a class of named values, with `UPPER_SNAKE_CASE` symbols and
+collision suffixes when needed. The [inventory example](examples/vector/README.md)
+uses `Rarity.RARE`. Enum classes have no view or packing methods.
+
+Fields use the underlying integer representation: `int` for signed 8/16/32-bit
+enums, `uint` for unsigned ones, and `Int64` / `UInt64` for 64-bit enums. The same
+representation works in tables, structs, and vectors, using existing scalar
+packing and decoding. Numeric values not listed in the enum are preserved;
+callers must handle unknown values from newer schemas.
+
+Enum symbols up to 32 bits are `public static const` values. Symbols for 64-bit
+enums are static getters returning fresh word objects, so mutating a retrieved
+value cannot corrupt a shared constant. Field defaults still use independent
+word objects, and unpack/reset reuse them. Nullable enum fields use the usual
+optional scalar wrappers or nullable 64-bit words.
+
+`bit_flags` enums use the masks exported by flatc; unknown flag bits are preserved.
+The flatc 25.12.19 limitation for large `ulong` field defaults described above
+also applies to enum field defaults. The full unsigned range works for enum
+symbols and field values. Unions remain unsupported.
 
 ## Strings
 
@@ -337,7 +361,8 @@ flatc -b --schema -o bin examples/point/schema/point.fbs
 bin/as3flatc -o examples/point/src bin/point.bfbs
 ```
 
-Every supported table or struct produces an owned class and a `View` class. Owned objects
+Every supported table or struct produces an owned class and a `View` class.
+Each enum produces one constants class. Owned objects
 have schema defaults and static `reset(msg)`, `clone(source)`, and
 `pack(source, dst)` and `unpack(bytes, destination = null, offset = 0)` methods.
 Generated `packInto()` and `unpackFrom()` calls compose nested objects. `clone(null)` returns null. Generated owned classes
@@ -361,7 +386,7 @@ still rejected.
 Schema validation completes before any output files are written. The CLI overwrites
 matching generated files, but does not remove stale files after schema renames.
 
-Fixed-size arrays, enums/unions, required/key
+Fixed-size arrays, unions, required/key
 fields, services, and file identifiers are currently unsupported.
 The CLI reports an error for unsupported features instead of emitting partial APIs.
 
@@ -404,7 +429,7 @@ examples/vector/            Inventory schema with scalar, string, struct, and ta
 tools/                      Reference-runtime interoperability harness
 ```
 
-The next milestones are fixed-size arrays and enums/unions. Schema-specific verification, file identifiers,
+The next milestones are fixed-size arrays and unions. Schema-specific verification, file identifiers,
 size-prefixed roots, and vtable deduplication are also not implemented yet.
 No Royale compatibility layer is included.
 

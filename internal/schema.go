@@ -17,8 +17,8 @@ func parseSchema(data []byte) ([]object, error) {
 	if schema.AdvancedFeatures() & ^reflection.AdvancedFeaturesOptionalScalars != 0 {
 		return nil, fmt.Errorf("advanced schema features are not supported yet")
 	}
-	if schema.EnumsLength() != 0 {
-		return nil, fmt.Errorf("enums and unions are not supported yet")
+	if schema.EnumsLength() > len(data)/4 {
+		return nil, fmt.Errorf("invalid enum count")
 	}
 	if schema.ServicesLength() != 0 {
 		return nil, fmt.Errorf("services are not supported yet")
@@ -27,11 +27,29 @@ func parseSchema(data []byte) ([]object, error) {
 		return nil, fmt.Errorf("file identifiers are not supported yet")
 	}
 	count := schema.ObjectsLength()
-	if count < 1 || count > len(data)/4 {
+	if (count < 1 && schema.EnumsLength() == 0) || count > len(data)/4 {
 		return nil, fmt.Errorf("invalid or empty schema object list")
 	}
 	objects := make([]object, 0, count)
 	paths := make(map[string]bool)
+	for i := 0; i < schema.EnumsLength(); i++ {
+		var source reflection.Enum
+		if !schema.Enums(&source, i) {
+			return nil, fmt.Errorf("missing enum %d", i)
+		}
+		o, err := parseEnum(&source, len(data))
+		if err != nil {
+			return nil, err
+		}
+		name := path.Join(strings.ReplaceAll(o.Package, ".", "/"), o.Name+".as")
+		key := strings.ToLower(name)
+		if paths[key] {
+			return nil, fmt.Errorf("generated class name collision: %s", name)
+		}
+		paths[key] = true
+		objects = append(objects, o)
+	}
+
 	for i := 0; i < count; i++ {
 		var source reflection.Object
 		if !schema.Objects(&source, i) {
@@ -143,8 +161,8 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, dataLengt
 			}
 			out = field{Name: name, ID: f.Id(), Type: "String", String: true, Width: 4, Alignment: 4, Default: "null"}
 		} else {
-			if fType.Index() != -1 {
-				return o, fmt.Errorf("%s.%s: referenced types are not supported yet", fullName, name)
+			if err := validateEnumReference(schema, fType.BaseType(), fType.Index()); err != nil {
+				return o, fmt.Errorf("%s.%s: %w", fullName, name, err)
 			}
 			var err error
 			out, err = parseScalar(&f)

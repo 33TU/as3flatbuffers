@@ -42,6 +42,9 @@ generate: build-generator
     {{ FLATC }} -b --schema -o bin internal/testdata/vectors.fbs
     bin/as3flatc -o runtime/test/generated bin/vectors.bfbs
     {{ FLATC }} --python -o runtime/bin/python internal/testdata/vectors.fbs
+    {{ FLATC }} -b --schema -o bin internal/testdata/enums.fbs
+    bin/as3flatc -o runtime/test/generated bin/enums.bfbs
+    {{ FLATC }} --python -o runtime/bin/python internal/testdata/enums.fbs
 
 generate-reflection:
     {{ FLATC }} --go --gen-onefile --go-namespace reflection -o internal/reflection internal/reflection/upstream/reflection.fbs

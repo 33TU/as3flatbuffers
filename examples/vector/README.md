@@ -8,6 +8,7 @@ import example.inventory.Inventory;
 import example.inventory.InventoryView;
 import example.inventory.Item;
 import example.inventory.Position;
+import example.inventory.Rarity;
 import flash.utils.ByteArray;
 import flash.utils.Endian;
 
@@ -15,6 +16,7 @@ const inventory:Inventory = new Inventory();
 const item:Item = new Item();
 item.id = 42;
 item.quantity = 3;
+item.rarity = Rarity.RARE;
 inventory.items = new <Item>[item];
 const point:Position = new Position();
 point.x = 1.5;
@@ -30,6 +32,7 @@ Inventory.pack(inventory, bytes);
 const view:InventoryView = new InventoryView();
 view.bind(bytes, bytes.readUnsignedInt());
 trace(view.itemsLength, view.items(0).quantity); // 1, 3
+trace(view.items(0).rarity == Rarity.RARE);      // true
 trace(view.tags(1));                            // rare
 trace(view.scoresLength);                      // 0
 
@@ -59,3 +62,6 @@ by index. Resizing assigns `length` directly. Absent input and reset both set
 its removed objects; a later growth allocates replacements. Cloning copies
 vectors and mutable elements deeply. As with other table fields, source graphs
 must be acyclic.
+
+`Rarity` provides named constants; `Item.rarity` remains a `uint` field. Unknown
+numeric enum values are preserved for compatibility with newer schemas.
