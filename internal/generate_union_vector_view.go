@@ -31,6 +31,7 @@ func generateUnionVectorView(w *IndentWriter, f field) {
 func generateUnionVectorViewPositions(w *IndentWriter, f field) {
 	w.Line("const tags:uint = vectorOffset(%d, 1);", 4+uint32(f.ID-1)*2)
 	w.Line("const vector:uint = vectorOffset(%d, 4);", 4+uint32(f.ID)*2)
+	generateRequiredRead(w, f, "tags && vector")
 	w.Line("var tagCount:uint = 0;")
 	w.Line("var count:uint = 0;")
 	w.Line("if (tags)")

@@ -34,7 +34,7 @@ BOMs, Unicode boundaries, and 70KB values.
 
 `vectors.fbs` covers every scalar vector element type, strings, aligned structs,
 recursive tables, and generated helper-name collisions. `unsupported.fbs` uses
-a required string field, which remains unsupported.
+a keyed string field, which remains unsupported.
 
 `enums.fbs` covers all eight integral underlying types, bit flags, symbol-name
 collisions, nonzero defaults, vectors, structs and nullable enum fields.
@@ -57,3 +57,9 @@ compare active members through flatc binary/JSON conversion and independently
 check raw NONE entries, which flatc 25.12.19's JSON parser cannot express.
 Malformed-pair tests reject differing tag/payload lengths, missing halves,
 unknown tags, and invalid references.
+
+`required.fbs` covers required strings, tables, inline structs, every supported
+vector category, unions, and union vectors. Fixtures include empty required
+values, nested required fields, and omitted optional fields. Runtime tests remove
+each required wire slot and check unpack/getter rejection; generator tests reject
+required scalars and mismatched required flags on union-vector pairs.

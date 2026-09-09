@@ -1,5 +1,7 @@
 package internal
 
+import "fmt"
+
 func generateUnpack(w *IndentWriter, o object) {
 	if o.Struct {
 		w.Line("/** Decode raw struct bytes at offset into a new or reused owned value. */")
@@ -60,6 +62,7 @@ func generateUnpack(w *IndentWriter, o object) {
 				generateVectorUnpack(w, f)
 			} else if f.String {
 				w.Line("const position%d:uint = as3flatbuffers.Unpack.fieldOffset(vtable, vtableSize, objectSize, base, %d, 4);", f.ID, 4+uint32(f.ID)*2)
+				generateRequiredRead(w, f, fmt.Sprintf("position%d", f.ID))
 				w.Line("destination.%s = as3flatbuffers.Unpack.stringValue(context, position%d);", f.Name, f.ID)
 			} else if f.Table {
 				generateTableFieldUnpack(w, f)

@@ -1,0 +1,17 @@
+namespace fixtures.required;
+struct Position { x:float; y:float; }
+table Child { label:string (required); }
+union Payload { Child, Position, Text:string }
+table RequiredFields {
+  name:string (required);
+  position:Position (required);
+  child:Child (required);
+  numbers:[int] (required);
+  names:[string] (required);
+  positions:[Position] (required);
+  children:[Child] (required);
+  payload:Payload (required);
+  payloads:[Payload] (required);
+  optional_name:string;
+}
+root_type RequiredFields;

@@ -173,6 +173,36 @@ The flatc 25.12.19 limitation for large `ulong` field defaults described above
 also applies to enum field defaults. The full unsigned range works for enum
 symbols and field values. Unions use separate typed wrappers, described below.
 
+## Required fields
+
+Non-scalar table fields support `(required)`, including strings, tables, inline
+structs, vectors, and unions:
+
+```fbs
+table Player {
+  name:string (required);
+  position:Point (required);
+  inventory:[Item] (required);
+}
+```
+
+Packing rejects null required values. Required strings may be empty, and required
+vectors may have length zero; both are written even when empty. A required union
+must select a non-NONE member with a non-null value. Required union vectors write
+both wire vectors, including their zero-length headers when empty; their elements
+may still select NONE.
+
+Owned unpacking rejects missing required fields, including in nested objects.
+Borrowed views check required presence when the relevant getter is accessed;
+`bind()` is not a recursive whole-buffer verifier. Existing offset and length
+checks still apply to present values.
+
+Owned defaults and reset behavior are unchanged: strings, tables, and table-owned
+structs start null, vectors start empty, and unions start at NONE. Populate the
+required values before packing. Scalars cannot be marked required; use their
+normal defaults or optional-scalar wrappers. Adding or removing a required
+constraint can break compatibility with buffers from other schema versions.
+
 ## Unions
 
 A union such as `union Payload { Move, Damage, Text:string }` generates a
@@ -431,8 +461,7 @@ still rejected.
 Schema validation completes before any output files are written. The CLI overwrites
 matching generated files, but does not remove stale files after schema renames.
 
-Required/key
-fields, services, and file identifiers are currently unsupported.
+Key fields, services, and file identifiers are currently unsupported.
 The CLI reports an error for unsupported features instead of emitting partial APIs.
 
 Go tests use checked-in `.bfbs` fixtures, so `just test-go` does not require an AIR
@@ -475,8 +504,8 @@ examples/union/             Typed table, struct, and string union payloads
 tools/                      Reference-runtime interoperability harness
 ```
 
-The next milestone is required fields. Schema-specific verification, file identifiers,
-size-prefixed roots, and vtable deduplication are also not implemented yet.
+The next milestones are file identifiers and size-prefixed roots. Schema-specific
+verification and vtable deduplication are also not implemented yet.
 No Royale compatibility layer is included.
 
 ## Design and provenance

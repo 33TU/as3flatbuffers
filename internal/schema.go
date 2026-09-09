@@ -110,8 +110,9 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, unions ma
 	}
 	ids := make(map[uint16]bool)
 	type unionPair struct {
-		index  int32
-		vector bool
+		index    int32
+		vector   bool
+		required bool
 	}
 	tags := make(map[uint16]unionPair)
 	unionFields := make(map[uint16]unionPair)
@@ -130,6 +131,9 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, unions ma
 		if o.Struct && (f.Deprecated() || f.Optional()) {
 			return o, fmt.Errorf("%s: struct fields cannot be deprecated or optional", fullName)
 		}
+		if f.Required() && (o.Struct || f.Deprecated() || f.Optional()) {
+			return o, fmt.Errorf("%s: invalid required field", fullName)
+		}
 		if f.Deprecated() {
 			continue
 		}
@@ -137,12 +141,15 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, unions ma
 		if !identifier.MatchString(name) {
 			return o, fmt.Errorf("%s: invalid field name %q", fullName, name)
 		}
-		if f.Required() || f.Key() || f.Offset64() {
-			return o, fmt.Errorf("%s.%s: required, key or offset64 fields are not supported yet", fullName, name)
+		if f.Key() || f.Offset64() {
+			return o, fmt.Errorf("%s.%s: key or offset64 fields are not supported yet", fullName, name)
 		}
 		fType := f.Type(nil)
 		if fType == nil {
 			return o, fmt.Errorf("%s.%s: missing type", fullName, name)
+		}
+		if f.Required() && fType.BaseType() != reflection.BaseTypeObj && fType.BaseType() != reflection.BaseTypeString && fType.BaseType() != reflection.BaseTypeVector && fType.BaseType() != reflection.BaseTypeUnion {
+			return o, fmt.Errorf("%s.%s: required applies only to non-scalar table fields", fullName, name)
 		}
 		var out field
 		if fType.BaseType() == reflection.BaseTypeUType {
@@ -177,13 +184,13 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, unions ma
 					return o, fmt.Errorf("%s.%s: invalid union vector reference", fullName, name)
 				}
 				if fType.Element() == reflection.BaseTypeUType {
-					tags[f.Id()] = unionPair{index: fType.Index(), vector: true}
+					tags[f.Id()] = unionPair{index: fType.Index(), vector: true, required: f.Required()}
 					continue
 				}
 				if f.Id() == 0 {
 					return o, fmt.Errorf("%s.%s: missing union vector tag", fullName, name)
 				}
-				unionFields[f.Id()-1] = unionPair{index: fType.Index(), vector: true}
+				unionFields[f.Id()-1] = unionPair{index: fType.Index(), vector: true, required: f.Required()}
 				element := field{Type: objectType(target), Union: target.Union, Width: 4, Alignment: 4}
 				out = field{Name: name, ID: f.Id(), Type: "Vector.<" + element.Type + ">", Default: "new Vector.<" + element.Type + ">()", Width: 4, Alignment: 4, Element: &element}
 			} else {
@@ -234,6 +241,7 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, unions ma
 				}
 			}
 		}
+		out.Required = f.Required()
 		out.Offset = uint32(f.Offset())
 		o.Fields = append(o.Fields, out)
 	}

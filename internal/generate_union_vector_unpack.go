@@ -1,9 +1,12 @@
 package internal
 
+import "fmt"
+
 func generateUnionVectorUnpack(w *IndentWriter, f field) {
 	e := *f.Element
 	w.Line("const tagsField%d:uint = as3flatbuffers.Unpack.fieldOffset(vtable, vtableSize, objectSize, base, %d, 4);", f.ID, 4+uint32(f.ID-1)*2)
 	w.Line("const field%d:uint = as3flatbuffers.Unpack.fieldOffset(vtable, vtableSize, objectSize, base, %d, 4);", f.ID, 4+uint32(f.ID)*2)
+	generateRequiredRead(w, f, fmt.Sprintf("tagsField%d && field%d", f.ID, f.ID))
 	w.Line("const tags%d:uint = as3flatbuffers.Unpack.vector(context, tagsField%d, 1);", f.ID, f.ID)
 	w.Line("const vector%d:uint = as3flatbuffers.Unpack.vector(context, field%d, 4);", f.ID, f.ID)
 	w.Line("const tagCount%d:uint = tags%d ? uint(li32(tags%d)) : 0;", f.ID, f.ID, f.ID)

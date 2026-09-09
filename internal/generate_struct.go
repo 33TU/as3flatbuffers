@@ -100,6 +100,7 @@ func generateStructFieldUnpack(w *IndentWriter, f field, inline bool) {
 		w.Line("destination.%s = %s.unpackFrom(context, base + %d, destination.%s);", f.Name, f.Type, f.Offset, f.Name)
 	} else {
 		w.Line("const position%d:uint = as3flatbuffers.Unpack.fieldOffset(vtable, vtableSize, objectSize, base, %d, %d);", f.ID, 4+uint32(f.ID)*2, f.Width)
+		generateRequiredRead(w, f, fmt.Sprintf("position%d", f.ID))
 		w.Line("destination.%s = position%d ? %s.unpackFrom(context, position%d, destination.%s) : null;", f.Name, f.ID, f.Type, f.ID, f.Name)
 	}
 }

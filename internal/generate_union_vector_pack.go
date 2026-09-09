@@ -1,6 +1,14 @@
 package internal
 
 func generateUnionVectorReserve(w *IndentWriter, f field, alignment uint32) {
+	if f.Required {
+		if alignment < 4 {
+			w.Line("as3flatbuffers.Pack.prepare(context, 4);")
+		}
+		w.Line("const tagsOffset%d:uint = as3flatbuffers.Pack.reserveOffset(context, %d);", f.ID, f.ID-1)
+		w.Line("const offset%d:uint = as3flatbuffers.Pack.reserveOffset(context, %d);", f.ID, f.ID)
+		return
+	}
 	w.Line("var tagsOffset%d:uint = 0;", f.ID)
 	w.Line("var offset%d:uint = 0;", f.ID)
 	w.Line("if (source.%s.length)", f.Name)

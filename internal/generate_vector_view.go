@@ -11,6 +11,7 @@ func generateVectorView(w *IndentWriter, f field) {
 	w.Line("{")
 	w.Indent()
 	w.Line("const position:uint = vectorOffset(%d, %d);", slot, e.Width)
+	generateRequiredRead(w, f, "position")
 	w.Line("if (!position)")
 	w.Indent()
 	w.Line("return 0;")

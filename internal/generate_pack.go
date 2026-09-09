@@ -39,6 +39,7 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 	w.Line("{")
 	w.Indent()
 	generatePackCheck(w)
+	generateRequiredPackChecks(w, o)
 
 	alignment := uint32(4)
 	for _, f := range o.Fields {
