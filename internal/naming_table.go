@@ -10,6 +10,7 @@ type TableNames struct {
 }
 
 var tableMembers = map[string]struct{}{
+	"FILE_IDENTIFIER": {}, "hasIdentifier": {}, "packSizePrefixed": {}, "unpackSizePrefixed": {},
 	"si8":          {},
 	"si16":         {},
 	"si32":         {},

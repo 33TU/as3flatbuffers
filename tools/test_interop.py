@@ -20,6 +20,7 @@ import array_interop
 import union_interop
 import union_vector_interop
 import required_interop
+import framing_interop
 
 
 def main():
@@ -38,6 +39,7 @@ def main():
     union_interop.create(work)
     union_vector_interop.create(work)
     required_interop.create(work)
+    framing_interop.create(work)
     # Test omitted defaults, field order, growth, signed values and
     # many exactly representable float32 values. Keep JSON metadata finite.
     cases = [(1.25, -2.5), (0, 0), (0, 42), (-123, 0)]
@@ -107,6 +109,7 @@ def main():
     union_interop.verify(work)
     union_vector_interop.verify(work)
     required_interop.verify(work)
+    framing_interop.verify(work)
     print(f"FlatBuffers Python {flatbuffers.__version__}; artifacts: {work.relative_to(root)}")
 
 

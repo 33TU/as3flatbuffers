@@ -461,13 +461,42 @@ still rejected.
 Schema validation completes before any output files are written. The CLI overwrites
 matching generated files, but does not remove stale files after schema renames.
 
-Key fields, services, and file identifiers are currently unsupported.
+Key fields and services are currently unsupported.
 The CLI reports an error for unsupported features instead of emitting partial APIs.
 
 Go tests use checked-in `.bfbs` fixtures, so `just test-go` does not require an AIR
 SDK or `flatc`. Run `just generate-test-schemas` to regenerate those fixtures and
 `just generate-reflection` to regenerate the vendored Go reflection bindings,
 using the pinned compiler version.
+
+## File identifiers and size-prefixed buffers
+
+A schema's `file_identifier` is written and checked by its declared root table's
+`pack` and `unpack` methods. Other tables and nested instances do not carry that
+header. The root class also exposes `FILE_IDENTIFIER` and
+`hasIdentifier(bytes, offset = 0, sizePrefixed = false)`; the latter only checks
+the identifier, leaving the input cursor and endian unchanged.
+
+Every table supports `packSizePrefixed(source, dst)` and
+`unpackSizePrefixed(bytes, destination = null, offset = 0)`. The prefix is a
+little-endian uint32 containing the remaining frame length, excluding the prefix
+itself. For example:
+
+```actionscript
+Record.packSizePrefixed(message, bytes);
+Record.unpackSizePrefixed(bytes, reusedMessage);
+
+// Decode a frame embedded in a larger input:
+Record.unpackSizePrefixed(stream, reusedMessage, frameOffset);
+```
+
+Prefixed decoding copies only the declared frame into domain memory and checks
+references against that boundary, including when more frames follow it. Strings
+are read from the corresponding region of the original input. Both packing
+formats preserve the destination's endian setting. Structs retain their raw
+fixed-layout API; size-prefixed entry points are generated only for tables.
+Borrowed views still bind to an absolute table position, after resolving the
+root offset word.
 
 ## Benchmark
 
@@ -504,8 +533,7 @@ examples/union/             Typed table, struct, and string union payloads
 tools/                      Reference-runtime interoperability harness
 ```
 
-The next milestones are file identifiers and size-prefixed roots. Schema-specific
-verification and vtable deduplication are also not implemented yet.
+Schema-specific verification and vtable deduplication are not implemented yet.
 No Royale compatibility layer is included.
 
 ## Design and provenance

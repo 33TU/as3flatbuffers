@@ -23,8 +23,13 @@ func parseSchema(data []byte) ([]object, error) {
 	if schema.ServicesLength() != 0 {
 		return nil, fmt.Errorf("services are not supported yet")
 	}
-	if len(schema.FileIdent()) != 0 {
-		return nil, fmt.Errorf("file identifiers are not supported yet")
+	identifier := string(schema.FileIdent())
+	if len(identifier) != 0 && len(identifier) != 4 {
+		return nil, fmt.Errorf("file identifiers must contain exactly four bytes")
+	}
+	root := schema.RootTable(nil)
+	if identifier != "" && (root == nil || root.IsStruct()) {
+		return nil, fmt.Errorf("file identifier requires a root table")
 	}
 	count := schema.ObjectsLength()
 	if (count < 1 && schema.EnumsLength() == 0) || count > len(data)/4 {
@@ -77,6 +82,18 @@ func parseSchema(data []byte) ([]object, error) {
 			paths[key] = true
 		}
 		objects = append(objects, o)
+	}
+	if identifier != "" {
+		found := false
+		for i := range objects {
+			if objectType(objects[i]) == string(root.Name()) && !objects[i].Struct && objects[i].Enum == nil && objects[i].Union == nil {
+				objects[i].FileIdentifier = identifier
+				found = true
+			}
+		}
+		if !found {
+			return nil, fmt.Errorf("file identifier root table is missing")
+		}
 	}
 	if err := validateStructs(objects); err != nil {
 		return nil, err

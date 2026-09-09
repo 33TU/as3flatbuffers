@@ -22,7 +22,33 @@ package as3flatbuffers
             const previous:ByteArray = DOMAIN.domainMemory;
             DOMAIN.domainMemory = memory;
             context.bytes = input;
+            context.start = 0;
             context.length = input.length;
+            return previous;
+        }
+
+        /** Copy exactly one declared frame, including its size word, into domain memory. */
+        public static function beginSizePrefixed(context:UnpackContext, input:ByteArray, offset:uint):ByteArray
+        {
+            if (!input)
+                throw new ArgumentError("Input must be non-null");
+            if (offset > input.length || input.length - offset < 8)
+                throw new RangeError("Truncated size-prefixed buffer");
+            const size:uint = uint(input[offset]) | (uint(input[offset + 1]) << 8) |
+                    (uint(input[offset + 2]) << 16) | (uint(input[offset + 3]) << 24);
+            if (size < 4 || size > input.length - offset - 4)
+                throw new RangeError("Invalid size prefix");
+            const length:uint = size + 4;
+            const memory:ByteArray = context.memory;
+            if (memory.length < ApplicationDomain.MIN_DOMAIN_MEMORY_LENGTH)
+                memory.length = ApplicationDomain.MIN_DOMAIN_MEMORY_LENGTH;
+            memory.position = 0;
+            memory.writeBytes(input, offset, length);
+            const previous:ByteArray = DOMAIN.domainMemory;
+            DOMAIN.domainMemory = memory;
+            context.bytes = input;
+            context.start = offset;
+            context.length = length;
             return previous;
         }
 
@@ -32,6 +58,7 @@ package as3flatbuffers
             DOMAIN.domainMemory = previous;
             context.bytes = null;
             context.length = 0;
+            context.start = 0;
         }
 
         /** Resolve a root-offset word at an absolute position in the input. */
@@ -112,7 +139,7 @@ package as3flatbuffers
             if (li8(start + length) != 0)
                 throw new RangeError("String terminator must be zero");
             const bytes:ByteArray = context.bytes;
-            bytes.position = start;
+            bytes.position = context.start + start;
             return bytes.readUTFBytes(length);
         }
 

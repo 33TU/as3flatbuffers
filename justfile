@@ -66,6 +66,10 @@ generate: build-generator
     {{ FLATC }} -b --schema -o bin internal/testdata/required.fbs
     bin/as3flatc -o runtime/test/generated bin/required.bfbs
 
+    {{ FLATC }} -b --schema -o bin internal/testdata/framing.fbs
+    bin/as3flatc -o runtime/test/generated bin/framing.bfbs
+    {{ FLATC }} --python -o runtime/bin/python internal/testdata/framing.fbs
+
 generate-reflection:
     {{ FLATC }} --go --gen-onefile --go-namespace reflection -o internal/reflection internal/reflection/upstream/reflection.fbs
 

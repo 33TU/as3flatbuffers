@@ -62,6 +62,36 @@ package as3flatbuffers
             return bytes;
         }
 
+        /** Reserve a table root header with an optional identifier and size prefix. */
+        public static function beginRoot(context:PackContext, dst:ByteArray, sizePrefixed:Boolean,
+                hasIdentifier:Boolean, identifier:uint):void
+        {
+            begin(context, dst, true);
+            const rootWord:uint = sizePrefixed ? 4 : 0;
+            context.rootReserved = false;
+            context.position = rootWord + 4;
+            si32(0, rootWord);
+            if (hasIdentifier)
+            {
+                si32(identifier, context.position);
+                context.position += 4;
+            }
+        }
+
+        public static function finishRoot(context:PackContext, root:uint, sizePrefixed:Boolean):ByteArray
+        {
+            if (sizePrefixed)
+            {
+                si32(root - 4, 4);
+                si32(context.position - 4, 0);
+            }
+            else
+            {
+                si32(root, 0);
+            }
+            return finish(context, root);
+        }
+
         /** Grow writable capacity before intrinsic stores; position tracks the encoded length. */
         [Inline]
         public static function ensure(context:PackContext, additional:Number):void

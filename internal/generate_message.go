@@ -21,6 +21,7 @@ func generateMessage(w *IndentWriter, o object, objects map[string]object) {
 	w.Line("private static const PACK:as3flatbuffers.PackContext = new as3flatbuffers.PackContext();")
 	w.Line("private static const UNPACK:as3flatbuffers.UnpackContext = new as3flatbuffers.UnpackContext();")
 	w.BlankLine()
+	generateIdentifier(w, o)
 	generateFields(w, o)
 	generateArrayConstructor(w, o)
 	w.BlankLine()
@@ -31,6 +32,12 @@ func generateMessage(w *IndentWriter, o object, objects map[string]object) {
 	generatePack(w, o, objects)
 	w.BlankLine()
 	generateUnpack(w, o)
+	if !o.Struct {
+		w.BlankLine()
+		generatePackEntry(w, o, true)
+		w.BlankLine()
+		generateUnpackEntry(w, o, true)
+	}
 	w.Dedent()
 	w.Line("}")
 	endPackage(w)

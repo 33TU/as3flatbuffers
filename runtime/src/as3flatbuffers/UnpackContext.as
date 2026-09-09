@@ -7,6 +7,7 @@ package as3flatbuffers
     {
         internal var bytes:ByteArray;
         internal var length:uint;
+        internal var start:uint;
         internal const memory:ByteArray = new ByteArray();
     }
 }

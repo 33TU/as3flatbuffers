@@ -146,5 +146,41 @@ package fixtures.text
             destination.next = position4 ? fixtures.text.Strings.unpackFrom(context, position4, destination.next) : null;
             return destination;
         }
+
+        /** Replace dst with packed bytes. Writes little-endian without changing dst.endian. Returns dst at position zero. */
+        public static function packSizePrefixed(source:Strings, dst:flash.utils.ByteArray):flash.utils.ByteArray
+        {
+            if (!source || !dst)
+                throw new ArgumentError("Source and destination must be non-null");
+
+            const context:as3flatbuffers.PackContext = PACK;
+            try
+            {
+                as3flatbuffers.Pack.beginRoot(context, dst, true, false, 0);
+                const root:uint = packInto(source, context);
+                as3flatbuffers.Pack.finishRoot(context, root, true);
+            }
+            finally
+            {
+                as3flatbuffers.Pack.reset(context);
+            }
+            return dst;
+        }
+
+        /** Decode one size-prefixed frame at offset; references are bounded to its declared length. */
+        public static function unpackSizePrefixed(bytes:flash.utils.ByteArray, destination:Strings = null, offset:uint = 0):Strings
+        {
+            const context:as3flatbuffers.UnpackContext = UNPACK;
+            const previous:flash.utils.ByteArray = as3flatbuffers.Unpack.beginSizePrefixed(context, bytes, offset);
+            try
+            {
+                destination = unpackFrom(context, as3flatbuffers.Unpack.root(context, 4), destination);
+            }
+            finally
+            {
+                as3flatbuffers.Unpack.end(context, previous);
+            }
+            return destination;
+        }
     }
 }

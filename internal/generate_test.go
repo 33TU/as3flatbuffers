@@ -77,7 +77,6 @@ func TestDefaultsIDsAndEscaping(t *testing.T) {
 func TestUnsupportedSchemasProduceNoFiles(t *testing.T) {
 	for name, want := range map[string]string{
 		"unsupported": "not supported", "collision": "class name collision",
-		"identifier": "file identifiers",
 	} {
 		t.Run(name, func(t *testing.T) {
 			files, err := Generate(fixture(t, name))
@@ -98,7 +97,7 @@ func TestMalformedSchema(t *testing.T) {
 }
 
 func FuzzGenerate(f *testing.F) {
-	for _, name := range []string{"point", "scalars", "unsupported", "vectors", "enums", "enum_only", "arrays", "union", "unions", "union_vectors", "required"} {
+	for _, name := range []string{"point", "scalars", "unsupported", "vectors", "enums", "enum_only", "arrays", "union", "unions", "union_vectors", "required", "identifier", "framing"} {
 		data, err := os.ReadFile(filepath.Join("testdata", name+".bfbs"))
 		if err != nil {
 			f.Fatal(err)

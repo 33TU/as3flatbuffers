@@ -3,35 +3,7 @@ package internal
 import "fmt"
 
 func generateUnpack(w *IndentWriter, o object) {
-	if o.Struct {
-		w.Line("/** Decode raw struct bytes at offset into a new or reused owned value. */")
-	} else {
-		w.Line("/** Decode a FlatBuffer whose root-offset word starts at offset. */")
-	}
-	w.Line("public static function unpack(bytes:flash.utils.ByteArray, destination:%s = null, offset:uint = 0):%s", o.Name, o.Name)
-	w.Line("{")
-	w.Indent()
-	w.Line("const context:as3flatbuffers.UnpackContext = UNPACK;")
-	w.Line("const previous:flash.utils.ByteArray = as3flatbuffers.Unpack.begin(context, bytes);")
-	w.Line("try")
-	w.Line("{")
-	w.Indent()
-	if o.Struct {
-		w.Line("destination = unpackFrom(context, offset, destination);")
-	} else {
-		w.Line("destination = unpackFrom(context, as3flatbuffers.Unpack.root(context, offset), destination);")
-	}
-	w.Dedent()
-	w.Line("}")
-	w.Line("finally")
-	w.Line("{")
-	w.Indent()
-	w.Line("as3flatbuffers.Unpack.end(context, previous);")
-	w.Dedent()
-	w.Line("}")
-	w.Line("return destination;")
-	w.Dedent()
-	w.Line("}")
+	generateUnpackEntry(w, o, false)
 	w.BlankLine()
 	w.Line("/** Internal generated entry point; context must already own domain memory. */")
 	w.Line("public static function unpackFrom(context:as3flatbuffers.UnpackContext, base:uint, destination:%s):%s", o.Name, o.Name)

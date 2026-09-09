@@ -37,6 +37,7 @@ type unionDefinition struct {
 }
 
 type object struct {
+	FileIdentifier  string
 	Union           *unionDefinition
 	Enum            *enumDefinition
 	Name, Package   string
