@@ -116,6 +116,18 @@ package as3flatbuffers
             return bytes.readUTFBytes(length);
         }
 
+        /** Resolve an active union payload, including structs smaller than four bytes. */
+        [Inline]
+        public static function unionOffset(context:UnpackContext, position:uint, width:uint):uint
+        {
+            if (!position || Number(position) + 4 > context.length)
+                throw new RangeError("Missing or truncated union reference");
+            const relative:uint = uint(li32(position));
+            if (relative < 4 || Number(position) + relative + width > context.length)
+                throw new RangeError("Invalid union payload offset");
+            return position + relative;
+        }
+
         /** Validate the entire vector payload against the original input length. */
         [Inline]
         public static function vector(context:UnpackContext, position:uint, width:uint):uint

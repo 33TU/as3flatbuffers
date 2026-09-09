@@ -14,7 +14,7 @@ func parseSchema(data []byte) ([]object, error) {
 		return nil, fmt.Errorf("expected a .bfbs binary schema (create it with flatc -b --schema)")
 	}
 	schema := reflection.GetRootAsSchema(data, 0)
-	if schema.AdvancedFeatures() & ^(reflection.AdvancedFeaturesOptionalScalars|reflection.AdvancedFeaturesAdvancedArrayFeatures) != 0 {
+	if schema.AdvancedFeatures() & ^(reflection.AdvancedFeaturesOptionalScalars|reflection.AdvancedFeaturesAdvancedArrayFeatures|reflection.AdvancedFeaturesAdvancedUnionFeatures) != 0 {
 		return nil, fmt.Errorf("advanced schema features are not supported yet")
 	}
 	if schema.EnumsLength() > len(data)/4 {
@@ -32,21 +32,29 @@ func parseSchema(data []byte) ([]object, error) {
 	}
 	objects := make([]object, 0, count)
 	paths := make(map[string]bool)
+	unions := make(map[int32]object)
 	for i := 0; i < schema.EnumsLength(); i++ {
 		var source reflection.Enum
 		if !schema.Enums(&source, i) {
 			return nil, fmt.Errorf("missing enum %d", i)
 		}
-		o, err := parseEnum(&source, len(data))
+		o, err := parseEnum(&source, schema, len(data))
 		if err != nil {
 			return nil, err
 		}
-		name := path.Join(strings.ReplaceAll(o.Package, ".", "/"), o.Name+".as")
-		key := strings.ToLower(name)
-		if paths[key] {
-			return nil, fmt.Errorf("generated class name collision: %s", name)
+		suffixes := []string{""}
+		if o.Union != nil {
+			unions[int32(i)] = o
+			suffixes = append(suffixes, "View")
 		}
-		paths[key] = true
+		for _, suffix := range suffixes {
+			name := path.Join(strings.ReplaceAll(o.Package, ".", "/"), o.Name+suffix+".as")
+			key := strings.ToLower(name)
+			if paths[key] {
+				return nil, fmt.Errorf("generated class name collision: %s", name)
+			}
+			paths[key] = true
+		}
 		objects = append(objects, o)
 	}
 
@@ -55,7 +63,7 @@ func parseSchema(data []byte) ([]object, error) {
 		if !schema.Objects(&source, i) {
 			return nil, fmt.Errorf("missing schema object %d", i)
 		}
-		o, e := parseObject(&source, schema, len(data))
+		o, e := parseObject(&source, schema, unions, len(data))
 		if e != nil {
 			return nil, e
 		}
@@ -76,7 +84,7 @@ func parseSchema(data []byte) ([]object, error) {
 	return objects, nil
 }
 
-func parseObject(source *reflection.Object, schema *reflection.Schema, dataLength int) (object, error) {
+func parseObject(source *reflection.Object, schema *reflection.Schema, unions map[int32]object, dataLength int) (object, error) {
 	fullName := string(source.Name())
 	parts := strings.Split(fullName, ".")
 	for _, part := range parts {
@@ -101,6 +109,8 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, dataLengt
 		return o, fmt.Errorf("%s: invalid or excessive field count", fullName)
 	}
 	ids := make(map[uint16]bool)
+	tags := make(map[uint16]int32)
+	unionFields := make(map[uint16]int32)
 	for i := 0; i < source.FieldsLength(); i++ {
 		var f reflection.Field
 		if !source.Fields(&f, i) {
@@ -131,7 +141,20 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, dataLengt
 			return o, fmt.Errorf("%s.%s: missing type", fullName, name)
 		}
 		var out field
-		if fType.BaseType() == reflection.BaseTypeArray {
+		if fType.BaseType() == reflection.BaseTypeUType {
+			if o.Struct || unions[fType.Index()].Union == nil || f.DefaultInteger() != 0 {
+				return o, fmt.Errorf("%s.%s: invalid union tag", fullName, name)
+			}
+			tags[f.Id()] = fType.Index()
+			continue
+		} else if fType.BaseType() == reflection.BaseTypeUnion {
+			target := unions[fType.Index()]
+			if o.Struct || target.Union == nil || f.Id() == 0 {
+				return o, fmt.Errorf("%s.%s: invalid union reference", fullName, name)
+			}
+			unionFields[f.Id()-1] = fType.Index()
+			out = field{Name: name, ID: f.Id(), Type: objectType(target), Union: target.Union, Width: 4, Alignment: 4, Default: "new " + objectType(target) + "()"}
+		} else if fType.BaseType() == reflection.BaseTypeArray {
 			if !o.Struct {
 				return o, fmt.Errorf("%s.%s: arrays are supported only in structs", fullName, name)
 			}
@@ -193,13 +216,21 @@ func parseObject(source *reflection.Object, schema *reflection.Schema, dataLengt
 		out.Offset = uint32(f.Offset())
 		o.Fields = append(o.Fields, out)
 	}
+	if len(tags) != len(unionFields) {
+		return o, fmt.Errorf("%s: unmatched union tag", fullName)
+	}
+	for id, index := range unionFields {
+		if tag, ok := tags[id]; !ok || tag != index {
+			return o, fmt.Errorf("%s: unmatched union tag", fullName)
+		}
+	}
 	sort.Slice(o.Fields, func(i, j int) bool { return o.Fields[i].ID < o.Fields[j].ID })
 	names := NewTableNames(o.Name)
 	for i := range o.Fields {
 		o.Fields[i].Name = names.Field(o.Fields[i].ID, o.Fields[i].Name)
 	}
 	for i := range o.Fields {
-		if o.Fields[i].Struct || o.Fields[i].Table || (o.Fields[i].Element != nil && (o.Fields[i].Element.Struct || o.Fields[i].Element.Table)) {
+		if o.Fields[i].Union != nil || o.Fields[i].Struct || o.Fields[i].Table || (o.Fields[i].Element != nil && (o.Fields[i].Element.Struct || o.Fields[i].Element.Table)) {
 			o.Fields[i].ViewCache = uniqueName(o.Fields[i].Name+"View", names.used)
 		}
 	}

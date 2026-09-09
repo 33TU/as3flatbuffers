@@ -22,6 +22,8 @@ generate: build-generator
     bin/as3flatc -o examples/string/src bin/chat.bfbs
     {{ FLATC }} -b --schema -o bin examples/vector/schema/inventory.fbs
     bin/as3flatc -o examples/vector/src bin/inventory.bfbs
+    {{ FLATC }} -b --schema -o bin examples/union/schema/packet.fbs
+    bin/as3flatc -o examples/union/src bin/packet.bfbs
     {{ FLATC }} -b --schema -o bin internal/testdata/scalars.fbs
     bin/as3flatc -o runtime/test/generated bin/scalars.bfbs
     {{ FLATC }} -b --schema -o bin internal/testdata/naming.fbs
@@ -50,6 +52,14 @@ generate: build-generator
     bin/as3flatc -o runtime/test/generated bin/arrays.bfbs
     {{ FLATC }} --python -o runtime/bin/python internal/testdata/arrays.fbs
 
+    {{ FLATC }} -b --schema -o bin internal/testdata/unions.fbs
+    bin/as3flatc -o runtime/test/generated bin/unions.bfbs
+    {{ FLATC }} -b --schema -o bin internal/testdata/union.fbs
+    bin/as3flatc -o runtime/test/generated bin/union.bfbs
+    {{ FLATC }} --python -o runtime/bin/python internal/testdata/union.fbs
+    {{ FLATC }} -b --schema -o bin internal/testdata/union_names.fbs
+    bin/as3flatc -o runtime/test/generated bin/union_names.bfbs
+
 generate-reflection:
     {{ FLATC }} --go --gen-onefile --go-namespace reflection -o internal/reflection internal/reflection/upstream/reflection.fbs
 
@@ -65,7 +75,7 @@ build: build-generator
 
 build-test: generate
     mkdir -p runtime/bin/test
-    {{ AMXMLC }} -source-path runtime/src -source-path examples/point/src -source-path examples/vector/src -source-path runtime/test/src -source-path runtime/test/generated -output runtime/bin/test/test.swf -optimize=true -compiler.strict=true -compiler.inline=true -debug=false runtime/test/src/Main.as
+    {{ AMXMLC }} -source-path runtime/src -source-path examples/point/src -source-path examples/vector/src -source-path examples/union/src -source-path runtime/test/src -source-path runtime/test/generated -output runtime/bin/test/test.swf -optimize=true -compiler.strict=true -compiler.inline=true -debug=false runtime/test/src/Main.as
 
 test: test-go build-test
     .venv/bin/python tools/test_interop.py

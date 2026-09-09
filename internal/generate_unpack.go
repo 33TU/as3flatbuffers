@@ -54,7 +54,9 @@ func generateUnpack(w *IndentWriter, o object) {
 			if i > 0 {
 				w.BlankLine()
 			}
-			if f.Element != nil {
+			if f.Union != nil {
+				generateUnionFieldUnpack(w, f)
+			} else if f.Element != nil {
 				generateVectorUnpack(w, f)
 			} else if f.String {
 				w.Line("const position%d:uint = as3flatbuffers.Unpack.fieldOffset(vtable, vtableSize, objectSize, base, %d, 4);", f.ID, 4+uint32(f.ID)*2)

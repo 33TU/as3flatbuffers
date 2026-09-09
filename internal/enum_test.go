@@ -33,7 +33,7 @@ func TestEnumGeneration(t *testing.T) {
 }
 
 func TestInvalidEnumSchemasProduceNoFiles(t *testing.T) {
-	for _, tc := range []struct{ name, want string }{{"enum_collision", "class name collision"}, {"union", "unions are not supported"}} {
+	for _, tc := range []struct{ name, want string }{{"enum_collision", "class name collision"}} {
 		t.Run(tc.name, func(t *testing.T) {
 			files, err := Generate(fixture(t, tc.name))
 			if err == nil || !strings.Contains(err.Error(), tc.want) || len(files) != 0 {

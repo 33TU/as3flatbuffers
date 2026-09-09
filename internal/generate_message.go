@@ -47,7 +47,9 @@ func generateReset(w *IndentWriter, o object) {
 	w.Line("{")
 	w.Indent()
 	for _, f := range o.Fields {
-		if f.FixedLength != 0 {
+		if f.Union != nil {
+			w.Line("%s.reset(msg.%s);", f.Type, f.Name)
+		} else if f.FixedLength != 0 {
 			generateArrayReset(w, f, "msg", false)
 		} else if f.Element != nil {
 			w.Line("msg.%s.length = 0;", f.Name)
@@ -80,7 +82,9 @@ func generateClone(w *IndentWriter, o object) {
 	w.BlankLine()
 	w.Line("const destination:%s = new %s();", o.Name, o.Name)
 	for _, f := range o.Fields {
-		if f.FixedLength != 0 {
+		if f.Union != nil {
+			w.Line("destination.%s = %s.clone(source.%s);", f.Name, f.Type, f.Name)
+		} else if f.FixedLength != 0 {
 			generateArrayClone(w, f)
 		} else if f.Element != nil {
 			generateVectorClone(w, f)

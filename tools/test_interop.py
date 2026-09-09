@@ -17,6 +17,7 @@ import string_interop
 import vector_interop
 import enum_interop
 import array_interop
+import union_interop
 
 
 def main():
@@ -32,6 +33,7 @@ def main():
     vector_interop.create(work)
     enum_interop.create(work)
     array_interop.create(work)
+    union_interop.create(work)
     # Test omitted defaults, field order, growth, signed values and
     # many exactly representable float32 values. Keep JSON metadata finite.
     cases = [(1.25, -2.5), (0, 0), (0, 42), (-123, 0)]
@@ -98,6 +100,7 @@ def main():
     vector_interop.verify(work)
     enum_interop.verify(work)
     array_interop.verify(work)
+    union_interop.verify(work)
     print(f"FlatBuffers Python {flatbuffers.__version__}; artifacts: {work.relative_to(root)}")
 
 

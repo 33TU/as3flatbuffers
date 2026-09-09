@@ -1,0 +1,2 @@
+namespace fixtures.unionnames;
+union Names { Type:string, type:string, NONE_:string, Validate:string, Text:string, text:string }

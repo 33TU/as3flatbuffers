@@ -27,6 +27,10 @@ func generateViewAccessors(w *IndentWriter, o object) {
 		if i > 0 {
 			w.BlankLine()
 		}
+		if f.Union != nil {
+			generateUnionFieldView(w, f)
+			continue
+		}
 		if f.Element != nil {
 			generateVectorView(w, f)
 			continue

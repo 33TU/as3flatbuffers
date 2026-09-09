@@ -2,7 +2,7 @@ package internal
 
 func hasOffsetFields(o object) bool {
 	for _, f := range o.Fields {
-		if f.Table || f.String || f.Element != nil {
+		if f.Union != nil || f.Table || f.String || f.Element != nil {
 			return true
 		}
 	}

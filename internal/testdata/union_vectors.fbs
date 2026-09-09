@@ -1,0 +1,5 @@
+namespace fixtures.unionvectors;
+table Value { x:int; }
+union Item { Value }
+table Root { items:[Item]; }
+root_type Root;

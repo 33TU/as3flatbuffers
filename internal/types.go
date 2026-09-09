@@ -23,13 +23,20 @@ type field struct {
 	Element                             *field
 	LengthName                          string
 	FixedLength                         uint32
+	Union                               *unionDefinition
+	Symbol                              string
 }
 
 type enumDefinition struct {
 	Values []field
 }
 
+type unionDefinition struct {
+	Members []field
+}
+
 type object struct {
+	Union           *unionDefinition
 	Enum            *enumDefinition
 	Name, Package   string
 	Count           int

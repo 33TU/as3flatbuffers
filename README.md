@@ -9,7 +9,7 @@ tables and inline structs with scalar fields (`bool`, `byte`, `ubyte`, `short`,
 Tables support UTF-8 strings and vectors of scalars, strings, structs, and tables.
 Enums use their underlying integer type in fields, vectors, and fixed arrays.
 Structs support fixed arrays of scalars, enums, and structs. Tables and structs
-can also contain inline structs.
+can also contain inline structs. Table union fields support table, struct, and string members.
 Tables may reference other tables, including recursive and mutually recursive types. The runtime provides
 a reusable forward builder, borrowed views, and 64-bit word helpers.
 `Point` / `PointView` are generated from the example schema. This is not yet a
@@ -171,7 +171,26 @@ optional scalar wrappers or nullable 64-bit words.
 `bit_flags` enums use the masks exported by flatc; unknown flag bits are preserved.
 The flatc 25.12.19 limitation for large `ulong` field defaults described above
 also applies to enum field defaults. The full unsigned range works for enum
-symbols and field values. Unions remain unsupported.
+symbols and field values. Unions use separate typed wrappers, described below.
+
+## Unions
+
+A union such as `union Payload { Move, Damage, Text:string }` generates a
+`Payload` class with numeric tag constants, a mutable `type`, and typed
+`move`, `damage`, and `text` fields. Its containing table initializes the union
+wrapper eagerly with `type = NONE`; members start null and are allocated lazily.
+The wire format still uses the standard separate tag and payload-offset fields.
+
+Packing uses only the selected field, which must be non-null. Empty strings are
+valid. Unpacking retains inactive members, so `Move → Damage → Move` reuses the
+original Move. Setting the tag to NONE retains caches; static reset clears cached
+values in place and selects NONE. Static clone deep-copies all cached objects.
+Aliases of the same underlying type get separate typed fields and caches.
+
+Borrowed union views expose the tag and typed getters. Inactive getters return
+null; active table/struct getters reuse cached views. Unknown tags, missing active
+payloads, and nonzero references tagged NONE are rejected. Union vectors are not
+yet supported. See [the union example](examples/union/README.md).
 
 ## Strings
 
@@ -397,7 +416,7 @@ still rejected.
 Schema validation completes before any output files are written. The CLI overwrites
 matching generated files, but does not remove stale files after schema renames.
 
-Unions, required/key
+Union vectors, required/key
 fields, services, and file identifiers are currently unsupported.
 The CLI reports an error for unsupported features instead of emitting partial APIs.
 
@@ -437,10 +456,11 @@ examples/point/src/         Generated owned object and view
 examples/struct/            Inline Point and fixed-array Transform examples
 examples/string/            UTF-8 chat schema, generated classes, and usage
 examples/vector/            Inventory schema with scalar, string, struct, and table vectors
+examples/union/             Typed table, struct, and string union payloads
 tools/                      Reference-runtime interoperability harness
 ```
 
-The next milestone is unions. Schema-specific verification, file identifiers,
+The next milestones are union vectors and required fields. Schema-specific verification, file identifiers,
 size-prefixed roots, and vtable deduplication are also not implemented yet.
 No Royale compatibility layer is included.
 

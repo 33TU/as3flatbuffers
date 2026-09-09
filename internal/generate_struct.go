@@ -12,7 +12,7 @@ func generateStructImports(w *IndentWriter, o object, view bool) {
 		if f.Element != nil {
 			f = *f.Element
 		}
-		if (f.Struct || f.Table) && strings.Contains(f.Type, ".") {
+		if (f.Struct || f.Table || f.Union != nil) && strings.Contains(f.Type, ".") {
 			imports[f.Type] = true
 			if view {
 				imports[f.Type+"View"] = true
@@ -36,7 +36,7 @@ func generateViewCaches(w *IndentWriter, o object) {
 			f = *f.Element
 			f.ViewCache = cache
 		}
-		if f.Table {
+		if f.Table || f.Union != nil {
 			w.Line("private var %s:%sView;", f.ViewCache, f.Type)
 			w.BlankLine()
 		} else if f.Struct {

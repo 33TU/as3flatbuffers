@@ -19,7 +19,10 @@ func generateFiles(objects []object) ([]File, error) {
 			suffix string
 			emit   func(*IndentWriter, object)
 		}{{"", emitMessage}, {"View", generateView}}
-		if o.Enum != nil {
+		if o.Union != nil {
+			specs[0].emit = generateUnion
+			specs[1].emit = generateUnionView
+		} else if o.Enum != nil {
 			specs = specs[:1]
 			specs[0].emit = generateEnum
 		}

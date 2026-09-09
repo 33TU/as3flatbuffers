@@ -1,0 +1,8 @@
+namespace fixtures.unions;
+struct Damage { amount:int; }
+struct Tiny { value:ubyte; }
+struct Transform { matrix:[float:4]; }
+table Move { x:float; y:float; next:Packet; }
+union Payload { Move, Damage, Text:string, Tiny, Transform, Alternate:Move }
+table Packet { id:uint; payload:Payload; second:Payload; }
+root_type Packet;

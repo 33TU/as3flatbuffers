@@ -16,7 +16,7 @@ func enumInteger(base reflection.BaseType) bool {
 	return false
 }
 
-func parseEnum(source *reflection.Enum, dataLength int) (object, error) {
+func parseEnum(source *reflection.Enum, schema *reflection.Schema, dataLength int) (object, error) {
 	name := string(source.Name())
 	parts := strings.Split(name, ".")
 	for _, part := range parts {
@@ -29,7 +29,7 @@ func parseEnum(source *reflection.Enum, dataLength int) (object, error) {
 		return o, fmt.Errorf("%s: class name conflicts with an AS3 or runtime type", name)
 	}
 	if source.IsUnion() {
-		return o, fmt.Errorf("%s: unions are not supported yet", name)
+		return parseUnion(o, source, schema)
 	}
 	underlying := source.UnderlyingType(nil)
 	if underlying == nil || !enumInteger(underlying.BaseType()) {
@@ -71,7 +71,7 @@ func validateEnumReference(schema *reflection.Schema, base reflection.BaseType, 
 		return fmt.Errorf("invalid enum reference")
 	}
 	if target.IsUnion() {
-		return fmt.Errorf("unions are not supported yet")
+		return fmt.Errorf("union reference used as a scalar enum")
 	}
 	underlying := target.UnderlyingType(nil)
 	if !enumInteger(base) || underlying == nil || underlying.BaseType() != base {

@@ -39,8 +39,15 @@ a required string field, which remains unsupported.
 `enums.fbs` covers all eight integral underlying types, bit flags, symbol-name
 collisions, nonzero defaults, vectors, structs and nullable enum fields.
 `enum_only.fbs` has no table or struct; `enum_collision.fbs` deliberately collides
-with a generated view. `union.fbs` verifies unions remain rejected.
+with a generated view. `union.fbs` covers table unions and unqualified class/constant collisions.
 
 `arrays.fbs` covers every scalar array type, enum arrays, aligned struct arrays,
 nested arrays, and vectors of array-containing structs. Python interoperability
 also compares raw struct bytes, including all padding.
+
+`unions.fbs` covers table, struct, and string members, aliases, recursive tables,
+multiple union fields, tiny structs, and structs containing arrays. The mixed
+cases use flatc binary/JSON interoperability because its Python generator only
+accepts table members. `union_names.fbs` covers union-only schemas and naming
+collisions; `union_vectors.fbs` remains explicitly rejected, and
+`union_collision.fbs` checks output class collisions.

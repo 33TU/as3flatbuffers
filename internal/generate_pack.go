@@ -50,6 +50,9 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 	maximum := uint32((o.Count+2)*2) + 4 + alignment
 	for _, f := range o.Fields {
 		maximum += f.Width + f.Alignment - 1
+		if f.Union != nil {
+			maximum++
+		}
 	}
 	w.Line("as3flatbuffers.Pack.ensure(context, %d);", maximum)
 	w.Line("as3flatbuffers.Pack.prepare(context, 2);")
@@ -62,6 +65,11 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 		before := guaranteedAlignment
 		// A conditional field may be absent, so retain only alignment shared by both paths.
 		guaranteedAlignment = min(guaranteedAlignment, f.Alignment)
+		if f.Union != nil {
+			generateUnionFieldPack(w, f)
+			guaranteedAlignment = 1
+			continue
+		}
 		if f.String || f.Table || f.Element != nil {
 			generateReserveOffset(w, f, before)
 			continue
@@ -102,6 +110,15 @@ func generatePack(w *IndentWriter, o object, objects map[string]object) {
 	if hasOffsetFields(o) {
 		w.Line("const table:uint = as3flatbuffers.Pack.endTable(context);")
 		for _, f := range o.Fields {
+			if f.Union != nil {
+				w.Line("if (offset%d)", f.ID)
+				w.Line("{")
+				w.Indent()
+				w.Line("%s.packInto(source.%s, context, offset%d);", f.Type, f.Name, f.ID)
+				w.Dedent()
+				w.Line("}")
+				continue
+			}
 			if f.Element != nil {
 				generateVectorPack(w, f, objects)
 				continue
