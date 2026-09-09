@@ -4,7 +4,7 @@ package example.inventory
     import as3flatbuffers.TableView;
     import flash.utils.ByteArray;
 
-    /** Borrowed read-only view; unpack() produces independent owned values. */
+    /** Borrowed read-only view. Use the owned class unpack() API for independent values. */
     public final class ItemView extends as3flatbuffers.TableView
     {
         public function get id():uint

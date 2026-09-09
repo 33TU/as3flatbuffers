@@ -1,7 +1,10 @@
 import importlib
-import subprocess
+import os
 from pathlib import Path
 import shutil
+import struct
+import subprocess
+
 import flatbuffers
 
 CASES = {
@@ -45,7 +48,6 @@ def create(work):
     create_go_reference(work)
 
 
-
 def verify(work):
     obj = module('Directory').Directory.GetRootAs((work / 'keys-as3.bin').read_bytes(), 0)
     for (name, expected), field in zip(CASES.items(), FIELDS):
@@ -54,12 +56,12 @@ def verify(work):
             child = getattr(obj, field)(i)
             actual = child.Name().decode('utf-8') if name == 'TextKey' else child.Id()
             if name == 'FloatKey':
-                import struct
                 key = struct.unpack('<f', struct.pack('<f', key))[0]
             assert actual == key, (name, i, actual, key)
             assert child.Value() == i
     subprocess.run([str(work / 'key-go/reference'), 'verify', str(work / 'keys-python.bin'), str(work / 'keys-as3.bin')], check=True)
     print('Passed sorted-key interoperability: UTF-8 order, default keys and exact 64-bit integers.')
+
 
 def create_go_reference(work):
     root = Path(__file__).resolve().parent.parent
@@ -73,7 +75,8 @@ def create_go_reference(work):
     schema += '\n'.join(line for line in declarations if any(line.startswith('table ' + name + ' ') for name in keep))
     schema += '\ntable Directory { signed:[Signed]; unsigned:[Unsigned]; texts:[TextKey]; longs:[LongKey]; ulongs:[ULongKey]; }\nroot_type Directory;\n'
     (build / 'keys.fbs').write_text(schema)
-    subprocess.run([str(root / 'bin/flatc'), '--go', '--gen-onefile', '--go-namespace', 'fixture', '-o', str(build / 'fixture'), str(build / 'keys.fbs')], check=True)
+    compiler = os.environ.get('FLATC') or (str(root / 'bin/flatc') if (root / 'bin/flatc').exists() else 'flatc')
+    subprocess.run([compiler, '--go', '--gen-onefile', '--go-namespace', 'fixture', '-o', str(build / 'fixture'), str(build / 'keys.fbs')], check=True)
     (build / 'go.mod').write_text('module keyreference\n\ngo 1.26.5\n\nrequire github.com/google/flatbuffers v25.12.19+incompatible\n')
     shutil.copyfile(root / 'go.sum', build / 'go.sum')
     source = (root / 'tools/key_reference.go').read_text().replace('//go:build ignore\n', '')

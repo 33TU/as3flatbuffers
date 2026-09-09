@@ -37,7 +37,7 @@ package fixtures.keys
     import fixtures.keys.Unsigned;
     import fixtures.keys.UnsignedView;
 
-    /** Borrowed read-only view; unpack() produces independent owned values. */
+    /** Borrowed read-only view. Use the owned class unpack() API for independent values. */
     public final class DirectoryView extends as3flatbuffers.TableView
     {
         private var signedView:fixtures.keys.SignedView;

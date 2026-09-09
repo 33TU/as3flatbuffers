@@ -12,7 +12,7 @@ func generateView(w *IndentWriter, o object) {
 	generateScalarImports(w, o)
 	generateStructImports(w, o, true)
 	w.BlankLine()
-	w.Line("/** Borrowed read-only view; unpack() produces independent owned values. */")
+	w.Line("/** Borrowed read-only view. Use the owned class unpack() API for independent values. */")
 	w.Line("public final class %sView extends as3flatbuffers.TableView", o.Name)
 	w.Line("{")
 	w.Indent()

@@ -6,7 +6,7 @@ package example.protocol
     import example.protocol.Payload;
     import example.protocol.PayloadView;
 
-    /** Borrowed read-only view; unpack() produces independent owned values. */
+    /** Borrowed read-only view. Use the owned class unpack() API for independent values. */
     public final class PacketView extends as3flatbuffers.TableView
     {
         private var payloadView:example.protocol.PayloadView;

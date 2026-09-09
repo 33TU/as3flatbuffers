@@ -6,7 +6,7 @@ package bench.data
     import bench.data.Node;
     import bench.data.NodeView;
 
-    /** Borrowed read-only view; unpack() produces independent owned values. */
+    /** Borrowed read-only view. Use the owned class unpack() API for independent values. */
     public final class NodeView extends as3flatbuffers.TableView
     {
         private var nextView:bench.data.NodeView;

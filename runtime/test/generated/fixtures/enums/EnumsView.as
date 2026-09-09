@@ -9,7 +9,7 @@ package fixtures.enums
     import fixtures.enums.EnumStruct;
     import fixtures.enums.EnumStructView;
 
-    /** Borrowed read-only view; unpack() produces independent owned values. */
+    /** Borrowed read-only view. Use the owned class unpack() API for independent values. */
     public final class EnumsView extends as3flatbuffers.TableView
     {
         private const stateView:fixtures.enums.EnumStructView = new fixtures.enums.EnumStructView();

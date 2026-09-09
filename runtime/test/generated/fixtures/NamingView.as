@@ -4,7 +4,7 @@ package fixtures
     import as3flatbuffers.TableView;
     import flash.utils.ByteArray;
 
-    /** Borrowed read-only view; unpack() produces independent owned values. */
+    /** Borrowed read-only view. Use the owned class unpack() API for independent values. */
     public final class NamingView extends as3flatbuffers.TableView
     {
         public function get snakeCase():int

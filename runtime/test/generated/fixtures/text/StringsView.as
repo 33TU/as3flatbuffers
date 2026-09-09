@@ -8,7 +8,7 @@ package fixtures.text
     import fixtures.text.Text;
     import fixtures.text.TextView;
 
-    /** Borrowed read-only view; unpack() produces independent owned values. */
+    /** Borrowed read-only view. Use the owned class unpack() API for independent values. */
     public final class StringsView extends as3flatbuffers.TableView
     {
         private var childView:fixtures.text.TextView;

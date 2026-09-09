@@ -1,4 +1,4 @@
-// as3flatc emits AS3 scalar table objects and views from flatc binary schemas.
+// as3flatc emits AS3 owned objects and borrowed views from flatc binary schemas.
 package main
 
 import (

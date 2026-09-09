@@ -6,7 +6,7 @@ package bench.data
     import bench.data.Vec3;
     import bench.data.Vec3View;
 
-    /** Borrowed read-only view; unpack() produces independent owned values. */
+    /** Borrowed read-only view. Use the owned class unpack() API for independent values. */
     public final class VectorStructsView extends as3flatbuffers.TableView
     {
         private const pointsView:bench.data.Vec3View = new bench.data.Vec3View();

@@ -6,7 +6,7 @@ package fixtures.unionvectors
     import fixtures.unionvectors.Batch;
     import fixtures.unionvectors.BatchView;
 
-    /** Borrowed read-only view; unpack() produces independent owned values. */
+    /** Borrowed read-only view. Use the owned class unpack() API for independent values. */
     public final class ValueView extends as3flatbuffers.TableView
     {
         private var nextView:fixtures.unionvectors.BatchView;

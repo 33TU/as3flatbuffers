@@ -6,7 +6,7 @@ package fixtures.vectors
     import fixtures.vectors.Entry;
     import fixtures.vectors.EntryView;
 
-    /** Borrowed read-only view; unpack() produces independent owned values. */
+    /** Borrowed read-only view. Use the owned class unpack() API for independent values. */
     public final class EntryView extends as3flatbuffers.TableView
     {
         private var childrenView:fixtures.vectors.EntryView;

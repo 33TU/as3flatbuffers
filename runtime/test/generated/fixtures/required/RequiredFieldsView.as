@@ -10,7 +10,7 @@ package fixtures.required
     import fixtures.required.Position;
     import fixtures.required.PositionView;
 
-    /** Borrowed read-only view; unpack() produces independent owned values. */
+    /** Borrowed read-only view. Use the owned class unpack() API for independent values. */
     public final class RequiredFieldsView extends as3flatbuffers.TableView
     {
         private const positionView:fixtures.required.PositionView = new fixtures.required.PositionView();

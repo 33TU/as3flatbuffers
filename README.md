@@ -3,17 +3,16 @@
 An experimental FlatBuffers runtime for ActionScript 3 and Flash/AIR, built
 around owned objects and reusable views into binary data.
 
-This initial branch includes a Go code generator and a working runtime for
-tables and inline structs with scalar fields (`bool`, `byte`, `ubyte`, `short`,
-`ushort`, `int`, `uint`, `long`, `ulong`, `float`, and `double` in `.fbs` schemas).
-Tables support UTF-8 strings and vectors of scalars, strings, structs, and tables.
-Enums use their underlying integer type in fields, vectors, and fixed arrays.
-Structs support fixed arrays of scalars, enums, and structs. Tables and structs
-can also contain inline structs. Table union fields support table, struct, and string members.
-Tables may reference other tables, including recursive and mutually recursive types. The runtime provides
-a reusable forward builder, borrowed views, and 64-bit word helpers.
-`Point` / `PointView` are generated from the example schema. This is not yet a
-general FlatBuffers implementation; unsupported schema features produce errors.
+The Go generator reads `.bfbs` schemas produced by `flatc` and emits owned AS3
+classes with static pack/unpack APIs plus borrowed views. It supports tables,
+inline structs, all scalar primitives (including exact 64-bit integers), strings,
+vectors, fixed arrays, enums, unions and union vectors, optional scalars, required
+fields, keys, file identifiers, and size-prefixed buffers.
+
+Packing uses a reusable forward builder and writes directly into the destination
+through domain memory. Unpacking reuses owned values when supplied; views read
+from the original bytes. Recursive and mutually recursive table types are supported.
+See [supported scope and limitations](#supported-scope-and-limitations) for exclusions.
 
 ## Owned values and borrowed views
 
@@ -406,12 +405,14 @@ wrapper used during development, pass the Windows mapping for absolute paths:
 AIR_PATH_PREFIX=Z: just test
 ```
 
-Test inputs come from the official Python FlatBuffers builder. AIR reads those
-buffers, emits its own, and the Python runtime reads the AIR output. The suite also
+Test inputs come from the official Python and Go FlatBuffers builders and
+`flatc` JSON conversion. AIR reads those buffers and emits its own, which the
+reference runtimes read back. The suite also
 checks omitted defaults, alternative field order, buffer growth and reuse,
 nonzero root offsets, malformed root/field offsets, ownership, and integer
-boundaries. It is not the full upstream FlatBuffers conformance suite. Generated
-fixtures, logs, SWFs, and results live in ignored `runtime/bin/` directories.
+boundaries. It is not the full upstream FlatBuffers conformance suite. Reference-language
+code, logs, SWFs, and results live in ignored `runtime/bin/` directories. Generated
+AS3 fixtures are checked in under `runtime/test/generated/`.
 Primitive fixtures additionally cover 64-bit values beyond Number's exact range,
 double precision, NaN/infinities, subnormal floats, signed zero, 8-byte alignment,
 nonzero defaults, and deep-copy versus reuse behavior.
@@ -461,8 +462,25 @@ still rejected.
 Schema validation completes before any output files are written. The CLI overwrites
 matching generated files, but does not remove stale files after schema renames.
 
-Services are currently unsupported.
-The CLI reports an error for unsupported features instead of emitting partial APIs.
+## Supported scope and limitations
+
+The generator rejects service/RPC definitions, 64-bit offsets and vector64 fields,
+and schema-level string/vector defaults. It does not generate a standalone verifier
+or deduplicate vtables. There is no Royale compatibility layer.
+
+Readers check bounds as fields are accessed. They do not perform a complete
+schema verification pass, and recursive operations are bounded by AIR's call
+stack. Owned input must be acyclic when packing or cloning.
+
+String decoding uses native AIR `readUTFBytes`, including its handling of NULs,
+BOMs, and malformed UTF-8. There is no separate UTF-8 validation. Key lookup
+compares serialized UTF-8 bytes directly.
+
+The pinned Go reference builder can deduplicate vtables across different scalar
+widths while retaining an earlier object size. Such buffers can fail this runtime's
+field-within-object bounds checks. The Go key interoperability fixture uses an
+explicit field-writing order to avoid that layout collision; those bounds checks
+remain enabled.
 
 Go tests use checked-in `.bfbs` fixtures, so `just test-go` does not require an AIR
 SDK or `flatc`. Run `just generate-test-schemas` to regenerate those fixtures and
@@ -562,9 +580,6 @@ examples/vector/            Inventory schema with scalar, string, struct, and ta
 examples/union/             Typed table, struct, and string union payloads
 tools/                      Reference-runtime interoperability harness
 ```
-
-Schema-specific verification and vtable deduplication are not implemented yet.
-No Royale compatibility layer is included.
 
 ## Design and provenance
 

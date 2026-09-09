@@ -8,7 +8,7 @@ package example.inventory
     import example.inventory.Position;
     import example.inventory.PositionView;
 
-    /** Borrowed read-only view; unpack() produces independent owned values. */
+    /** Borrowed read-only view. Use the owned class unpack() API for independent values. */
     public final class InventoryView extends as3flatbuffers.TableView
     {
         private var itemsView:example.inventory.ItemView;

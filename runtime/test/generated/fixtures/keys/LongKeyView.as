@@ -5,7 +5,7 @@ package fixtures.keys
     import flash.utils.ByteArray;
     import as3flatbuffers.types.Int64;
 
-    /** Borrowed read-only view; unpack() produces independent owned values. */
+    /** Borrowed read-only view. Use the owned class unpack() API for independent values. */
     public final class LongKeyView extends as3flatbuffers.TableView
     {
         public function get id():as3flatbuffers.types.Int64

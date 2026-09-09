@@ -6,7 +6,7 @@ package fixtures.nested
     import fixtures.nested.Left;
     import fixtures.nested.LeftView;
 
-    /** Borrowed read-only view; unpack() produces independent owned values. */
+    /** Borrowed read-only view. Use the owned class unpack() API for independent values. */
     public final class RightView extends as3flatbuffers.TableView
     {
         private var leftView:fixtures.nested.LeftView;

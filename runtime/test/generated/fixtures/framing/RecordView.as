@@ -10,7 +10,7 @@ package fixtures.framing
     import fixtures.framing.Record;
     import fixtures.framing.RecordView;
 
-    /** Borrowed read-only view; unpack() produces independent owned values. */
+    /** Borrowed read-only view. Use the owned class unpack() API for independent values. */
     public final class RecordView extends as3flatbuffers.TableView
     {
         private const alignedView:fixtures.framing.AlignedView = new fixtures.framing.AlignedView();

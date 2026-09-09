@@ -33,7 +33,8 @@ for i, kind in enumerate(TYPES):
 
 
 def flatc(*args):
-    subprocess.run([os.environ.get('FLATC', str(ROOT / 'bin/flatc')), *map(str,args)], check=True, capture_output=True)
+    compiler = os.environ.get('FLATC') or (str(ROOT / 'bin/flatc') if (ROOT / 'bin/flatc').exists() else 'flatc')
+    subprocess.run([compiler, *map(str, args)], check=True, capture_output=True)
 
 
 def create(work):

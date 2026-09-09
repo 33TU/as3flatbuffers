@@ -6,7 +6,7 @@ package example.geometry
     import example.geometry.Point;
     import example.geometry.PointView;
 
-    /** Borrowed read-only view; unpack() produces independent owned values. */
+    /** Borrowed read-only view. Use the owned class unpack() API for independent values. */
     public final class PointMessageView extends as3flatbuffers.TableView
     {
         private const pointView:example.geometry.PointView = new example.geometry.PointView();

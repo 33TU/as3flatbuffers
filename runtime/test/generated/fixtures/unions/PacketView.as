@@ -6,7 +6,7 @@ package fixtures.unions
     import fixtures.unions.Payload;
     import fixtures.unions.PayloadView;
 
-    /** Borrowed read-only view; unpack() produces independent owned values. */
+    /** Borrowed read-only view. Use the owned class unpack() API for independent values. */
     public final class PacketView extends as3flatbuffers.TableView
     {
         private var payloadView:fixtures.unions.PayloadView;

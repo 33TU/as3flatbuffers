@@ -6,7 +6,7 @@ package bench.data
     import bench.data.State;
     import bench.data.StateView;
 
-    /** Borrowed read-only view; unpack() produces independent owned values. */
+    /** Borrowed read-only view. Use the owned class unpack() API for independent values. */
     public final class InlineView extends as3flatbuffers.TableView
     {
         private const stateView:bench.data.StateView = new bench.data.StateView();

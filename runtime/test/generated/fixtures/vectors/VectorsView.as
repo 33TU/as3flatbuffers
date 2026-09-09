@@ -12,7 +12,7 @@ package fixtures.vectors
     import fixtures.vectors.Pair;
     import fixtures.vectors.PairView;
 
-    /** Borrowed read-only view; unpack() produces independent owned values. */
+    /** Borrowed read-only view. Use the owned class unpack() API for independent values. */
     public final class VectorsView extends as3flatbuffers.TableView
     {
         private const pointsView:fixtures.vectors.PairView = new fixtures.vectors.PairView();

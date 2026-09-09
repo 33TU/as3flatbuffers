@@ -12,7 +12,7 @@ package fixtures
     import fixtures.geometry.Point;
     import fixtures.geometry.PointView;
 
-    /** Borrowed read-only view; unpack() produces independent owned values. */
+    /** Borrowed read-only view. Use the owned class unpack() API for independent values. */
     public final class InlineRootView extends as3flatbuffers.TableView
     {
         private const pointView_:fixtures.geometry.PointView = new fixtures.geometry.PointView();

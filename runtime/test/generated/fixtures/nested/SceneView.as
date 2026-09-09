@@ -8,7 +8,7 @@ package fixtures.nested
     import fixtures.nested.Node;
     import fixtures.nested.NodeView;
 
-    /** Borrowed read-only view; unpack() produces independent owned values. */
+    /** Borrowed read-only view. Use the owned class unpack() API for independent values. */
     public final class SceneView extends as3flatbuffers.TableView
     {
         private var headView:fixtures.nested.NodeView;

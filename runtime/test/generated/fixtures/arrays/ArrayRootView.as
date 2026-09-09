@@ -6,7 +6,7 @@ package fixtures.arrays
     import fixtures.arrays.Arrays;
     import fixtures.arrays.ArraysView;
 
-    /** Borrowed read-only view; unpack() produces independent owned values. */
+    /** Borrowed read-only view. Use the owned class unpack() API for independent values. */
     public final class ArrayRootView extends as3flatbuffers.TableView
     {
         private const valueView:fixtures.arrays.ArraysView = new fixtures.arrays.ArraysView();
