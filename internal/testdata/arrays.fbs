@@ -1,0 +1,21 @@
+namespace fixtures.arrays;
+enum Mode:ubyte { None = 0, Active = 1 }
+struct Cell (force_align:16) { x:short; samples:[float:3]; }
+struct Arrays {
+    flags:[bool:3];
+    tiny:[byte:3];
+    octets:[ubyte:3];
+    small:[short:3];
+    shorts:[ushort:3];
+    ints:[int:3];
+    uints:[uint:3];
+    longs:[long:3];
+    ulongs:[ulong:3];
+    floats:[float:3];
+    doubles:[double:3];
+    modes:[Mode:3];
+    cells:[Cell:2];
+    tail:ubyte;
+}
+table ArrayRoot { value:Arrays; values:[Arrays]; other:[Arrays]; }
+root_type ArrayRoot;

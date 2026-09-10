@@ -1,0 +1,17 @@
+namespace fixtures;
+
+table OptionalScalars {
+  enabled:bool = null;
+  i8:byte = null;
+  u8:ubyte = null;
+  i16:short = null;
+  u16:ushort = null;
+  i32:int = null;
+  u32:uint = null;
+  i64:long = null;
+  u64:ulong = null;
+  f32:float = null;
+  f64:double = null;
+}
+
+root_type OptionalScalars;

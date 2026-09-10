@@ -1,0 +1,3 @@
+table Item { value:int; }
+enum ItemView:byte { Zero = 0 }
+root_type Item;

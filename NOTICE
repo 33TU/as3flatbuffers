@@ -1,0 +1,31 @@
+The Int64, UInt64, Int64Vector, UInt64Vector, OptionalInt, OptionalUint,
+OptionalNumber, and OptionalBoolean classes in
+runtime/src/as3flatbuffers/types/ are adapted from AS3PB:
+
+    https://github.com/33TU/as3pb
+    source revision: 6849308 (royale branch)
+    original path: runtime/src/as3pb/types/
+
+The original AS3PB code is by 33TU. These files retain its behavior, with the
+package renamed and protobuf-specific input/output comments generalized.
+This repository is distributed under the MIT License in LICENSE.
+
+internal/indent.go and its tests are also adapted from AS3PB's internal/indent.go
+and internal/indent_test.go at the same revision. The test import path points to
+this repository; the writer behavior is unchanged.
+
+internal/naming_cases.go, the reserved-word map in internal/naming.go, and
+uniqueName in internal/naming_table.go are adapted from AS3PB's naming_cases.go,
+naming.go, and naming_message.go at the same revision. The reserved-word test is
+adapted from naming_test.go. FlatBuffers-specific names and field-ID allocation
+replace the protobuf descriptor wrappers; the initial generator's additional
+keyword guards are retained.
+
+The generated Point example and FlatBuffers table runtime follow the public
+FlatBuffers wire format. The test harness uses, but does not vendor, the official
+FlatBuffers Python package (Apache-2.0).
+
+internal/reflection/upstream/reflection.fbs and the generated Go bindings in
+internal/reflection/reflection_generated.go derive from Google FlatBuffers
+v25.12.19 (https://github.com/google/flatbuffers), under Apache-2.0.
+The upstream license is included at internal/reflection/upstream/LICENSE.

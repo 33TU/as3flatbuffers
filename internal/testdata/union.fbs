@@ -1,0 +1,4 @@
+table A { value:int; }
+union Choice { A }
+table Root { choice:Choice; }
+root_type Root;

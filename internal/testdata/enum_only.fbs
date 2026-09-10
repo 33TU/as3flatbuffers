@@ -1,0 +1,2 @@
+namespace fixtures.symbols;
+enum Status:short { Failed = -1, Ok = 0 }

@@ -1,0 +1,18 @@
+namespace fixtures;
+
+table Naming {
+  snake_case:int = 11;
+  snakeCase:int = 22;
+  reset:int = 33;
+  reset_:int = 44;
+  reset__:int = 55;
+  bind:int = 66;
+  Bind:int = 77;
+  __leading_name:int = 88;
+  trailing_name_:int = 99;
+  value__name:int = 111;
+  bytes:int = 122;
+  class:int = 133;
+}
+
+root_type Naming;

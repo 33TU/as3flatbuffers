@@ -1,0 +1,13 @@
+namespace fixtures.framing;
+struct Aligned (force_align:16) { value:double; tag:uint; }
+table Child { name:string (required); }
+table PlainFrame { text:string; value:uint; }
+table Record {
+  title:string (required);
+  aligned:Aligned;
+  child:Child;
+  next:Record;
+  values:[uint];
+}
+root_type Record;
+file_identifier "FRM1";

@@ -1,0 +1,23 @@
+namespace example.inventory;
+
+enum Rarity:ubyte { Common = 0, Rare = 1, Epic = 2 }
+
+struct Position {
+    x:float;
+    y:float;
+}
+
+table Item {
+    id:uint (key);
+    quantity:uint = 1;
+    rarity:Rarity = Common;
+}
+
+table Inventory {
+    items:[Item];
+    path:[Position];
+    tags:[string];
+    scores:[int];
+}
+
+root_type Inventory;

@@ -1,0 +1,3 @@
+table Member { x:int; }
+union Value { Member }
+table ValueView { x:int; }

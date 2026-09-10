@@ -1,0 +1,37 @@
+namespace fixtures.keys;
+enum State:short { LOW=-7, ZERO=0, HIGH=200 }
+table Signed { id:int = -7 (key); value:uint; }
+table Unsigned { id:uint (key); value:uint; }
+table TextKey { name:string (key); value:uint; }
+table LongKey { id:long = -9223372036854775808 (key); value:uint; }
+table ULongKey { id:ulong = 4294967296 (key); value:uint; }
+table FloatKey { id:float (key); value:uint; }
+table DoubleKey { id:double (key); value:uint; }
+table ByteKey { id:byte (key); }
+table UByteKey { id:ubyte (key); }
+table ShortKey { id:short (key); }
+table UShortKey { id:ushort (key); }
+table BoolKey { id:bool (key); }
+table EnumKey { id:State = LOW (key); }
+struct InlineKey (force_align:16) { id:int (key); value:uint; }
+struct InlineLong { id:long (key); value:uint; }
+table Directory {
+  signed:[Signed];
+  unsigned:[Unsigned];
+  texts:[TextKey];
+  longs:[LongKey];
+  ulongs:[ULongKey];
+  floats:[FloatKey];
+  doubles:[DoubleKey];
+  bytes:[ByteKey];
+  ubytes:[UByteKey];
+  shorts:[ShortKey];
+  ushorts:[UShortKey];
+  bools:[BoolKey];
+  enums:[EnumKey];
+  inline_keys:[InlineKey];
+  inline_longs:[InlineLong];
+  signed_by_key:string;
+  signed_by_key_:string;
+}
+root_type Directory;

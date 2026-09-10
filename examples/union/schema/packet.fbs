@@ -1,0 +1,19 @@
+namespace example.protocol;
+
+table Move {
+  x:float;
+  y:float;
+}
+
+struct Damage {
+  amount:int;
+}
+
+union Payload { Move, Damage, Text:string }
+
+table Packet {
+  payload:Payload;
+  payloads:[Payload];
+}
+
+root_type Packet;

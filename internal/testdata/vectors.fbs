@@ -1,0 +1,24 @@
+namespace fixtures.vectors;
+struct Pair { x:int; y:int; }
+struct Aligned (force_align:16) { point:Pair; weight:double; }
+table Entry { id:int; children:[Entry]; }
+table Vectors {
+ flags:[bool];
+ signed_bytes:[byte];
+ unsigned_bytes:[ubyte];
+ signed_shorts:[short];
+ unsigned_shorts:[ushort];
+ ints:[int];
+ uints:[uint];
+ longs:[long];
+ ulongs:[ulong];
+ floats:[float];
+ doubles:[double];
+ texts:[string];
+ points:[Pair];
+ aligned:[Aligned];
+ entries:[Entry];
+ ints_present:int;
+ entries_view:int;
+}
+root_type Vectors;

@@ -1,0 +1,2 @@
+table Collision { snake_case:int; snakeCase:int; }
+root_type Collision;

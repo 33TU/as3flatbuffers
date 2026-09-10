@@ -1,0 +1,45 @@
+namespace fixtures.geometry;
+
+struct Point {
+  x:float;
+  y:float;
+}
+
+struct Frame {
+  tag:ubyte;
+  point:Point;
+  count:short;
+  signed_value:long;
+  unsigned_value:ulong;
+  weight:double;
+  enabled:bool;
+  tiny:byte;
+  small:ushort;
+  number:int;
+  unsigned_number:uint;
+  fraction:float;
+}
+
+struct Envelope {
+  lead:byte;
+  frame:Frame;
+  tail:short;
+}
+
+struct Aligned (force_align: 16) {
+  id:int;
+  value:double;
+}
+
+namespace fixtures;
+
+table InlineRoot {
+  point:geometry.Point;
+  frame:geometry.Frame;
+  envelope:geometry.Envelope;
+  aligned:geometry.Aligned;
+  label:int;
+  point_view:int;
+}
+
+root_type InlineRoot;
